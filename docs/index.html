@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LangDocs · 多语言语法特性详解站</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <h1>◈ LangDocs</h1>
+  <span class="subtitle">语言特性详解 · C# · C++ · Python · JavaScript · TypeScript · Agent</span>
+  <nav id="top-nav">
+    <button class="nav-btn active" data-view="home">首页</button>
+    <button class="nav-btn" data-view="csharp">C# 语法特性</button>
+    <button class="nav-btn" data-view="patterns">C# 设计模式</button>
+    <button class="nav-btn" data-view="python">Python 语法</button>
+    <button class="nav-btn" data-view="js">JavaScript 语法</button>
+    <button class="nav-btn" data-view="ts">TypeScript 语法</button>
+    <button class="nav-btn" data-view="agent">AI Agent 开发</button>
+    <button class="nav-btn" data-view="cpp11">C++ 11/14/17</button>
+    <button class="nav-btn" data-view="cpp20">C++20 特性</button>
+    <button id="theme-toggle" class="nav-btn" title="切换浅色/深色主题">浅色</button>
+  </nav>
+</header>
+
+<main id="app">
+  <!-- ============ 首页 ============ -->
+  <section id="view-home" class="view">
+    <div class="hero">
+      <h2>系统学习现代语言特性</h2>
+      <p>精选 C# 与 C++20 的核心语法特性，每个特性配有版本信息、要点解析与可读代码示例。</p>
+    </div>
+    <div class="cards">
+      <a class="card card-cs" data-goto="csharp" href="#csharp">
+        <div class="card-icon">⌨</div>
+        <h3>C# 语法特性详解</h3>
+        <p>从自动属性到模式匹配、async/await 到 Span&lt;T&gt;，覆盖 C# 1.0 → 12.0 演进路上的关键特性。</p>
+        <div class="card-meta"><span id="cs-count">…</span> 个特性 · 按主题分类</div>
+      </a>
+      <a class="card card-pattern" data-goto="patterns" href="#patterns">
+        <div class="card-icon">◆</div>
+        <h3>C# 23 种设计模式</h3>
+        <p>用 C# 示例完整讲解 GoF 的创建型、结构型与行为型三大类 23 种经典设计模式。</p>
+        <div class="card-meta"><span id="pattern-count">…</span> 种模式 · 含可运行示例</div>
+      </a>
+      <a class="card card-py" data-goto="python" href="#python">
+        <div class="card-icon">Py</div>
+        <h3>Python 语法详解</h3>
+        <p>从动态类型、推导式、装饰器到 asyncio、模式匹配与类型注解，系统梳理现代 Python 核心语法。</p>
+        <div class="card-meta"><span id="py-count">…</span> 个特性 · 基础到进阶</div>
+      </a>
+      <a class="card card-js" data-goto="js" href="#js">
+        <div class="card-icon">JS</div>
+        <h3>JavaScript 语法详解</h3>
+        <p>从 let/const、闭包、原型链到 Promise、async/await、Proxy，系统梳理现代 JS 的核心语法。</p>
+        <div class="card-meta"><span id="js-count">…</span> 个特性 · 基础到进阶</div>
+      </a>
+      <a class="card card-ts" data-goto="ts" href="#ts">
+        <div class="card-icon">TS</div>
+        <h3>TypeScript 语法详解</h3>
+        <p>从类型注解、接口、联合类型到泛型、工具类型与 tsconfig，从零掌握 JS 的类型超集。</p>
+        <div class="card-meta"><span id="ts-count">…</span> 个特性 · 从零到工程化</div>
+      </a>
+      <a class="card card-agent" data-goto="agent" href="#agent">
+        <div class="card-icon">AI</div>
+        <h3>AI Agent 开发教程</h3>
+        <p>从 LLM 调用、工具循环、ReAct 到记忆、RAG、MCP 与安全评估，从零手写一个可用 Agent。</p>
+        <div class="card-meta"><span id="agent-count">…</span> 课 · 从零到工程化</div>
+      </a>
+      <a class="card card-cpp2" data-goto="cpp11" href="#cpp11">
+        <div class="card-icon">⚙</div>
+        <h3>C++ 11 / 14 / 17 标准特性</h3>
+        <p>auto、移动语义、智能指针、Lambda、结构化绑定、if constexpr、std::optional……现代 C++ 三次里程碑迭代。</p>
+        <div class="card-meta"><span id="cpp11-count">…</span> 个特性 · 按版本与主题分类</div>
+      </a>
+      <a class="card card-cpp" data-goto="cpp20" href="#cpp20">
+        <div class="card-icon">⚙</div>
+        <h3>C++20 标准特性板块</h3>
+        <p>Concepts、Ranges、协程、Modules、三路比较……四大新支柱与常用库增强一网打尽。</p>
+        <div class="card-meta"><span id="cpp-count">…</span> 个特性 · 核心语言 + 标准库</div>
+      </a>
+    </div>
+  </section>
+
+  <!-- ============ 文档视图（C# / C++20 共用骨架） ============ -->
+  <section id="view-docs" class="view" style="display:none">
+    <aside id="docs-sidebar">
+      <input id="doc-search" type="search" placeholder="搜索特性 / 关键字…" spellcheck="false">
+      <ul id="feature-list"></ul>
+    </aside>
+    <article id="doc-content">
+      <div id="doc-empty">从左侧选择一个特性开始阅读</div>
+      <div id="doc-body" style="display:none">
+        <div id="doc-badges"></div>
+        <h2 id="doc-title"></h2>
+        <p id="doc-summary"></p>
+        <div id="doc-sections"></div>
+      </div>
+    </article>
+  </section>
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>
