@@ -2,3 +2,9 @@ node_modules/
 .edgeone/
 *.log
 .DS_Store
+
+# Tencent Cloud EdgeOne
+.env
+.edgeone/*
+.tef_dist/*
+  

@@ -47,6 +47,33 @@ function highlight(code, lang) {
 }
 
 /* ================= 视图切换 ================= */
+function closeNav() {
+  const hd = document.querySelector('header');
+  if (hd) hd.classList.remove('nav-open');
+  const btn = $('nav-toggle');
+  if (btn) btn.setAttribute('aria-expanded', 'false');
+}
+
+function isPhone() {
+  return window.matchMedia('(max-width: 768px)').matches;
+}
+
+function openSidebar() {
+  const docs = $('view-docs');
+  if (!docs) return;
+  docs.classList.add('sidebar-open');
+  const bd = $('sidebar-backdrop');
+  if (bd) bd.hidden = false;
+}
+
+function closeSidebar() {
+  const docs = $('view-docs');
+  if (!docs) return;
+  docs.classList.remove('sidebar-open');
+  const bd = $('sidebar-backdrop');
+  if (bd) bd.hidden = true;
+}
+
 function showView(view) {
   state.view = view;
   $('view-home').style.display = view === 'home' ? '' : 'none';
@@ -54,6 +81,8 @@ function showView(view) {
   document.body.classList.toggle('view-cpp20', view === 'cpp20');
   document.querySelectorAll('.nav-btn').forEach(b =>
     b.classList.toggle('active', b.dataset.view === view));
+  closeNav();
+  if (view === 'home') closeSidebar();
   if (view !== 'home') loadDocs(view);
 }
 
@@ -61,6 +90,23 @@ document.querySelectorAll('.nav-btn[data-view]').forEach(btn =>
   btn.addEventListener('click', () => showView(btn.dataset.view)));
 document.querySelectorAll('.card[data-goto]').forEach(card =>
   card.addEventListener('click', (e) => { e.preventDefault(); showView(card.dataset.goto); }));
+
+const navToggle = $('nav-toggle');
+if (navToggle) {
+  navToggle.addEventListener('click', () => {
+    const hd = document.querySelector('header');
+    const open = !hd.classList.contains('nav-open');
+    hd.classList.toggle('nav-open', open);
+    navToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+  });
+}
+const sidebarToggle = $('sidebar-toggle');
+if (sidebarToggle) sidebarToggle.addEventListener('click', () => {
+  if ($('view-docs').classList.contains('sidebar-open')) closeSidebar();
+  else openSidebar();
+});
+const sidebarBackdrop = $('sidebar-backdrop');
+if (sidebarBackdrop) sidebarBackdrop.addEventListener('click', closeSidebar);
 
 function apiUrl(name) {
   const script = document.currentScript || document.querySelector('script[src$="app.js"]');
@@ -84,6 +130,9 @@ async function loadDocs(lang) {
   renderList();
   $('doc-empty').style.display = '';
   $('doc-body').style.display = 'none';
+  const tt = $('toolbar-title');
+  if (tt) tt.textContent = '选择一篇开始阅读';
+  if (isPhone()) openSidebar();
 }
 
 function renderList() {
@@ -126,6 +175,8 @@ async function openFeature(id, li) {
 
   $('doc-title').textContent = f.title;
   $('doc-summary').textContent = f.summary;
+  const tt = $('toolbar-title');
+  if (tt) tt.textContent = f.title;
 
   let html = '<h3>要点解析</h3><div id="doc-detail">' +
     f.detail.map(p => `<p>${esc(p)}</p>`).join('') + '</div>';
@@ -144,6 +195,7 @@ async function openFeature(id, li) {
 
   $('doc-empty').style.display = 'none';
   $('doc-body').style.display = '';
+  if (isPhone()) closeSidebar();
 }
 
 /* ================= 搜索 ================= */
@@ -190,6 +242,8 @@ function applyTheme(t) {
   document.documentElement.setAttribute('data-theme', t);
   const btn = $('theme-toggle');
   if (btn) btn.textContent = t === 'light' ? '深色' : '浅色';
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute('content', t === 'light' ? '#f3f5fa' : '#0b1120');
 }
 (function initTheme() {
   let saved = null;
