@@ -15,21 +15,45 @@ module.exports = [
       '事件订阅若不退订会造成对象泄漏（发布者持有订阅者引用），UI 生命周期短于发布者时务必 -='
     ],
     example:
+      'using System;\n\n' +
       'public class Thermometer\n' +
       '{\n' +
-      '    public event Action<int>? TemperatureChanged;   // 事件\n\n' +
+      '    // event 限制外部只能订阅/退订，不能随便触发\n' +
+      '    public event Action<int>? TemperatureChanged;\n\n' +
       '    private int _temp;\n' +
       '    public int Temp\n' +
       '    {\n' +
       '        get => _temp;\n' +
-      '        set { _temp = value; TemperatureChanged?.Invoke(value); }\n' +
+      '        set\n' +
+      '        {\n' +
+      '            _temp = value;\n' +
+      '            // ?. 判空后触发，所有订阅者依次收到通知\n' +
+      '            TemperatureChanged?.Invoke(value);\n' +
+      '        }\n' +
       '    }\n' +
       '}\n\n' +
+      '// 完整演示\n' +
       'var t = new Thermometer();\n' +
-      'Action<int> handler = deg => Console.WriteLine($"当前 {deg}°C");\n' +
-      't.TemperatureChanged += handler;\n' +
-      't.TemperatureChanged -= handler;   // 长生命周期场景记得退订\n' +
-      't.Temp = 26;'
+      'Action<int> onChanged = deg => Console.WriteLine($"当前 {deg}°C");\n' +
+      't.TemperatureChanged += onChanged;     // 订阅\n\n' +
+      't.Temp = 25;   // 触发 -> 当前 25°C\n' +
+      't.Temp = 26;   // 触发 -> 当前 26°C\n\n' +
+      't.TemperatureChanged -= onChanged;     // 退订（避免内存泄漏）\n' +
+      't.Temp = 30;   // 不再有输出'
+    ,
+    example2Title: '多播委托与内置泛型委托',
+    example2:
+      '// 多播委托：一次调用触发多个方法\n' +
+      'Action<string> pipeline = s => Console.WriteLine($"1) {s}");\n' +
+      'pipeline += s => Console.WriteLine($"2) {s.ToUpper()}");\n' +
+      'pipeline += s => Console.WriteLine($"3) 长度={s.Length}");\n' +
+      'pipeline("hello");\n' +
+      '// 输出顺序：1) hello / 2) HELLO / 3) 长度=5\n\n' +
+      '// 内置泛型委托\n' +
+      'Func<int, int, int> add = (a, b) => a + b;          // 有返回值\n' +
+      'Predicate<int> isEven = x => x % 2 == 0;            // 返回 bool\n' +
+      'Console.WriteLine(add(3, 4));      // 7\n' +
+      'Console.WriteLine(isEven(8));      // True'
   },
   {
     id: 'lambda-expressions',
@@ -52,20 +76,21 @@ module.exports = [
       'Func<int, int, int> add = (a, b) => a + b;\n' +
       'Action<string> log = msg => Console.WriteLine(msg);\n\n' +
       'var list = new List<int> { 1, 2, 3, 4 };\n' +
-      'list.RemoveAll(x => x % 2 == 0);\n' +
-      'list.ForEach(log);                      // 1 3\n\n' +
-      '// 闭包：捕获的是变量本身\n' +
+      'list.RemoveAll(x => x % 2 == 0);   // 移除偶数\n' +
+      'list.ForEach(log);                  // 1 3\n\n' +
+      '// 闭包：捕获的是变量本身（引用）\n' +
       'int counter = 0;\n' +
       'Func<int> next = () => ++counter;\n' +
       'next(); next();\n' +
-      'Console.WriteLine(counter);             // 2 —— 外部变量被修改了\n\n' +
+      'Console.WriteLine(counter);         // 2 —— 外部变量被修改\n\n' +
       '// 经典陷阱：for 循环共享计数器\n' +
       'var actions = new List<Func<int>>();\n' +
       'for (int i = 0; i < 3; i++)\n' +
       '{\n' +
-      '    int copy = i;                       // 正确做法：拷贝一份\n' +
+      '    int copy = i;                   // ✔ 正确：每次迭代拷贝一份\n' +
       '    actions.Add(() => copy);\n' +
-      '}'
+      '}\n' +
+      'Console.WriteLine(string.Join(",", actions.Select(f => f()))); // 0,1,2'
   },
   {
     id: 'linq',
@@ -90,30 +115,47 @@ module.exports = [
       '    new { Name = "张三", Score = 88, City = "北京" },\n' +
       '    new { Name = "李四", Score = 95, City = "上海" },\n' +
       '    new { Name = "王五", Score = 76, City = "北京" },\n' +
+      '    new { Name = "赵六", Score = 62, City = "上海" },\n' +
       '};\n\n' +
-      '// 方法语法：按城市分组，取平均分\n' +
-      'var result = students\n' +
+      '// 方法语法：及格同学按分数降序，只取姓名\n' +
+      'var top = students\n' +
+      '    .Where(s => s.Score >= 60)\n' +
+      '    .OrderByDescending(s => s.Score)\n' +
+      '    .Select(s => s.Name);\n' +
+      'Console.WriteLine(string.Join(", ", top));    // 李四, 张三, 王五, 赵六\n\n' +
+      '// 按城市分组，取平均分\n' +
+      'var byCity = students\n' +
       '    .GroupBy(s => s.City)\n' +
-      '    .Select(g => new { City = g.Key, Avg = g.Average(s => s.Score) })\n' +
-      '    .OrderByDescending(x => x.Avg);\n\n' +
-      '// 查询语法\n' +
-      'var names = from s in students where s.Score > 80 select s.Name;',
+      '    .Select(g => new { City = g.Key, Avg = g.Average(s => s.Score), Count = g.Count() });\n' +
+      'foreach (var x in byCity)\n' +
+      '    Console.WriteLine($"{x.City}: 平均 {x.Avg:F1}（{x.Count}人）");\n\n' +
+      '// 查询语法（等价）\n' +
+      'var names = from s in students where s.Score > 80 select s.Name;\n' +
+      'Console.WriteLine(string.Join(",", names));    // 张三, 李四'
+    ,
     example2Title: 'Join 连接与 SelectMany 展平',
     example2:
+      'var students = new[]\n' +
+      '{\n' +
+      '    new { Id = 1, Name = "张三" },\n' +
+      '    new { Id = 2, Name = "李四" },\n' +
+      '};\n' +
       'var courses = new[]\n' +
       '{\n' +
-      '    new { Student = "张三", Course = "数学" },\n' +
-      '    new { Student = "张三", Course = "物理" },\n' +
-      '    new { Student = "李四", Course = "化学" },\n' +
+      '    new { StudentId = 1, Course = "数学" },\n' +
+      '    new { StudentId = 1, Course = "物理" },\n' +
+      '    new { StudentId = 2, Course = "化学" },\n' +
       '};\n\n' +
       '// 内连接：学生 × 选课\n' +
       'var joined = students.Join(courses,\n' +
-      '    s => s.Name, c => c.Student,\n' +
-      '    (s, c) => $"{s.Name} 选了 {c.Course}");\n\n' +
-      '// SelectMany：每人展开成多行\n' +
+      '    s => s.Id, c => c.StudentId,\n' +
+      '    (s, c) => $"{s.Name} 选了 {c.Course}");\n' +
+      'joined.ToList().ForEach(Console.WriteLine);\n\n' +
+      '// SelectMany：每人展开成多行（类似 JOIN 但保留完整对象）\n' +
       'var flat = students.SelectMany(\n' +
-      '    s => courses.Where(c => c.Student == s.Name),\n' +
-      '    (s, c) => $"{s.Name}-{c.Course}");'
+      '    s => courses.Where(c => c.StudentId == s.Id),\n' +
+      '    (s, c) => $"{s.Name}-{c.Course}");\n' +
+      'flat.ToList().ForEach(Console.WriteLine);   // 张三-数学, 张三-物理, 李四-化学'
   },
   {
     id: 'linq-pitfalls',
@@ -130,17 +172,17 @@ module.exports = [
     ],
     example:
       'var nums = new List<int> { 1, 2, 3 };\n' +
-      'var query = nums.Where(n => n > filter);   // 只是配方\n\n' +
       'int filter = 1;\n' +
-      'Console.WriteLine(query.Count());          // 2\n' +
+      'var query = nums.Where(n => n > filter);   // 只是"配方"，此刻没执行\n\n' +
+      'Console.WriteLine(query.Count());          // 2（过滤 >1）\n' +
       'filter = 2;\n' +
-      'Console.WriteLine(query.Count());          // 1 ← 同一查询结果变了！\n\n' +
+      'Console.WriteLine(query.Count());          // 1 ← 同一查询因变量变化而不同！\n\n' +
       'nums.Add(10);\n' +
       'Console.WriteLine(query.Count());          // 2 ← 数据源变了也影响\n\n' +
-      '// 物化后不再受影响\n' +
+      '// 物化后不再受影响：先把结果"固定"下来\n' +
       'var materialized = query.ToList();\n' +
       'nums.Clear();\n' +
-      'Console.WriteLine(materialized.Count);     // 保持不变'
+      'Console.WriteLine(materialized.Count);     // 仍保持为 2'
   },
   {
     id: 'local-functions',
@@ -158,18 +200,23 @@ module.exports = [
       'public static long Fib(int n)\n' +
       '{\n' +
       '    return fib(n);\n\n' +
-      '    long fib(int k) => k <= 1 ? k : fib(k - 1) + fib(k - 2);  // 本地递归\n' +
+      '    // 本地递归函数：可访问 n，且不分配委托\n' +
+      '    long fib(int k) => k <= 1 ? k : fib(k - 1) + fib(k - 2);\n' +
       '}\n\n' +
-      '// 本地迭代器函数：参数校验立即执行，惰性部分延后\n' +
+      '// 本地迭代器：参数校验立即执行，惰性部分延后（避免"延迟校验陷阱"）\n' +
       'public static IEnumerable<int> Positive(IEnumerable<int> src)\n' +
       '{\n' +
-      '    if (src == null) throw new ArgumentNullException(nameof(src)); // 立即抛出\n' +
+      '    if (src == null) throw new ArgumentNullException(nameof(src)); // 调用即校验\n' +
       '    return Iterator();\n\n' +
       '    IEnumerable<int> Iterator()\n' +
       '    {\n' +
-      '        foreach (var n in src) if (n > 0) yield return n;\n' +
+      '        foreach (var n in src)\n' +
+      '            if (n > 0) yield return n;\n' +
       '    }\n' +
-      '}'
+      '}\n\n' +
+      '// 完整演示\n' +
+      'Console.WriteLine(Fib(10));                       // 55\n' +
+      'Console.WriteLine(string.Join(",", Positive(new[] { -1, 2, -3, 4 }))); // 2,4'
   },
   {
     id: 'expression-trees',
@@ -185,22 +232,27 @@ module.exports = [
     ],
     example:
       'using System.Linq.Expressions;\n\n' +
+      'public record Person(string Name, int Age);\n\n' +
       'Expression<Func<Person, bool>> isAdult = p => p.Age >= 18;\n\n' +
-      '// 遍历这棵树\n' +
-      'var bin = (BinaryExpression)isAdult.Body;\n' +
-      'Console.WriteLine(bin.NodeType);            // GreaterThanOrEqual\n' +
-      'Console.WriteLine(((MemberExpression)bin.Left).Member.Name); // Age\n\n' +
-      '// 动态构造：p => p.Age >= minAge\n' +
+      '// 遍历这棵树，看清它的结构\n' +
+      'var body = (BinaryExpression)isAdult.Body;\n' +
+      'Console.WriteLine($"节点类型: {body.NodeType}");       // GreaterThanOrEqual\n' +
+      'var left = (MemberExpression)body.Left;\n' +
+      'Console.WriteLine($"左操作数属性: {left.Member.Name}"); // Age\n\n' +
+      '// 动态构造表达式：p => p.Age >= value\n' +
       'static Expression<Func<T, bool>> GreaterThan<T>(string prop, object value)\n' +
       '{\n' +
       '    var p = Expression.Parameter(typeof(T), "x");\n' +
-      '    var body = Expression.GreaterThanOrEqual(\n' +
-      '        Expression.Property(p, prop),\n' +
-      '        Expression.Constant(value));\n' +
-      '    return Expression.Lambda<Func<T, bool>>(body, p);\n' +
+      '    var propAccess = Expression.Property(p, prop);\n' +
+      '    var constant = Expression.Constant(value, value.GetType());\n' +
+      '    var compare = Expression.GreaterThanOrEqual(propAccess, constant);\n' +
+      '    return Expression.Lambda<Func<T, bool>>(compare, p);\n' +
       '}\n\n' +
-      'var compiled = GreaterThan<Person>("Age", 18).Compile();\n' +
-      'compiled(new Person { Age = 20 });           // true'
+      '// 完整演示：把表达式编译回委托并执行\n' +
+      'var rule = GreaterThan<Person>("Age", 18);\n' +
+      'var compiled = rule.Compile();\n' +
+      'Console.WriteLine(compiled(new Person("小明", 20)));  // True\n' +
+      'Console.WriteLine(compiled(new Person("小红", 15)));  // False'
   },
 
   // ==================== 异步与并发 ====================
@@ -222,22 +274,31 @@ module.exports = [
       'HttpClient 应复用实例（IHttpClientFactory），每个请求 new HttpClient 会耗尽套接字。'
     ],
     example:
-      'public async Task<string> FetchUserAsync(int id)\n' +
+      'public class UserService\n' +
       '{\n' +
-      '    using var http = new HttpClient();\n' +
-      '    var user = await http.GetFromJsonAsync<User>($"/users/{id}");\n' +
-      '    var orders = await LoadOrdersAsync(id);\n' +
-      '    return $"{user.Name}: {orders.Count} 个订单";\n' +
+      '    private static readonly HttpClient Http = new();\n\n' +
+      '    public async Task<string> FetchUserAsync(int id)\n' +
+      '    {\n' +
+      '        // 每个 await 都不阻塞线程\n' +
+      '        var user = await Http.GetFromJsonAsync<User>($"https://api.x.com/users/{id}");\n' +
+      '        var orders = await LoadOrdersAsync(id);\n' +
+      '        return $"{user?.Name}: {orders.Count} 个订单";\n' +
+      '    }\n\n' +
+      '    private async Task<List<Order>> LoadOrdersAsync(int id) =>\n' +
+      '        await Http.GetFromJsonAsync<List<Order>>($"https://api.x.com/users/{id}/orders")\n' +
+      '            ?? new();\n' +
       '}\n\n' +
-      '// ❌ 错误示范：async void + 阻塞混用\n' +
-      '// async void Bad() { var r = FetchUserAsync(1).Result; }   // 可能死锁\n\n' +
-      '// ✔ 并发版：同时发起两个请求\n' +
-      'public async Task<(User, List<Order>)> LoadBothAsync(int id)\n' +
+      '// ❌ 错误示范：async void + 阻塞混用（可能死锁）\n' +
+      '// async void Bad() { var r = FetchUserAsync(1).Result; }\n\n' +
+      '// ✔ 并发版：先把两个任务都启动，再一起 await\n' +
+      'public async Task<(User?, List<Order>)> LoadBothAsync(int id)\n' +
       '{\n' +
-      '    var userTask = GetUserAsync(id);       // 已开始执行\n' +
-      '    var ordersTask = LoadOrdersAsync(id);  // 与上面并发\n' +
+      '    var userTask = GetUserAsync(id);        // 已开始执行\n' +
+      '    var ordersTask = LoadOrdersAsync(id);   // 与上面并发\n' +
       '    return (await userTask, await ordersTask);\n' +
-      '}'
+      '}\n\n' +
+      'public record User(string Name);\n' +
+      'public record Order(int Id);'
   },
   {
     id: 'async-streams',
@@ -253,22 +314,25 @@ module.exports = [
       '.NET 9 的 System.Linq.AsyncEnumerable 把 Where/Select 等 LINQ 操作符带进了异步流。'
     ],
     example:
-      '// 生产端：分页拉取全部用户\n' +
-      'public async IAsyncEnumerable<User> GetAllUsersAsync(\n' +
+      '// 生产端：分页拉取全部用户，逐条产出（内存占用恒定）\n' +
+      'public static async IAsyncEnumerable<User> GetAllUsersAsync(\n' +
       '    [EnumeratorCancellation] CancellationToken ct = default)\n' +
       '{\n' +
       '    int page = 1;\n' +
       '    while (true)\n' +
       '    {\n' +
-      '        var users = await _api.GetPageAsync(page++, 100, ct);\n' +
+      '        var users = await FetchPageAsync(page++, 100, ct);\n' +
       '        if (users.Count == 0) yield break;\n' +
       '        foreach (var u in users)\n' +
-      '            yield return u;              // 逐条产出，内存占用恒定\n' +
+      '            yield return u;\n' +
       '    }\n' +
       '}\n\n' +
-      '// 消费端\n' +
+      '// 消费端：一边拉取一边处理\n' +
       'await foreach (var user in GetAllUsersAsync().WithCancellation(ct))\n' +
-      '    Console.WriteLine(user.Name);'
+      '    Console.WriteLine(user.Name);\n\n' +
+      'static Task<List<User>> FetchPageAsync(int page, int size, CancellationToken ct)\n' +
+      '    => Task.FromResult(new List<User> { new("p" + page) });\n' +
+      'public record User(string Name);'
   },
   {
     id: 'valuetask-cancellation',
@@ -284,24 +348,30 @@ module.exports = [
       'CancellationTokenSource.CreateLinkedTokenSource 可以组合多个令牌（如"请求取消 OR 全局停机"）。'
     ],
     example:
-      'private readonly Dictionary<int, User> _cache = new();\n\n' +
-      'public ValueTask<User?> GetAsync(int id)\n' +
+      'using System.Collections.Concurrent;\n\n' +
+      'public class Cache\n' +
       '{\n' +
-      '    if (_cache.TryGetValue(id, out var u))\n' +
-      '        return new ValueTask<User?>(u);     // 无分配的已完成任务\n' +
-      '    return new ValueTask<User?>(LoadFromDbAsync(id));\n' +
+      '    private readonly Dictionary<int, User> _cache = new();\n\n' +
+      '    // 命中缓存：无分配直接返回已完成任务\n' +
+      '    public ValueTask<User?> GetAsync(int id)\n' +
+      '        => _cache.TryGetValue(id, out var u)\n' +
+      '            ? new ValueTask<User?>(u)\n' +
+      '            : new ValueTask<User?>(LoadFromDbAsync(id));\n\n' +
+      '    private static Task<User?> LoadFromDbAsync(int id) => Task.FromResult<User?>(new User(id));\n' +
       '}\n\n' +
+      '// 取消令牌贯穿链路\n' +
       'public async Task WorkAsync(CancellationToken ct)\n' +
       '{\n' +
       '    while (!ct.IsCancellationRequested)\n' +
       '    {\n' +
       '        await DoStepAsync(ct);\n' +
-      '        ct.ThrowIfCancellationRequested();\n' +
+      '        ct.ThrowIfCancellationRequested();   // 主动抛 OperationCanceledException\n' +
       '    }\n' +
       '}\n\n' +
       '// 组合令牌：用户取消 或 应用停机 都能终止\n' +
-      'using var linked = CancellationTokenSource.CreateLinkedTokenSource(\n' +
-      '    requestAborted, appStopping);'
+      'using var linked = CancellationTokenSource.CreateLinkedTokenSource(reqAborted, appStopping);\n' +
+      'await WorkAsync(linked.Token);\n' +
+      'public record User(int Id);'
   },
   {
     id: 'task-combinators',
@@ -317,25 +387,35 @@ module.exports = [
       '注意 WhenAll 中某个任务失败不会取消其余任务，只是不再等待它们的完成通知之外的结果。'
     ],
     example:
-      '// 并发获取三个服务的数据\n' +
-      'var (users, orders, stats) = (\n' +
-      '    await GetUsersAsync(),\n' +
-      '    await GetOrdersAsync(),\n' +
-      '    await GetStatsAsync());   // ❌ 这是串行！\n\n' +
+      '// ❌ 串行：总耗时 = 三次之和\n' +
+      'var a1 = await GetUsersAsync();\n' +
+      'var b1 = await GetOrdersAsync();\n' +
+      'var c1 = await GetStatsAsync();\n\n' +
+      '// ✔ 真并发：先全部启动，再一次性等待\n' +
       'var usersTask  = GetUsersAsync();\n' +
       'var ordersTask = GetOrdersAsync();\n' +
       'var statsTask  = GetStatsAsync();\n' +
-      'await Task.WhenAll(usersTask, ordersTask, statsTask);   // ✔ 真并发\n' +
+      'await Task.WhenAll(usersTask, ordersTask, statsTask);\n' +
       'var all = (usersTask.Result, ordersTask.Result, statsTask.Result);\n\n' +
       '// 带超时的等待（.NET 6+）\n' +
       'try\n' +
       '{\n' +
       '    var data = await SlowApiAsync().WaitAsync(TimeSpan.FromSeconds(3));\n' +
+      '    Console.WriteLine(data);\n' +
       '}\n' +
-      'catch (TimeoutException) { /* 降级处理 */ }\n\n' +
-      '// 竞速：任一镜像返回即用\n' +
-      'var fastest = await Task.WhenAny(mirrorA(), mirrorB());\n' +
-      'var result = await fastest;'
+      'catch (TimeoutException)\n' +
+      '{\n' +
+      '    Console.WriteLine("降级：调用超时");\n' +
+      '}\n\n' +
+      '// 竞速：哪个镜像先返回就用哪个\n' +
+      'var fastest = await Task.WhenAny(MirrorAAsync(), MirrorBAsync());\n' +
+      'var result = await fastest;   // 取最先完成的任务结果\n\n' +
+      'static Task<string> GetUsersAsync() => Task.FromResult("users");\n' +
+      'static Task<string> GetOrdersAsync() => Task.FromResult("orders");\n' +
+      'static Task<string> GetStatsAsync() => Task.FromResult("stats");\n' +
+      'static Task<string> SlowApiAsync() => Task.Delay(5000).ContinueWith(_ => "ok");\n' +
+      'static Task<string> MirrorAAsync() => Task.FromResult("A");\n' +
+      'static Task<string> MirrorBAsync() => Task.FromResult("B");'
   },
   {
     id: 'thread-safe-collections',
@@ -350,23 +430,27 @@ module.exports = [
       'ConcurrentDictionary 的 GetOrAdd/AddOrUpdate 保证原子性，但 valueFactory 可能被调用多次（对同一 key），工厂内不要有副作用。'
     ],
     example:
+      'using System.Collections.Concurrent;\n\n' +
       'var dict = new ConcurrentDictionary<string, int>();\n' +
       'dict.AddOrUpdate("hits", 1, (_, old) => old + 1);\n' +
-      'dict.GetOrAdd("config", k => LoadExpensive(k));\n\n' +
+      'dict.GetOrAdd("config", _ => LoadExpensive("config"));\n' +
+      'Console.WriteLine(dict["hits"]);             // 1\n\n' +
+      '// Channel<T>：生产者-消费者 + 背压\n' +
       'var channel = Channel.CreateBounded<int>(new BoundedChannelOptions(100)\n' +
       '{\n' +
-      '    FullMode = BoundedChannelFullMode.Wait   // 满了就等：背压\n' +
+      '    FullMode = BoundedChannelFullMode.Wait    // 满了就等待：自带背压\n' +
       '});\n\n' +
       '// 生产者\n' +
       '_ = Task.Run(async () =>\n' +
       '{\n' +
       '    for (int i = 0; i < 10; i++)\n' +
       '        await channel.Writer.WriteAsync(i);\n' +
-      '    channel.Writer.Complete();\n' +
+      '    channel.Writer.Complete();               // 通知消费端结束\n' +
       '});\n\n' +
       '// 消费者\n' +
       'await foreach (var item in channel.Reader.ReadAllAsync())\n' +
-      '    Console.WriteLine(item);'
+      '    Console.WriteLine(item);                 // 0..9\n\n' +
+      'static int LoadExpensive(string k) => k.Length;'
   },
   {
     id: 'sync-primitives',
@@ -395,15 +479,22 @@ module.exports = [
       '        _counter++;\n' +
       '    }\n' +
       '}\n\n' +
-      '// 无锁版本（更快）\n' +
+      '// 无锁版本（更快，适合简单计数）\n' +
       'public void IncrementAtomic() => Interlocked.Increment(ref _counter);\n\n' +
       '// 异步限流：最多 5 个并发请求\n' +
+      'private static readonly HttpClient Http = new();\n' +
       'private readonly SemaphoreSlim _throttle = new(5);\n\n' +
       'public async Task<string> CallAsync(string url)\n' +
       '{\n' +
-      '    await _throttle.WaitAsync();\n' +
-      '    try   { return await _http.GetStringAsync(url); }\n' +
-      '    finally { _throttle.Release(); }\n' +
-      '}'
+      '    await _throttle.WaitAsync();    // 超过 5 个就在这里排队\n' +
+      '    try   { return await Http.GetStringAsync(url); }\n' +
+      '    finally { _throttle.Release(); } // 务必释放\n' +
+      '}\n\n' +
+      '// 演示\n' +
+      'var demo = new CounterDemo();\n' +
+      'Parallel.For(0, 1000, _ => demo.IncrementAtomic());\n' +
+      'Console.WriteLine(demo._counter);   // 1000（线程安全）\n\n' +
+      'class CounterDemo { public int _counter; }\n' +
+      '// 注：上面 Parallel 仅为演示，实际类见方法体'
   }
 ];

@@ -15,13 +15,27 @@ module.exports = [
     ],
     example:
       'object value = "hello";\n\n' +
-      '// 旧写法\n' +
-      'var s = value as string;\n' +
-      'if (s != null) Console.WriteLine(s.Length);\n\n' +
-      '// 新写法：一步到位\n' +
-      'if (value is string str) Console.WriteLine(str.Length);\n' +
-      'if (value is not null) Console.WriteLine("非空");   // C# 9 否定模式\n' +
-      'if (value is int n or long) { /* 整数族 */ }'
+      '// 旧写法：as + null 判断\n' +
+      'var s0 = value as string;\n' +
+      'if (s0 != null) Console.WriteLine(s0.Length);\n\n' +
+      '// 新写法：一步到位，声明变量 str 并直接可用\n' +
+      'if (value is string str)\n' +
+      '    Console.WriteLine(str.Length);\n\n' +
+      '// C# 9 否定模式：判空首选\n' +
+      'if (value is not null)\n' +
+      '    Console.WriteLine("非空");\n\n' +
+      '// or 模式：一次匹配多种类型\n' +
+      'if (value is int or long)\n' +
+      '    Console.WriteLine("整数族");\n\n' +
+      '// 演示：按类型分派\n' +
+      'void Describe(object o)\n' +
+      '{\n' +
+      '    if (o is int n)        Console.WriteLine($"int={n}");\n' +
+      '    else if (o is string t) Console.WriteLine($"string={t}");\n' +
+      '    else if (o is null)     Console.WriteLine("null");\n' +
+      '    else                    Console.WriteLine("其他");\n' +
+      '}\n' +
+      'Describe(42); Describe("hi"); Describe(null);'
   },
   {
     id: 'switch-expressions',
@@ -36,7 +50,8 @@ module.exports = [
       '对枚举等有限域能做穷尽性检查：漏掉分支时编译器警告（配合 IEnumeralble 无关的 exhaustiveness 分析）。'
     ],
     example:
-      'public static string Grade(int score) => score switch\n' +
+      '// 成绩评级：关系模式 + 兜底\n' +
+      'static string Grade(int score) => score switch\n' +
       '{\n' +
       '    >= 90 => "优秀",\n' +
       '    >= 80 => "良好",\n' +
@@ -44,14 +59,21 @@ module.exports = [
       '    >= 0  => "不及格",\n' +
       '    _     => throw new ArgumentOutOfRangeException(nameof(score))\n' +
       '};\n\n' +
-      'public static decimal Toll(object vehicle) => vehicle switch\n' +
+      '// 属性模式 + when 子句：根据车型收费\n' +
+      'record Car(int Passengers, bool Electric);\n' +
+      'static decimal Toll(Car c) => c switch\n' +
       '{\n' +
-      '    Car { Passengers: 0 }        => 2.00m + 0.50m,   // 属性模式\n' +
-      '    Car c when c.Passengers > 2  => 1.00m,            // when 子句\n' +
-      '    Car                          => 2.00m,\n' +
-      '    null                         => throw new ArgumentNullException(),\n' +
-      '    _                            => 1.50m\n' +
-      '};'
+      '    { Electric: true }              => 0.00m,                  // 新能源车免费\n' +
+      '    { Passengers: 0 }               => 2.50m,                  // 空车\n' +
+      '    { Passengers: > 2 }             => 1.00m,                  // 多人优惠\n' +
+      '    var normal when normal.Passengers == 1 => 3.00m,           // when 子句\n' +
+      '    _                               => 2.00m\n' +
+      '};\n\n' +
+      '// 演示\n' +
+      'Console.WriteLine(Grade(95));     // 优秀\n' +
+      'Console.WriteLine(Grade(55));     // 不及格\n' +
+      'Console.WriteLine(Toll(new Car(0, false)));  // 2.50\n' +
+      'Console.WriteLine(Toll(new Car(3, false)));  // 1.00'
   },
   {
     id: 'relational-patterns',
@@ -66,8 +88,8 @@ module.exports = [
       '关系模式只能用于可比较类型；与声明模式组合（is { Count: > 0 }）可以同时判空、判类型、判范围。'
     ],
     example:
-      '// 闰年判断\n' +
-      'static bool IsLeap(int y) => y is { % 4: 0 } && (y % 100 != 0 || y % 400 == 0);\n\n' +
+      '// 闰年判断（逻辑组合模式）\n' +
+      'static bool IsLeap(int y) => y is { } && (y % 4 == 0 && (y % 100 != 0 || y % 400 == 0));\n\n' +
       'static string Check(int n) => n switch\n' +
       '{\n' +
       '    < 0             => "负数",\n' +
@@ -77,7 +99,14 @@ module.exports = [
       '    _               => "大数"\n' +
       '};\n\n' +
       '// 区间判断一目了然\n' +
-      'bool pass = score is >= 60 and < 100;'
+      'bool pass = 75 is >= 60 and < 100;\n' +
+      'Console.WriteLine(pass);     // True\n\n' +
+      '// 演示\n' +
+      'Console.WriteLine(Check(-3)); // 负数\n' +
+      'Console.WriteLine(Check(7));  // 个位数\n' +
+      'Console.WriteLine(Check(42)); // 两位数\n' +
+      'Console.WriteLine(IsLeap(2024)); // True\n' +
+      'Console.WriteLine(IsLeap(1900)); // False'
   },
   {
     id: 'list-patterns',
@@ -93,15 +122,25 @@ module.exports = [
     ],
     example:
       'int[] numbers = { 1, 2, 3, 4, 5 };\n\n' +
-      'string Describe(int[] arr) => arr switch\n' +
+      'static string Describe(int[] arr) => arr switch\n' +
       '{\n' +
-      '    []                        => "空数组",\n' +
-      '    [var single]              => $"单元素 {single}",\n' +
-      '    [var first, .., var last] => $"首 {first} 尾 {last}",\n' +
-      '    [0, ..]                   => "以 0 开头",\n' +
-      '    _                         => "其他"\n' +
+      '    []                              => "空数组",\n' +
+      '    [var single]                    => $"单元素 {single}",\n' +
+      '    [var first, .., var last]       => $"首 {first} 尾 {last}",\n' +
+      '    [0, ..]                         => "以 0 开头",\n' +
+      '    _                               => "其他"\n' +
       '};\n\n' +
-      'Describe(numbers);            // 首 1 尾 5'
+      '// 演示：解析简易命令行参数\n' +
+      'static string ParseArgs(string[] args) => args switch\n' +
+      '{\n' +
+      '    ["--help"]                  => "显示帮助",\n' +
+      '    ["build", .. var rest]      => $"构建，参数：{string.Join(",", rest)}",\n' +
+      '    ["run", var target, ..]     => $"运行目标：{target}",\n' +
+      '    _                           => "未知命令"\n' +
+      '};\n\n' +
+      'Console.WriteLine(Describe(numbers));       // 首 1 尾 5\n' +
+      'Console.WriteLine(ParseArgs(new[] { "build", "-c", "Release" })); // 构建，参数：-c,Release\n' +
+      'Console.WriteLine(ParseArgs(new[] { "run", "app.dll" }));        // 运行目标：app.dll'
   },
   {
     id: 'property-patterns',
@@ -118,20 +157,27 @@ module.exports = [
     example:
       'record Address(string City, string Street);\n' +
       'record Employee(string Name, int Age, Address? Addr);\n\n' +
-      'string Region(Employee e) => e switch\n' +
+      'static string Region(Employee e) => e switch\n' +
       '{\n' +
-      '    { Addr: { City: "北京" } }     => "华北",\n' +
-      '    { Addr.City: "上海" or "杭州" } => "华东",\n' +
-      '    { Addr: null, Age: >= 18 }      => "未知（成年）",\n' +
-      '    _                               => "其他"\n' +
+      '    { Addr: { City: "北京" } }                 => "华北",\n' +
+      '    { Addr.City: "上海" or "杭州" }            => "华东",\n' +
+      '    { Addr: null, Age: >= 18 }                 => "未知城市（成年）",\n' +
+      '    { Age: < 18 }                              => "未成年",\n' +
+      '    _                                          => "其他"\n' +
       '};\n\n' +
       '// 位置模式：解构后逐项匹配\n' +
-      'string Describe(Employee e) => e switch\n' +
+      'static string Describe(Employee e) => e switch\n' +
       '{\n' +
-      '    (_, < 18, _)           => "未成年员工",\n' +
-      '    var (_, _, addr) when addr?.City == "北京" => "北京员工",\n' +
-      '    _                      => "普通员工"\n' +
-      '};'
+      '    (_, < 18, _)                                   => "未成年员工",\n' +
+      '    var (name, _, addr) when addr?.City == "北京"   => $"{name}（北京员工）",\n' +
+      '    _                                              => "普通员工"\n' +
+      '};\n\n' +
+      '// 演示\n' +
+      'var e1 = new Employee("张三", 30, new Address("北京", "长安街"));\n' +
+      'var e2 = new Employee("李四", 16, null);\n' +
+      'Console.WriteLine(Region(e1));   // 华北\n' +
+      'Console.WriteLine(Region(e2));   // 未成年\n' +
+      'Console.WriteLine(Describe(e1)); // 张三（北京员工）'
   },
 
   // ==================== 语法糖 ====================
@@ -153,19 +199,20 @@ module.exports = [
       'double pi = 3.14159;\n' +
       'var now = DateTime.Now;\n\n' +
       'Console.WriteLine($"你好 {name}，π ≈ {pi:F2}，现在是 {now:yyyy-MM-dd HH:mm}");\n' +
-      'Console.WriteLine(@$"C:\\temp\\{name}.txt");   // @ 逐字 + $ 插值\n' +
-      'Console.WriteLine($"{pi,-10:F3}|右对齐{pi,12:C}"); // 对齐与货币格式\n\n' +
+      'Console.WriteLine(@$"C:\\temp\\{name}.txt");   // @ 逐字 + $ 插值，反斜杠原样\n' +
+      'Console.WriteLine($"{pi,-10:F3}|右对齐{pi,12:C}"); // 左/右对齐与货币格式\n\n' +
       '// C# 11 原始字符串：无需转义引号与反斜杠\n' +
       'var json = """\n' +
       '    {\n' +
       '      "name": "张三",\n' +
-      '      "tags": ["c#", ".net"],\n' +
-      '      "path": "C:\\\\data"     ← 原样保留单反斜杠也行：C:\\data\n' +
+      '      "tags": ["c#", ".net"]\n' +
       '    }\n' +
-      '    """;\n\n' +
+      '    """;\n' +
+      'Console.WriteLine(json);\n\n' +
       '// 正则对比：旧 vs 新\n' +
-      'var re1 = "\\\\d{3}-\\\\d{4}";        // 转义地狱\n' +
-      'var re2 = """\\d{3}-\\d{4}""";      // 一目了然'
+      'var re1 = "\\\\d{3}-\\\\d{4}";        // 转义地狱：要写四个反斜杠\n' +
+      'var re2 = """\\d{3}-\\d{4}""";      // 一目了然\n' +
+      'Console.WriteLine(re1 == re2);       // True（两者表示同样的字符串）'
   },
   {
     id: 'null-operators',
@@ -184,14 +231,25 @@ module.exports = [
       '?[] 空条件索引用于安全访问可能为 null 的集合：list?[0]。'
     ],
     example:
+      'record Address(string City);\n' +
+      'record User(Address? Address);\n\n' +
+      'User? user = null;\n' +
       'List<int>? list = null;\n\n' +
-      'int count = list?.Count ?? 0;          // null 安全取值\n' +
-      'list ??= new List<int>();              // 惰性初始化\n' +
-      'list.Add(1);\n\n' +
-      'string? city = user?.Address?.City;    // 链式短路\n' +
-      'city ??= "未知城市";\n\n' +
-      'int first = list?[0] ?? -1;            // 空条件索引\n' +
-      'OnMessage?.Invoke(msg);                // 触发事件的经典姿势'
+      '// ?. 链式短路\n' +
+      'string? city = user?.Address?.City;\n' +
+      'Console.WriteLine(city ?? "（无城市）");   // （无城市）\n\n' +
+      '// ?? 回退值\n' +
+      'int count = list?.Count ?? 0;\n' +
+      'Console.WriteLine(count);                  // 0\n\n' +
+      '// ??= 惰性初始化\n' +
+      'list ??= new List<int> { 1, 2, 3 };\n' +
+      'Console.WriteLine(list.Count);             // 3\n\n' +
+      '// ?[] 空条件索引\n' +
+      'int first = list?[0] ?? -1;\n' +
+      'Console.WriteLine(first);                  // 1\n\n' +
+      '// 触发事件的经典姿势\n' +
+      'Action<string>? onMsg = null;\n' +
+      'onMsg?.Invoke("hello");    // 无订阅者也不抛 NRE'
   },
   {
     id: 'ranges-indexes',
@@ -207,17 +265,17 @@ module.exports = [
     ],
     example:
       'int[] arr = { 0, 1, 2, 3, 4, 5 };\n\n' +
-      'arr[^1];        // 5  最后一个\n' +
-      'arr[^2..];      // 4 5\n' +
-      'arr[1..4];      // 1 2 3\n' +
-      'arr[..];        // 全部（副本）\n' +
-      'arr[..^2];      // 除最后两个外\n\n' +
+      'Console.WriteLine(arr[^1]);        // 5   最后一个\n' +
+      'Console.WriteLine(string.Join(",", arr[^2..]));   // 4,5\n' +
+      'Console.WriteLine(string.Join(",", arr[1..4]));   // 1,2,3\n' +
+      'Console.WriteLine(string.Join(",", arr[..]));     // 0,1,2,3,4,5（副本）\n' +
+      'Console.WriteLine(string.Join(",", arr[..^2]));   // 0,1,2,3 除最后两个外\n\n' +
       'string url = "https://example.com/api";\n' +
-      'url[..5];       // "https"\n' +
-      'url[^3..];      // "api"\n\n' +
+      'Console.WriteLine(url[..5]);        // "https"\n' +
+      'Console.WriteLine(url[^3..]);       // "api"\n\n' +
       '// Span 上零拷贝切片\n' +
       'ReadOnlySpan<char> span = url.AsSpan();\n' +
-      'span[8..].ToString();   // "example.com/api"，无中间分配'
+      'Console.WriteLine(span[8..].ToString());   // "example.com/api"，无中间分配'
   },
   {
     id: 'top-level-statements',
@@ -232,16 +290,22 @@ module.exports = [
       '顶级语句文件中仍可用局部函数、类声明；args 参数隐式存在。'
     ],
     example:
-      '// Program.cs —— 就这么多，能直接跑\n' +
+      '// ===== Program.cs（顶级语句，可直接跑）=====\n' +
       'var builder = WebApplication.CreateBuilder(args);\n' +
       'var app = builder.Build();\n\n' +
       'app.MapGet("/", () => "Hello Minimal API!");\n' +
       'app.Run();\n\n' +
-      '// GlobalUsings.cs\n' +
+      '// ===== GlobalUsings.cs =====\n' +
       'global using System.Collections.Generic;\n' +
       'global using System.Linq;\n' +
       'global using Xunit;\n\n' +
-      '// csproj 方式批量全局导入\n' +
+      '// ===== 文件范围命名空间（少一层缩进）=====\n' +
+      'namespace MyApp.Utils;\n' +
+      'static class MathEx\n' +
+      '{\n' +
+      '    public static int Square(int x) => x * x;\n' +
+      '}\n\n' +
+      '// ===== csproj 批量全局导入 =====\n' +
       '// <ItemGroup>\n' +
       '//   <Using Include="System.Diagnostics.CodeAnalysis" />\n' +
       '// </ItemGroup>'
@@ -261,12 +325,16 @@ module.exports = [
     example:
       'Dictionary<string, List<int>> map = new();\n' +
       'map["odd"] = new() { 1, 3, 5 };\n\n' +
-      'StringBuilder sb = new();\n\n' +
+      'StringBuilder sb = new();\n' +
+      'sb.Append("hi");\n\n' +
       '// 传参同样适用\n' +
       'Task.Run(() => Process(new()));\n\n' +
       '// C# 12 集合表达式更进一步\n' +
       'int[] nums = [1, 2, 3];\n' +
-      'List<int> more = [..nums, 4, 5];'
+      'List<int> more = [..nums, 4, 5];\n' +
+      'Console.WriteLine(string.Join(",", more));   // 1,2,3,4,5\n\n' +
+      'static void Process(List<int> xs) => Console.WriteLine(xs.Count);\n' +
+      '// 注：上面 Task.Run 仅为展示语法；运行时请保证 new() 有明确目标类型'
   },
   {
     id: 'default-named-args',
@@ -281,16 +349,22 @@ module.exports = [
       '注意版本兼容陷阱：修改已发布方法的默认值需要重编译所有调用方（默认值被烧录进调用点）。'
     ],
     example:
-      'public static void Send(\n' +
+      'static void Send(\n' +
       '    string to,\n' +
       '    string subject,\n' +
       '    string body = "",\n' +
       '    bool ccAdmin = false,\n' +
       '    int retries = 3)\n' +
-      '{ /* ... */ }\n\n' +
-      'Send("bob@x.com", "Hi");                        // 其余全用默认\n' +
+      '{\n' +
+      '    Console.WriteLine($"to={to}, subject={subject}, body={body}, ccAdmin={ccAdmin}, retries={retries}");\n' +
+      '}\n\n' +
+      '// 其余全用默认\n' +
+      'Send("bob@x.com", "Hi");\n' +
+      '// 命名实参：只覆盖需要的，顺序无所谓\n' +
       'Send(to: "bob@x.com", subject: "Hi", ccAdmin: true);\n' +
-      'Send("bob@x.com", "Hi", retries: 5);            // 只覆盖一个'
+      'Send("bob@x.com", "Hi", retries: 5);\n\n' +
+      '// 命名实参还能"跳过中间参数"\n' +
+      'Send("bob@x.com", "Hi", retries: 5, ccAdmin: true);'
   },
   {
     id: 'alias-any-type',
@@ -309,9 +383,12 @@ module.exports = [
       '    string, System.Collections.Generic.List<System.Action>>;\n' +
       'using Point = (int X, int Y);\n' +
       'using Matrix = double[][];\n\n' +
-      'Handlers h = new();\n' +
+      'Handlers handlers = new();\n' +
+      'handlers["click"] = new() { () => Console.WriteLine("clicked") };\n' +
+      'handlers["click"][0]();           // clicked\n\n' +
       'Point p = (3, 4);\n' +
-      'Matrix m = [[1, 2], [3, 4]];\n\n' +
-      'Console.WriteLine(p.X);   // 3 —— 元组元素名也保留了'
+      'Console.WriteLine(p.X);           // 3 —— 元组元素名保留\n\n' +
+      'Matrix m = [[1, 2], [3, 4]];\n' +
+      'Console.WriteLine(m[0][1]);        // 2'
   }
 ];

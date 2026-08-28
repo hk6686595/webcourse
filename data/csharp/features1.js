@@ -19,29 +19,53 @@ module.exports = [
       '结构体中的自动属性在显式构造函数里必须全部赋值。'
     ],
     example:
-      '// 旧写法：手动字段\n' +
-      'private string _name;\n' +
-      'public string Name\n' +
+      '// ========== 1. 旧写法：手动字段 + 访问器 ==========\n' +
+      'public class LegacyUser\n' +
       '{\n' +
-      '    get { return _name; }\n' +
-      '    set { _name = value; }\n' +
+      '    private string _name;            // 手写 backing field\n' +
+      '    public string Name\n' +
+      '    {\n' +
+      '        get { return _name; }\n' +
+      '        set { _name = value; }\n' +
+      '    }\n' +
       '}\n\n' +
-      '// 新写法：自动属性 + 初始化器\n' +
+      '// ========== 2. 新写法：自动属性 + 初始化器 ==========\n' +
       'public class User\n' +
       '{\n' +
-      '    public string Name { get; set; } = "匿名";\n' +
-      '    public int Age { get; private set; }   // 外部只读\n' +
-      '    public DateTime CreatedAt { get; } = DateTime.Now;\n' +
+      '    public string Name { get; set; } = "匿名";   // 带默认值\n' +
+      '    public int Age { get; private set; }         // 外部只读、内部可改\n' +
+      '    public DateTime CreatedAt { get; } = DateTime.Now; // 只有 get，构造后不可变\n' +
       '\n' +
-      '    // 混合写法：set 加校验，get 保持自动\n' +
-      '    private int _score;\n' +
-      '    public int Score\n' +
+      '    public User(string name, int age)\n' +
       '    {\n' +
-      '        get => _score;\n' +
-      '        set => _score = value is >= 0 and <= 100\n' +
-      '            ? value : throw new ArgumentOutOfRangeException(nameof(value));\n' +
+      '        Name = name;\n' +
+      '        Age = age;                  // private set 允许在类内部赋值\n' +
       '    }\n' +
-      '}'
+      '}\n\n' +
+      '// ========== 3. 混合写法：set 加校验，get 保持自动 ==========\n' +
+      'public class Score\n' +
+      '{\n' +
+      '    private int _value;\n' +
+      '    public int Value\n' +
+      '    {\n' +
+      '        get => _value;             // 自动 get 的逻辑由编译器生成\n' +
+      '        set => _value = value switch\n' +
+      '        {\n' +
+      '            >= 0 and <= 100 => value,\n' +
+      '            _ => throw new ArgumentOutOfRangeException(nameof(value), "分数必须在 0~100")\n' +
+      '        };\n' +
+      '    }\n' +
+      '}\n\n' +
+      '// ========== 4. 完整演示 ==========\n' +
+      'var u = new User("张三", 20);\n' +
+      'u.Name = "李四";          // 外部可改 Name\n' +
+      '// u.Age = 21;           // ✘ 编译错误：Age 的 set 是 private\n' +
+      'Console.WriteLine($"{u.Name} / {u.Age} / {u.CreatedAt:HH:mm}");\n' +
+      '\n' +
+      'var s = new Score();\n' +
+      's.Value = 95;             // ✔\n' +
+      '// s.Value = 150;        // ✘ 抛 ArgumentOutOfRangeException\n' +
+      'Console.WriteLine(s.Value);'
   },
   {
     id: 'expression-bodied-members',
@@ -60,12 +84,22 @@ module.exports = [
       '{\n' +
       '    public int X { get; }\n' +
       '    public int Y { get; }\n\n' +
-      '    public Point(int x, int y) => (X, Y) = (x, y);   // 构造函数\n\n' +
-      '    public double Length => Math.Sqrt(X * X + Y * Y);  // 只读属性\n\n' +
-      '    public override string ToString() => $"({X}, {Y})"; // 方法\n\n' +
+      '    // 构造函数（C# 7.0）\n' +
+      '    public Point(int x, int y) => (X, Y) = (x, y);\n\n' +
+      '    // 只读属性：=> 右侧即返回值\n' +
+      '    public double Length => Math.Sqrt(X * X + Y * Y);\n\n' +
+      '    // 方法\n' +
+      '    public override string ToString() => $"({X}, {Y})";\n\n' +
+      '    // 带语句体的方法也能用 =>（两行仍算一个表达式）\n' +
       '    public double DistanceTo(Point other) =>\n' +
       '        Math.Sqrt(Math.Pow(X - other.X, 2) + Math.Pow(Y - other.Y, 2));\n' +
-      '}'
+      '}\n\n' +
+      '// 完整演示\n' +
+      'var a = new Point(3, 4);\n' +
+      'var b = new Point(0, 0);\n' +
+      'Console.WriteLine(a);                 // (3, 4)\n' +
+      'Console.WriteLine(a.Length);          // 5\n' +
+      'Console.WriteLine(a.DistanceTo(b));   // 5'
   },
   {
     id: 'nullable-reference-types',
@@ -86,23 +120,37 @@ module.exports = [
     ],
     example:
       '#nullable enable\n' +
+      'using System.Collections.Generic;\n\n' +
       'public class UserService\n' +
       '{\n' +
       '    private readonly Dictionary<int, string> _users = new()\n' +
       '    {\n' +
       '        [1] = "张三",\n' +
+      '        [2] = "李四",\n' +
       '    };\n\n' +
+      '    // 返回可空：用户可能不存在\n' +
+      '    public string? GetName(int id)\n' +
+      '    {\n' +
+      '        // 字典里没有时 GetValueOrDefault 返回 null\n' +
+      '        return _users.TryGetValue(id, out var name) ? name : null;\n' +
+      '    }\n\n' +
       '    public int GetNameLength(int id)\n' +
       '    {\n' +
-      '        string? name = _users.GetValueOrDefault(id);   // 可能没有\n' +
-      '        // return name.Length;          // ✘ 编译警告 CS8602\n' +
-      '\n' +
+      '        string? name = GetName(id);\n' +
+      '        // return name.Length;          // ✘ CS8602：可能为 null\n' +
       '        if (name != null)\n' +
-      '            return name.Length;         // ✔ 流分析确认已判空\n' +
-      '\n' +
-      '        return name!.Length;            // ⚠ 强行断言，运行时会 NRE\n' +
-      '    }\n' +
-      '}'
+      '            return name.Length;         // ✔ 流分析确认此分支已判空\n' +
+      '        return 0;                        // ✔ 兜底\n' +
+      '    }\n\n' +
+      '    public string NameOrDefault(int id) =>\n' +
+      '        GetName(id) ?? "未知用户";        // ?? 提供回退值\n' +
+      '}\n\n' +
+      '// 完整演示：编译器全程帮你盯住 null\n' +
+      'var svc = new UserService();\n' +
+      'Console.WriteLine(svc.GetNameLength(1));      // 2\n' +
+      'Console.WriteLine(svc.GetNameLength(99));     // 0（不存在）\n' +
+      'Console.WriteLine(svc.NameOrDefault(2));      // 李四\n' +
+      'Console.WriteLine(svc.NameOrDefault(99));     // 未知用户'
   },
   {
     id: 'record-types',
@@ -122,28 +170,47 @@ module.exports = [
       '继承链上的 record 相等包含运行时类型判断：基类实例与派生类实例即使字段相同也不相等。'
     ],
     example:
+      '// ========== 基础：值相等 + 解构 ==========\n' +
       'public record Person(string Name, int Age);\n\n' +
       'var p1 = new Person("张三", 20);\n' +
       'var p2 = new Person("张三", 20);\n\n' +
-      'Console.WriteLine(p1 == p2);                // True —— 值相等性\n' +
-      'Console.WriteLine(ReferenceEquals(p1, p2)); // False —— 仍是两个对象\n' +
-      'Console.WriteLine(p1);                      // Person { Name = 张三, Age = 20 }\n\n' +
-      'var p3 = p1 with { Age = 21 };              // 复制并修改，p1 不受影响\n' +
-      'var (name, age) = p1;                       // 解构',
+      'Console.WriteLine(p1 == p2);                 // True  —— 值相等\n' +
+      'Console.WriteLine(ReferenceEquals(p1, p2));  // False —— 仍是不同对象\n' +
+      'Console.WriteLine(p1);                       // Person { Name = 张三, Age = 20 }\n' +
+      'var (name, age) = p1;                        // 自动解构\n' +
+      'Console.WriteLine($"{name} / {age}");\n\n' +
+      '// ========== with：非破坏性复制修改 ==========\n' +
+      'var p3 = p1 with { Age = 21 };               // p1 不受影响\n' +
+      'Console.WriteLine(p1);                       // Person { Name = 张三, Age = 20 }\n' +
+      'Console.WriteLine(p3);                       // Person { Name = 张三, Age = 21 }'
+    ,
+    example2Title: 'record 继承、方法重写与 record struct',
     example2:
-      '// record 支持继承与方法\n' +
-      'public record Employee(string Name, int Age, string Dept) : Person(Name, Age)\n' +
+      '// ========== 继承 ==========\n' +
+      'public record Person(string Name, int Age)\n' +
       '{\n' +
-      '    public decimal Salary { get; init; }\n\n' +
-      '    // 追加打印信息\n' +
+      '    public virtual string Greet() => $"我是 {Name}";\n' +
+      '}\n\n' +
+      'public record Employee(string Name, int Age, string Dept)\n' +
+      '    : Person(Name, Age)\n' +
+      '{\n' +
+      '    public decimal Salary { get; init; }\n' +
+      '    public override string Greet() => $"{Name}（{Dept}部门）";\n\n' +
+      '    // 自定义打印字段\n' +
       '    protected override bool PrintMembers(StringBuilder sb)\n' +
       '    {\n' +
-      '        sb.Append(" Dept = ").Append(Dept);\n' +
+      '        base.PrintMembers(sb);\n' +
+      '        sb.Append(", Dept = ").Append(Dept);\n' +
       '        return true;\n' +
       '    }\n' +
       '}\n\n' +
-      '// record struct：值类型的记录\n' +
-      'public readonly record struct Money(decimal Amount, string Currency);'
+      '// ========== record struct（值类型记录）==========\n' +
+      'public readonly record struct Money(decimal Amount, string Currency);\n\n' +
+      'var e = new Employee("王五", 30, "研发") { Salary = 20000 };\n' +
+      'Console.WriteLine(e);        // Employee { Name = 王五, Age = 30, Dept = 研发 }\n' +
+      'Console.WriteLine(e.Greet());\n\n' +
+      'Money m = new(99.9m, "CNY");\n' +
+      'Console.WriteLine(m);        // Money { Amount = 99.9, Currency = CNY }'
   },
   {
     id: 'init-setters',
@@ -165,14 +232,19 @@ module.exports = [
       '{\n' +
       '    public string Host { get; init; }\n' +
       '    public int Port { get; init; } = 8080;\n' +
+      '    public string Env { get; init; } = "dev";\n' +
       '}\n\n' +
       'var c = new Config { Host = "localhost", Port = 5432 };\n' +
-      '// c.Port = 80;   // ✘ 编译错误 CS8852：init 属性只能在初始化时赋值\n\n' +
-      '// 与 record 配合构成完整的不可变模型\n' +
+      '// c.Port = 80;   // ✘ CS8852：init 属性只能在对象初始化时赋值\n' +
+      'Console.WriteLine($"{c.Host}:{c.Port}/{c.Env}");   // localhost:5432/dev\n\n' +
+      '// ========== 与 record 配合构成完整不可变模型 ==========\n' +
       'public record OrderItem(string Sku, int Qty, decimal Price)\n' +
       '{\n' +
       '    public decimal Subtotal => Qty * Price;   // 计算属性天然只读\n' +
-      '}'
+      '}\n\n' +
+      'var item = new OrderItem("BOOK", 2, 59.9m);\n' +
+      'Console.WriteLine(item.Subtotal);             // 119.8\n' +
+      '// item.Qty = 3;   // ✘ init 不可变'
   },
   {
     id: 'required-members',
@@ -194,17 +266,22 @@ module.exports = [
       '{\n' +
       '    public required string ProductName { get; init; }\n' +
       '    public required decimal Amount { get; init; }\n' +
-      '    public string? Remark { get; init; }           // 可选\n' +
+      '    public string? Remark { get; init; }           // 可选，可留空\n' +
       '\n' +
-      '    [SetsRequiredMembers]\n' +
+      '    [SetsRequiredMembers]                           // 视为已赋全部必需成员\n' +
       '    public Order(string name, decimal amount)\n' +
       '    {\n' +
-      '        ProductName = name; Amount = amount;       // 已全部赋值\n' +
+      '        ProductName = name;\n' +
+      '        Amount = amount;\n' +
       '    }\n' +
       '}\n\n' +
-      'var ok1 = new Order { ProductName = "书", Amount = 59.9m };  // ✔ 初始化器\n' +
-      'var ok2 = new Order("书", 59.9m);                            // ✔ 构造函数\n' +
-      '// var bad = new Order { Amount = 10 };                     // ✘ 缺少 ProductName'
+      '// ✔ 初始化器写法：必须包含 ProductName 与 Amount\n' +
+      'var ok1 = new Order { ProductName = "书", Amount = 59.9m };\n' +
+      '// ✔ 构造函数写法：同样合法\n' +
+      'var ok2 = new Order("书", 59.9m);\n' +
+      '// ✘ 编译错误 CS9035：缺少 required 属性 ProductName\n' +
+      '// var bad = new Order { Amount = 10 };\n' +
+      'Console.WriteLine($"{ok1.ProductName} / {ok1.Amount}");'
   },
   {
     id: 'primary-constructors',
@@ -223,22 +300,32 @@ module.exports = [
       '捕获的字段名就是参数名（如 baseUrl/http），调试窗口看到的私有字段属于编译器生成行为。'
     ],
     example:
-      '// 传统写法要重复三遍 baseUrl\n' +
+      '// ========== 1. 简化服务类（依赖注入）==========\n' +
       'public class Service(string baseUrl, HttpClient http)\n' +
       '{\n' +
       '    public async Task<string> GetAsync(string path)\n' +
       '    {\n' +
+      '        // baseUrl / http 在整个类体可见，无需手动声明字段\n' +
       '        return await http.GetStringAsync(baseUrl + path);\n' +
       '    }\n' +
       '}\n\n' +
-      '// 对比传统 DI 写法：\n' +
+      '// ========== 2. 添加额外构造函数须链式调用 ==========\n' +
+      'public class Logger(string prefix)\n' +
+      '{\n' +
+      '    public Logger() : this("[LOG]") { }   // 委托给主构造函数\n' +
+      '    public void Write(string msg) => Console.WriteLine($"{prefix} {msg}");\n' +
+      '}\n\n' +
+      '// ========== 3. 对比传统写法（重复三遍）==========\n' +
       'public class OldService\n' +
       '{\n' +
       '    private readonly string _baseUrl;\n' +
       '    private readonly HttpClient _http;\n' +
       '    public OldService(string baseUrl, HttpClient http)\n' +
       '        => (_baseUrl, _http) = (baseUrl, http);\n' +
-      '}'
+      '}\n\n' +
+      '// 演示\n' +
+      'var logger = new Logger();\n' +
+      'logger.Write("启动完成");     // [LOG] 启动完成'
   },
   {
     id: 'tuples',
@@ -261,19 +348,35 @@ module.exports = [
       '{\n' +
       '    return (nums.Min(), nums.Max());\n' +
       '}\n\n' +
-      'var (lo, hi) = FindRange(new[] { 3, 1, 4, 1, 5 });  // 解构接收\n' +
+      'int[] data = { 3, 1, 4, 1, 5, 9, 2, 6 };\n' +
+      'var (lo, hi) = FindRange(data);          // 解构接收\n' +
+      'Console.WriteLine($"范围 {lo}~{hi}");     // 范围 1~9\n\n' +
       'int a = 1, b = 2;\n' +
-      '(a, b) = (b, a);                                    // 一行交换\n\n' +
-      '// 自定义类型的解构支持\n' +
+      '(a, b) = (b, a);                          // 一行交换变量\n' +
+      'Console.WriteLine($"a={a}, b={b}");       // a=2, b=1\n\n' +
+      '// 弃元：只关心最小值\n' +
+      '(int minimum, _) = FindRange(data);\n' +
+      'Console.WriteLine(minimum);\n\n' +
+      '// 元组相等（C# 7.3+）\n' +
+      'var t1 = (1, "x");\n' +
+      'var t2 = (1, "x");\n' +
+      'Console.WriteLine(t1 == t2);              // True'
+    ,
+    example2Title: '自定义类型的解构支持',
+    example2:
       'public readonly record struct Point(int X, int Y)\n' +
       '{\n' +
+      '    // 提供第三个 out 参数即可用 var (x, y, len) 解构\n' +
       '    public void Deconstruct(out int x, out int y, out double len)\n' +
       '    {\n' +
-      '        x = X; y = Y;\n' +
+      '        x = X;\n' +
+      '        y = Y;\n' +
       '        len = Math.Sqrt(X * X + Y * Y);\n' +
       '    }\n' +
-      '}\n' +
-      'var (x, y, length) = new Point(3, 4);   // length == 5'
+      '}\n\n' +
+      'var p = new Point(3, 4);\n' +
+      'var (x, y, length) = p;                   // length == 5\n' +
+      'Console.WriteLine($"({x},{y}) 长度 {length}");'
   },
   {
     id: 'nullable-value-types',
@@ -294,21 +397,23 @@ module.exports = [
     ],
     example:
       'int? qty = null;\n' +
-      'DateTime? shippedAt = order.ShippedAt;   // 可能还没发货\n\n' +
+      'DateTime? shippedAt = null;             // 可能还没发货\n\n' +
       'if (qty.HasValue)\n' +
-      '    Console.WriteLine(qty.Value * 2);\n\n' +
-      'int actual   = qty ?? 0;                     // 回退值\n' +
-      'int fallback = qty.GetValueOrDefault(5);     // 方法形式\n\n' +
+      '    Console.WriteLine(qty.Value * 2);  // 仅在有值时取值\n' +
+      'else\n' +
+      '    Console.WriteLine("数量未知");\n\n' +
+      'int actual   = qty ?? 0;              // ?? 回退值\n' +
+      'int fallback = qty.GetValueOrDefault(5); // 方法形式回退\n' +
+      'Console.WriteLine($"actual={actual}, fallback={fallback}");\n\n' +
       '// 提升运算符：任一为 null 结果为 null\n' +
       'int? a = 3, b = null;\n' +
-      'Console.WriteLine(a + b == null);             // True\n\n' +
-      '// 典型应用：EF 实体的可空列\n' +
-      'public class Product\n' +
-      '{\n' +
-      '    public DateTime? DiscontinuedAt { get; set; }\n' +
-      '}\n\n' +
-      'if (product.DiscontinuedAt is { } date)       // C# 9 属性+声明模式\n' +
-      '    Console.WriteLine(date.Year);'
+      'Console.WriteLine(a + b == null);      // True\n\n' +
+      '// 三态 bool：同意/拒绝/未表态\n' +
+      'bool? agreed = null;\n' +
+      'Console.WriteLine(agreed is true);     // False\n\n' +
+      '// 属性模式安全解包（C# 9）\n' +
+      'int? maybe = 10;\n' +
+      'if (maybe is { } v) Console.WriteLine(v);  // 10'
   },
 
   // ==================== 面向对象 ====================
@@ -320,7 +425,7 @@ module.exports = [
     level: '入门',
     summary: '给既有类型"外挂"实例方法，不修改原类型、无需继承。',
     detail: [
-      '静态静态类中的静态方法，第一个参数加 this 即成为扩展方法。调用方式与实例方法完全一致，编译器实际改写为静态调用。',
+      '静态类中的静态方法，第一个参数加 this 即成为扩展方法。调用方式与实例方法完全一致，编译器实际改写为静态调用。',
       '解析优先级：类型自身实例方法 > 扩展方法。若原类型后来新增同名方法，会静默"遮蔽"你的扩展方法。',
       'LINQ 的全部 Where/Select 等操作符都是 IEnumerable<T> 上的扩展方法，这是扩展方法最重要的应用。',
       '扩展方法的命名空间必须被 using 导入才可见；工具库通常放在独立的 *.Extensions 命名空间。'
@@ -330,21 +435,32 @@ module.exports = [
       '扩展属性目前不支持，但 C# 14 的 extension 成员提案正在路上。'
     ],
     example:
+      'using System.Linq;\n' +
+      'using System.Collections.Generic;\n\n' +
       'public static class StringExtensions\n' +
       '{\n' +
+      '    // 回文判断\n' +
       '    public static bool IsPalindrome(this string s)\n' +
       '    {\n' +
+      '        if (string.IsNullOrEmpty(s)) return true;\n' +
       '        var r = new string(s.Reverse().ToArray());\n' +
-      '        return s.Equals(r, StringComparison.OrdinalIgnoreCase);\n' +
+      '        return s.Equals(r, System.StringComparison.OrdinalIgnoreCase);\n' +
       '    }\n\n' +
+      '    // 泛型约束版 Clamp\n' +
       '    public static T Clamp<T>(this T v, T min, T max) where T : IComparable<T>\n' +
       '        => v.CompareTo(min) < 0 ? min : v.CompareTo(max) > 0 ? max : v;\n\n' +
+      '    // 过滤掉序列中的 null\n' +
       '    public static IEnumerable<T> WhereNotNull<T>(this IEnumerable<T?> source)\n' +
       '        where T : class\n' +
-      '        => source.Where(x => x != null).Select(x => x!);\n' +
+      '        => source.Where(x => x != null)!;\n' +
       '}\n\n' +
-      '"level".IsPalindrome();       // true\n' +
-      '15.Clamp(0, 10);              // 10'
+      '// 完整演示\n' +
+      'Console.WriteLine("level".IsPalindrome());     // true\n' +
+      'Console.WriteLine("abc".IsPalindrome());      // false\n' +
+      'Console.WriteLine(15.Clamp(0, 10));           // 10\n' +
+      'Console.WriteLine((-3).Clamp(0, 10));         // 0\n\n' +
+      'string?[] names = { "a", null, "b" };\n' +
+      'Console.WriteLine(string.Join(",", names.WhereNotNull()));  // a,b'
   },
   {
     id: 'default-interface-methods',
@@ -362,7 +478,8 @@ module.exports = [
       'public interface ILogger\n' +
       '{\n' +
       '    void Log(string message);\n\n' +
-      '    void Warn(string message) => Log("[WARN] " + message);   // 默认实现\n' +
+      '    // 默认实现：基于 Log 组合出 Warn\n' +
+      '    void Warn(string message) => Log("[WARN] " + message);\n' +
       '    void Error(string message) => Log("[ERROR] " + message);\n' +
       '}\n\n' +
       'public class ConsoleLogger : ILogger\n' +
@@ -370,6 +487,11 @@ module.exports = [
       '    public void Log(string message) => Console.WriteLine(message);\n' +
       '    // 无需实现 Warn/Error，自动继承默认版本\n' +
       '}\n\n' +
+      '// 完整演示：必须通过接口引用才能调用默认实现\n' +
+      'ILogger log = new ConsoleLogger();\n' +
+      'log.Log("启动");                 // 启动\n' +
+      'log.Warn("内存偏高");            // [WARN] 内存偏高\n' +
+      'log.Error("连接失败");           // [ERROR] 连接失败\n\n' +
       '// 静态虚成员：泛型算法的接口约束（.NET 7 泛型数学）\n' +
       'public interface IAddable<T> where T : IAddable<T>\n' +
       '{\n' +
@@ -394,13 +516,21 @@ module.exports = [
       '    public static Money operator +(Money a, Money b) =>\n' +
       '        a.Currency == b.Currency\n' +
       '            ? new(a.Amount + b.Amount, a.Currency)\n' +
-      '            : throw new InvalidOperationException("币种不同");\n\n' +
+      '            : throw new InvalidOperationException("币种不同，无法相加");\n\n' +
       '    public static Money operator *(Money m, int times) =>\n' +
       '        new(m.Amount * times, m.Currency);\n\n' +
+      '    public static Money operator -(Money a, Money b) =>\n' +
+      '        a.Currency == b.Currency\n' +
+      '            ? new(a.Amount - b.Amount, a.Currency)\n' +
+      '            : throw new InvalidOperationException("币种不同");\n\n' +
+      '    // 隐式转换：Money -> decimal 金额\n' +
       '    public static implicit operator decimal(Money m) => m.Amount;\n' +
       '}\n\n' +
+      '// 完整演示\n' +
       'var total = new Money(10m, "CNY") * 3 + new Money(5m, "CNY");  // 35 CNY\n' +
-      'decimal d = total;                                             // 隐式转换'
+      'Console.WriteLine($"{total.Amount} {total.Currency}");         // 35 CNY\n' +
+      'decimal d = total;                                            // 隐式转换 -> 35\n' +
+      'Console.WriteLine(d);'
   },
   {
     id: 'generics-constraints',
@@ -416,18 +546,26 @@ module.exports = [
       'C# 8 起 typeof(T).Name 等反射之外还可配合静态抽象接口成员（泛型数学）做零开销抽象。'
     ],
     example:
+      '// 比较约束\n' +
       'public static T Max<T>(T a, T b) where T : IComparable<T>\n' +
       '    => a.CompareTo(b) >= 0 ? a : b;\n\n' +
-      'public static T Create<T>() where T : new()\n' +
-      '    => new T();\n\n' +
-      '// 多约束组合：必须是引用类型 + 实现接口 + 有无参构造\n' +
+      '// 无参构造约束\n' +
+      'public static T Create<T>() where T : new() => new T();\n\n' +
+      '// 接口 + 基类 + new 多约束组合\n' +
+      'public interface IEntity { Guid Id { get; set; } }\n' +
       'public class Repo<T> where T : class, IEntity, new()\n' +
       '{\n' +
       '    private readonly List<T> _items = new();\n' +
       '    public T New() { var e = new T(); e.Id = Guid.NewGuid(); _items.Add(e); return e; }\n' +
+      '    public IReadOnlyList<T> All => _items;\n' +
       '}\n\n' +
-      'Max(3, 7);               // 7\n' +
-      'Max("apple", "banana");  // banana'
+      '// 完整演示\n' +
+      'Console.WriteLine(Max(3, 7));              // 7\n' +
+      'Console.WriteLine(Max("apple", "banana")); // banana\n' +
+      'var repo = new Repo<MyEntity>();\n' +
+      'var e1 = repo.New();\n' +
+      'Console.WriteLine(e1.Id != Guid.Empty);   // True\n\n' +
+      'public class MyEntity : IEntity { public Guid Id { get; set; } }'
   },
   {
     id: 'partial-types',
@@ -443,23 +581,31 @@ module.exports = [
       'Source Generator（源码生成器）大量依赖 partial：生成器补全另一半实现。'
     ],
     example:
-      '// File1.cs —— 手写的业务部分\n' +
+      '// ===== File1.cs —— 手写的业务部分 =====\n' +
       'public partial class Customer\n' +
       '{\n' +
-      '    public string Name { get; set; } = "";\n\n' +
-      '    partial void OnNameChanged(string oldName, string newName);\n' +
-      '\n' +
-      '    public string Greet() => $"你好，{Name}";\n' +
+      '    public string Name { get; set; } = "";\n' +
+      '    private string _last;\n\n' +
+      '    public void Rename(string newName)\n' +
+      '    {\n' +
+      '        _last = Name;\n' +
+      '        Name = newName;\n' +
+      '        OnNameChanged(_last, newName);   // 分部方法调用\n' +
+      '    }\n' +
       '}\n\n' +
-      '// File2.cs —— 工具/生成器产生的部分\n' +
+      '// ===== File2.cs —— 工具/生成器产生的部分 =====\n' +
       'public partial class Customer\n' +
       '{\n' +
       '    public int Id { get; set; }\n\n' +
+      '    // 分部方法声明（在 File1 中调用，这里提供实现）\n' +
       '    partial void OnNameChanged(string oldName, string newName)\n' +
       '    {\n' +
       '        Console.WriteLine($"改名: {oldName} -> {newName}");\n' +
       '    }\n' +
-      '}'
+      '}\n\n' +
+      '// 完整演示\n' +
+      'var c = new Customer { Id = 1, Name = "旧名" };\n' +
+      'c.Rename("新名");     // 输出：改名: 旧名 -> 新名'
   },
   {
     id: 'enum-flags',
@@ -478,16 +624,23 @@ module.exports = [
       '[Flags]\n' +
       'public enum Permissions\n' +
       '{\n' +
-      '    None    = 0,\n' +
-      '    Read    = 1,\n' +
-      '    Write   = 2,\n' +
-      '    Delete  = 4,\n' +
-      '    Admin   = Read | Write | Delete       // 7\n' +
+      '    None  = 0,\n' +
+      '    Read  = 1,\n' +
+      '    Write = 2,\n' +
+      '    Delete = 4,\n' +
+      '    Admin = Read | Write | Delete      // = 7\n' +
       '}\n\n' +
-      'var p = Permissions.Read | Permissions.Write;\n\n' +
-      'bool canDelete = (p & Permissions.Delete) != 0;  // false\n' +
-      'bool canRead   = p.HasFlag(Permissions.Read);    // true\n' +
-      'Console.WriteLine(p);                            // Read, Write\n' +
+      '// 合并权限\n' +
+      'var p = Permissions.Read | Permissions.Write;\n' +
+      'Console.WriteLine(p);                          // Read, Write\n\n' +
+      '// 检查是否拥有某项\n' +
+      'bool canDelete = (p & Permissions.Delete) != 0;   // false\n' +
+      'bool canRead   = p.HasFlag(Permissions.Read);     // true\n' +
+      'Console.WriteLine($"canDelete={canDelete}, canRead={canRead}");\n\n' +
+      '// 增加 / 移除权限\n' +
+      'p |= Permissions.Delete;                         // 加 Delete\n' +
+      'p &= ~Permissions.Write;                        // 去掉 Write\n' +
+      'Console.WriteLine(p);                           // Read, Delete\n' +
       'Console.WriteLine((Permissions)7 == Permissions.Admin); // True'
   },
   {
@@ -506,15 +659,20 @@ module.exports = [
       '不变类型如 IList<T> 既读又写 T，无法安全协变/逆变，这是类型安全的必然结果。'
     ],
     example:
+      'class Animal { public int Age; }\n' +
+      'class Dog : Animal { public void Bark() { } }\n\n' +
       'var dogs = new List<Dog>();\n' +
-      '// List<T> 是不变的：List<Animal> a = dogs;          // ✘\n' +
-      'IEnumerable<Animal> animals = dogs;                  // ✔ 协变 out\n\n' +
-      'Action<Animal> feed = a => Console.WriteLine("喂食");\n' +
-      'Action<Dog> feedDog = feed;                          // ✔ 逆变 in\n\n' +
+      '// List<T> 是不变的：List<Animal> a = dogs;            // ✘ 编译错误\n' +
+      'IEnumerable<Animal> animals = dogs;                  // ✔ 协变 out：派生集合可赋基类接口\n' +
+      'foreach (var a in animals) Console.WriteLine(a.Age);\n\n' +
+      '// 逆变 in：基类委托可接收派生参数\n' +
+      'Action<Animal> feed = a => Console.WriteLine($"喂食 {a.Age} 岁");\n' +
+      'Action<Dog> feedDog = feed;                          // ✔\n' +
+      'feedDog(new Dog { Age = 3 });\n\n' +
+      '// IComparer<in T> 逆变：用基类比较器排派生集合\n' +
       'Comparer<Animal> byAge = Comparer<Animal>.Create(\n' +
       '    (x, y) => x.Age.CompareTo(y.Age));\n' +
-      'dogs.Sort(byAge);   // IComparer<in T> 逆变，可直接用基类比较器\n\n' +
-      'class Animal { public int Age; }\n' +
-      'class Dog : Animal { }'
+      'dogs.Sort(byAge);                                    // ✔\n' +
+      'Console.WriteLine(dogs.Count);'
   }
 ];

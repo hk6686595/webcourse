@@ -15,12 +15,13 @@ module.exports = [
       'yield return 只能出现在返回 IEnumerable<T>/IEnumerator<T>（或其非泛型版本）的方法中，不能用于 async 方法（异步用 IAsyncEnumerable）。'
     ],
     example:
-      '// 无限序列\n' +
+      '// 无限序列：永不真正存内存，Take 决定取多少\n' +
       'static IEnumerable<int> Naturals()\n' +
       '{\n' +
       '    for (int i = 0; ; i++) yield return i;\n' +
-      '}\n\n' +
-      'var first10 = Naturals().Take(10);   // 惰性 + Take 截断\n\n' +
+      '}\n' +
+      'foreach (var n in Naturals().Take(10))\n' +
+      '    Console.Write(n + " ");   // 0 1 2 3 4 5 6 7 8 9\n\n' +
       '// 逐行读取超大文件：内存占用恒定\n' +
       'static IEnumerable<string> ReadLines(string path)\n' +
       '{\n' +
@@ -28,7 +29,7 @@ module.exports = [
       '    while (reader.ReadLine() is { } line)\n' +
       '        yield return line;\n' +
       '}\n\n' +
-      '// 斐波那契序列\n' +
+      '// 斐波那契序列（惰性无限）\n' +
       'static IEnumerable<long> Fibonacci()\n' +
       '{\n' +
       '    long a = 0, b = 1;\n' +
@@ -37,7 +38,43 @@ module.exports = [
       '        yield return a;\n' +
       '        (a, b) = (b, a + b);\n' +
       '    }\n' +
-      '}'
+      '}\n' +
+      'Console.WriteLine(string.Join(",", Fibonacci().Take(10)));  // 0,1,1,2,3,5,8,13,21,34'
+    ,
+    example2Title: 'yield break 与 foreach 中途 break 的清理',
+    example2:
+      '// yield break 提前结束；foreach 的 break 会触发 finally/Dispose\n' +
+      'static IEnumerable<int> Countdown(int from)\n' +
+      '{\n' +
+      '    try\n' +
+      '    {\n' +
+      '        for (int i = from; i > 0; i--)\n' +
+      '        {\n' +
+      '            if (i == 3) yield break;   // 到 3 直接结束\n' +
+      '            yield return i;\n' +
+      '        }\n' +
+      '    }\n' +
+      '    finally\n' +
+      '    {\n' +
+      '        Console.WriteLine("枚举结束，执行清理");\n' +
+      '    }\n' +
+      '}\n\n' +
+      'foreach (var n in Countdown(5))\n' +
+      '{\n' +
+      '    Console.WriteLine(n);             // 5 4\n' +
+      '    if (n == 4) break;               // 触发 finally\n' +
+      '}\n\n' +
+      '// 惰性参数校验陷阱：必须拆两段\n' +
+      'static IEnumerable<int> Positive(IEnumerable<int> src)\n' +
+      '{\n' +
+      '    if (src == null) throw new ArgumentNullException(nameof(src)); // 调用即校验\n' +
+      '    return Impl();\n' +
+      '    IEnumerable<int> Impl()\n' +
+      '    {\n' +
+      '        foreach (var n in src) if (n > 0) yield return n;\n' +
+      '    }\n' +
+      '}\n' +
+      '// Positive(null) 立即抛异常，而不是等到遍历时才抛'
   },
   {
     id: 'collection-initializers',
@@ -59,15 +96,35 @@ module.exports = [
       '    ["apple"] = 5,\n' +
       '    ["banana"] = 3,\n' +
       '};\n' +
-      'var set = new HashSet<int> { 1, 1, 2 };   // 自动去重 → {1,2}\n\n' +
+      'var set = new HashSet<int> { 1, 1, 2 };   // 自动去重 -> {1,2}\n' +
+      'Console.WriteLine(set.Contains(1));        // True\n\n' +
       '// .NET 8 冻结集合：读多写少的最佳选择\n' +
       'private static readonly FrozenDictionary<string, int> Codes =\n' +
-      '    new Dictionary<string, int>\n' +
-      '    {\n' +
-      '        ["OK"] = 200, ["NF"] = 404\n' +
-      '    }.ToFrozenDictionary();\n\n' +
-      '// 对外只读暴露\n' +
-      'public IReadOnlyList<Order> Orders => _orders;'
+      '    new Dictionary<string, int> { ["OK"] = 200, ["NF"] = 404 }.ToFrozenDictionary();\n' +
+      'Console.WriteLine(Codes["OK"]);            // 200（构建后不可变、查询更快）\n\n' +
+      '// 对外只读暴露（防御性）\n' +
+      'private static readonly List<Order> _orders = new();\n' +
+      'public IReadOnlyList<Order> Orders => _orders.AsReadOnly();\n\n' +
+      'record Order(int Id);'
+    ,
+    example2Title: 'Queue / Stack / SortedSet 等结构的选择',
+    example2:
+      '// 队列：先进先出（如任务调度）\n' +
+      'var queue = new Queue<string>();\n' +
+      'queue.Enqueue("A"); queue.Enqueue("B");\n' +
+      'Console.WriteLine(queue.Dequeue());        // A\n\n' +
+      '// 栈：后进先出（如表达式求值）\n' +
+      'var stack = new Stack<int>();\n' +
+      'stack.Push(1); stack.Push(2);\n' +
+      'Console.WriteLine(stack.Pop());            // 2\n\n' +
+      '// SortedSet：自动去重 + 排序\n' +
+      'var sorted = new SortedSet<int> { 3, 1, 2, 1 };\n' +
+      'Console.WriteLine(string.Join(",", sorted)); // 1,2,3\n\n' +
+      '// 集合运算：交/并/差\n' +
+      'var a = new HashSet<int> { 1, 2, 3 };\n' +
+      'var b = new HashSet<int> { 2, 3, 4 };\n' +
+      'a.IntersectWith(b);\n' +
+      'Console.WriteLine(string.Join(",", a));    // 2,3'
   },
 
   // ==================== 异常与资源管理 ====================
@@ -92,20 +149,21 @@ module.exports = [
       '// 传统 using 块\n' +
       'using (var conn = new SqlConnection(cs))\n' +
       '{\n' +
-      '    // ...\n' +
-      '}   // 自动 Dispose\n\n' +
-      '// C# 8 using 声明：作用域结束时释放\n' +
+      '    conn.Open();\n' +
+      '    // ... 使用连接\n' +
+      '}   // 自动 Dispose，连接归还池\n\n' +
+      '// C# 8 using 声明：作用域结束即释放，少一层缩进\n' +
       'public string ReadConfig(string path)\n' +
       '{\n' +
       '    using var reader = new StreamReader(path);\n' +
       '    return reader.ReadToEnd();\n' +
       '}   // 这里自动释放\n\n' +
       '// 多资源一次声明\n' +
-      'using var input = File.OpenRead(src);\n' +
-      'using var output = File.Create(dst);\n' +
-      'await input.CopyToAsync(output);\n\n' +
+      'using var input = File.OpenRead("src.txt");\n' +
+      'using var output = File.Create("dst.txt");\n' +
+      'input.CopyTo(output);\n\n' +
       '// 标准 Dispose 模式骨架\n' +
-      'public class Res : IDisposable\n' +
+      'public class Resource : IDisposable\n' +
       '{\n' +
       '    private bool _disposed;\n' +
       '    public void Dispose()\n' +
@@ -116,11 +174,13 @@ module.exports = [
       '    protected virtual void Dispose(bool disposing)\n' +
       '    {\n' +
       '        if (_disposed) return;\n' +
-      '        if (disposing) { /* 托管资源 */ }\n' +
-      '        /* 非托管资源 */\n' +
+      '        if (disposing) { /* 释放托管资源 */ }\n' +
+      '        /* 释放非托管资源 */\n' +
       '        _disposed = true;\n' +
       '    }\n' +
-      '}'
+      '}\n\n' +
+      '// 异步释放\n' +
+      'await using var stream = await OpenAsync();'
   },
   {
     id: 'exception-handling',
@@ -136,28 +196,32 @@ module.exports = [
       '捕获具体异常类型而非 Exception 大网；吞掉异常至少要记日志。自定义异常继承 Exception 并提供三个标准构造函数。'
     ],
     example:
-      'try\n' +
+      'static void Process(int orderId)\n' +
       '{\n' +
-      '    ProcessOrder(order);\n' +
-      '}\n' +
-      'catch (HttpRequestException ex) when (ex.StatusCode >= HttpStatusCode.InternalServerError)\n' +
-      '{\n' +
-      '    _logger.LogError(ex, "服务端错误");\n' +
-      '    throw;                       // ✔ 裸抛出保留堆栈\n' +
-      '}\n' +
-      'catch (OperationCanceledException)\n' +
-      '{\n' +
-      '    // 取消不是错误，静默或记录即可\n' +
+      '    try\n' +
+      '    {\n' +
+      '        Validate(orderId);\n' +
+      '    }\n' +
+      '    catch (HttpRequestException ex) when (ex.StatusCode >= System.Net.HttpStatusCode.InternalServerError)\n' +
+      '    {\n' +
+      '        Console.WriteLine($"服务端错误：{ex.Message}");\n' +
+      '        throw;                       // ✔ 裸抛出，保留完整堆栈\n' +
+      '    }\n' +
+      '    catch (OperationCanceledException)\n' +
+      '    {\n' +
+      '        Console.WriteLine("请求被取消");   // 取消不是错误，静默即可\n' +
+      '    }\n' +
       '}\n\n' +
-      '// 自定义异常\n' +
+      '// 自定义异常（标准三构造函数）\n' +
       'public class InsufficientBalanceException(decimal shortfall)\n' +
       '    : Exception($"余额不足，还差 {shortfall:C}")\n' +
       '{\n' +
       '    public decimal Shortfall { get; } = shortfall;\n' +
       '}\n\n' +
-      '// 避免 catch 做流程控制\n' +
-      'if (int.TryParse(input, out var n)) Use(n);   // ✔\n' +
-      '// 反例：try { n = int.Parse(input); } catch {}'
+      '// 避免用异常做流程控制：优先 TryParse\n' +
+      'if (int.TryParse("123", out var n)) Console.WriteLine($"解析成功：{n}");\n' +
+      '// 反例：try { n = int.Parse(input); } catch { }\n\n' +
+      'static void Validate(int id) => throw new InsufficientBalanceException(50);'
   },
 
   // ==================== 性能与底层 ====================
@@ -179,21 +243,29 @@ module.exports = [
       'string.Split 会分配数组；只需遍历时用 text.SpanSplit(separator)（.NET 8）更省内存。'
     ],
     example:
+      '// readonly struct：不可变 + 消除防御性拷贝\n' +
       'public readonly struct Rgb(byte r, byte g, byte b)\n' +
       '{\n' +
       '    public byte R { get; } = r;\n' +
       '    public byte G { get; } = g;\n' +
       '    public byte B { get; } = b;\n' +
       '}\n\n' +
+      '// Span：连续内存的安全视图，切片零分配\n' +
       'static int CountDigits(ReadOnlySpan<char> text)\n' +
       '{\n' +
       '    int n = 0;\n' +
-      '    foreach (char c in text) if (char.IsAsciiDigit(c)) n++;\n' +
+      '    foreach (char c in text)\n' +
+      '        if (char.IsAsciiDigit(c)) n++;\n' +
       '    return n;\n' +
       '}\n\n' +
-      'CountDigits("abc123");               // 3，全程无堆分配\n' +
-      'Span<char> buf = stackalloc char[16]; // 栈上缓冲区\n' +
-      'buf[0] = \'A\';'
+      '// stackalloc：栈上缓冲区，配合 Span 使用\n' +
+      'Span<char> buf = stackalloc char[16];\n' +
+      'buf[0] = \'A\'; buf[1] = \'B\';\n' +
+      'Console.WriteLine(CountDigits("abc123"));   // 3，全程无堆分配\n' +
+      'Console.WriteLine(buf[0]);                   // A\n\n' +
+      '// 切片零拷贝\n' +
+      'ReadOnlySpan<char> hello = "Hello World".AsSpan(0, 5);\n' +
+      'Console.WriteLine(hello.ToString());         // Hello'
   },
   {
     id: 'in-params',
@@ -208,18 +280,23 @@ module.exports = [
       'readonly struct 的成员经 in 传递无额外开销；可变 struct 经 in 传递时编译器会插入防御性拷贝，反而更慢。'
     ],
     example:
-      'static bool TryParse(string s, out int result)\n' +
-      '{\n' +
-      '    return int.TryParse(s, out result);   // out：必须先赋值才能返回\n' +
-      '}\n\n' +
-      'static double Norm(in Vector3 v) =>     // in：只读引用，免拷贝\n' +
-      '    Math.Sqrt(v.X * v.X + v.Y * v.Y + v.Z * v.Z);\n\n' +
-      '// ref 返回与 ref 局部变量\n' +
-      'static ref int Max(ref int a, ref int b) => ref (a > b ? ref a : ref b);\n\n' +
+      '// out：必须赋值才能返回\n' +
+      'static bool TryParse(string s, out int result) => int.TryParse(s, out result);\n' +
+      'if (TryParse("42", out var n)) Console.WriteLine(n);  // 42\n\n' +
+      '// in：只读引用传递，避免大结构体拷贝\n' +
+      'readonly struct Vector3 { public double X { get; } public double Y { get; } public double Z { get; } public Vector3(double x, double y, double z) : this() { X = x; Y = y; Z = z; } }\n' +
+      'static double Norm(in Vector3 v) =>\n' +
+      '    Math.Sqrt(v.X * v.X + v.Y * v.Y + v.Z * v.Z);\n' +
+      'var v = new Vector3(3, 4, 0);\n' +
+      'Console.WriteLine(Norm(v));       // 5（无拷贝）\n\n' +
+      '// ref 返回 + ref 局部变量：原地修改数组元素\n' +
+      'static ref int Max(ref int a, ref int b) => ref (a > b ? ref a : ref b);\n' +
       'int[] xs = { 1, 99, 3 };\n' +
       'ref int slot = ref xs[1];\n' +
-      'slot = 42;                              // xs[1] 变成 42\n' +
-      'ref int biggest = ref Max(ref xs[0], ref xs[1]);'
+      'slot = 42;                          // xs[1] 变成 42\n' +
+      'ref int biggest = ref Max(ref xs[0], ref xs[1]);\n' +
+      'biggest = 100;                      // 通过别名直接改原数组\n' +
+      'Console.WriteLine(string.Join(",", xs)); // 1,100,3'
   },
   {
     id: 'collection-expressions',
@@ -237,13 +314,28 @@ module.exports = [
       'int[] a = [1, 2, 3];\n' +
       'int[] b = [0, ..a, 4];                  // 0 1 2 3 4\n' +
       'List<string> names = ["Tom", "Jerry"];\n' +
-      'Span<byte> header = [0xEF, 0xBB, 0xBF];\n\n' +
-      'int[][] grid = [[1, 2], [3, 4], [5, 6]];\n\n' +
-      'static int Sum(ReadOnlySpan<int> s) { int t = 0; foreach (var x in s) t += x; return t; }\n' +
-      'Sum([1, 2, 3, 4]);                      // 直接内联，无堆分配\n\n' +
-      '// C# 13：params Span\n' +
-      'static int Max(params ReadOnlySpan<int> values) { /* ... */ return 0; }\n' +
-      'Max(3, 1, 4, 1, 5);                     // 无数组分配'
+      'Span<byte> header = [0xEF, 0xBB, 0xBF];\n' +
+      'Console.WriteLine(string.Join(",", b));  // 0,1,2,3,4\n' +
+      'Console.WriteLine(string.Join(",", names)); // Tom,Jerry\n\n' +
+      '// 锯齿数组（嵌套集合表达式）\n' +
+      'int[][] grid = [[1, 2], [3, 4], [5, 6]];\n' +
+      'Console.WriteLine(grid[1][1]);          // 4\n\n' +
+      '// spread 与 span 配合：零堆分配的内联初始化\n' +
+      'static int Sum(ReadOnlySpan<int> s)\n' +
+      '{\n' +
+      '    int t = 0;\n' +
+      '    foreach (var x in s) t += x;\n' +
+      '    return t;\n' +
+      '}\n' +
+      'Console.WriteLine(Sum([1, 2, 3, 4]));    // 10\n\n' +
+      '// C# 13：params Span（调用点直接栈分配，无数组分配）\n' +
+      'static int Max(params ReadOnlySpan<int> values)\n' +
+      '{\n' +
+      '    int m = values[0];\n' +
+      '    foreach (var x in values) if (x > m) m = x;\n' +
+      '    return m;\n' +
+      '}\n' +
+      'Console.WriteLine(Max(3, 1, 4, 1, 5));   // 5'
   },
   {
     id: 'arraypool',
@@ -262,18 +354,23 @@ module.exports = [
       'public byte[] Process(int size)\n' +
       '{\n' +
       '    var pool = ArrayPool<byte>.Shared;\n' +
-      '    byte[] buffer = pool.Rent(size);       // 租借 ≥ size 的数组\n' +
+      '    byte[] buffer = pool.Rent(size);       // 租借 ≥ size 的数组（长度可能更大）\n' +
       '    try\n' +
       '    {\n' +
-      '        Array.Clear(buffer, 0, size);      // 内容是脏的，先清零\n' +
-      '        // ... 使用 buffer.AsSpan(0, size) ...\n' +
-      '        return buffer[..size].ToArray();   // 只复制实际长度\n' +
+      '        // 内容是脏的，先清零再使用\n' +
+      '        Array.Clear(buffer, 0, size);\n' +
+      '        Span<byte> slice = buffer.AsSpan(0, size);\n' +
+      '        for (int i = 0; i < size; i++) slice[i] = (byte)(i & 0xFF);\n' +
+      '        // 只复制实际长度，避免把借来的多余容量带出去\n' +
+      '        return slice.ToArray();\n' +
       '    }\n' +
       '    finally\n' +
       '    {\n' +
-      '        pool.Return(buffer);               // 必须归还（放 finally）\n' +
+      '        pool.Return(buffer);               // 必须归还（放 finally，防止异常泄漏）\n' +
       '    }\n' +
-      '}'
+      '}\n\n' +
+      'var result = Process(100);\n' +
+      'Console.WriteLine($"长度 {result.Length}，首字节 {result[0]}");'
   },
 
   // ==================== 特性与反射 ====================
@@ -299,18 +396,24 @@ module.exports = [
       'class Runner\n' +
       '{\n' +
       '    [Benchmark(Iterations = 5000)]\n' +
-      '    public void FastPath() { /* ... */ }\n' +
+      '    public void FastPath() { var s = "abc".Length; _ = s; }\n' +
       '\n' +
-      '    [Obsolete("请改用 FastPathV2", false)]\n' +
+      '    [Obsolete("请改用 FastPathV2", false)]   // false=仅警告\n' +
       '    public void Legacy() { }\n' +
       '}\n\n' +
       '// 反射扫描并执行所有标注了 [Benchmark] 的方法\n' +
-      'foreach (var m in typeof(Runner).GetMethods())\n' +
+      'var methods = typeof(Runner).GetMethods()\n' +
+      '    .Where(m => m.GetCustomAttribute<BenchmarkAttribute>() != null)\n' +
+      '    .ToList();\n' +
+      'foreach (var m in methods)\n' +
       '{\n' +
-      '    var attr = m.GetCustomAttribute<BenchmarkAttribute>();\n' +
-      '    if (attr == null) continue;\n' +
-      '    Console.WriteLine($"{m.Name} x{attr.Iterations}");\n' +
-      '    for (int i = 0; i < attr.Iterations; i++) m.Invoke(new Runner(), null);\n' +
-      '}'
+      '    var attr = m.GetCustomAttribute<BenchmarkAttribute>()!;\n' +
+      '    Console.WriteLine($"执行 {m.Name} x{attr.Iterations}");\n' +
+      '    var instance = new Runner();\n' +
+      '    for (int i = 0; i < attr.Iterations; i++)\n' +
+      '        m.Invoke(instance, null);\n' +
+      '}\n\n' +
+      '// 强制弃用：编译期直接报错\n' +
+      '// [Obsolete("已移除", true)] void Removed() { }'
   }
 ];

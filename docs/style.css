@@ -1,4 +1,4 @@
-* { box-sizing: border-box; margin: 0; padding: 0; }
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 :root {
   --bg: #0b1120;
   --panel: #151e31;
@@ -53,6 +53,8 @@ body {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  overscroll-behavior: none;        /* 禁止移动端下拉刷新 / 滚动链 */
+  -webkit-text-size-adjust: 100%;
 }
 
 /* ---------- header ---------- */
@@ -90,6 +92,9 @@ header h1 { font-size: 19px; color: var(--text); letter-spacing: .5px; line-heig
   font-size: 13.5px;
   text-decoration: none;
   touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
 }
 .nav-btn:hover { color: var(--text); background: var(--panel2); }
 .nav-btn.active { color: var(--cs); background: var(--panel2); border-color: var(--border); }
@@ -130,8 +135,8 @@ header.nav-open .icon-btn span:nth-child(3) { transform: translateY(-7px) rotate
 [data-theme="light"] #doc-summary { color: #475569; }
 [data-theme="light"] #doc-detail p { color: #475569; }
 
-main#app { flex: 1; overflow: hidden; }
-.view { height: 100%; overflow-y: auto; }
+main#app { flex: 1; overflow: hidden; overscroll-behavior: contain; }
+.view { height: 100%; overflow-y: auto; overscroll-behavior: contain; }
 
 /* ---------- home ---------- */
 .hero { text-align: center; padding: 64px 20px 30px; }
@@ -194,11 +199,11 @@ main#app { flex: 1; overflow: hidden; }
   border: 1px solid var(--border);
   border-radius: 6px;
   color: var(--text);
-  font-size: 13px;
+  font-size: 16px;
   outline: none;
 }
 #doc-search:focus { border-color: var(--cs); }
-#feature-list { list-style: none; overflow-y: auto; flex: 1; padding-bottom: 16px; }
+#feature-list { list-style: none; overflow-y: auto; flex: 1; padding-bottom: 16px; overscroll-behavior: contain; }
 .cat-label {
   padding: 14px 16px 5px;
   font-size: 11.5px;
@@ -224,7 +229,7 @@ main#app { flex: 1; overflow: hidden; }
 .view-cpp20 #feature-list li.feat.active { border-left-color: var(--cpp); }
 .feat-ver { margin-left: auto; font-size: 10.5px; color: var(--dim); white-space: nowrap; }
 
-#doc-content { flex: 1; overflow-y: auto; padding: 30px 44px 70px; }
+#doc-content { flex: 1; overflow-y: auto; padding: 30px 44px 70px; overscroll-behavior: contain; }
 #doc-empty { color: var(--dim); text-align: center; margin-top: 120px; padding: 0 20px; }
 .empty-mobile { display: none; }
 #doc-body { max-width: 900px; }
@@ -301,6 +306,8 @@ pre.code {
   tab-size: 4;
   white-space: pre;
   margin-bottom: 8px;
+  overscroll-behavior-x: contain;     /* 代码内横滑不触发浏览器返回手势 */
+  -webkit-overflow-scrolling: touch;
 }
 .tok-com  { color: var(--tok-com); font-style: italic; }   /* 注释 */
 .tok-str  { color: var(--tok-str); }                        /* 字符串 */
@@ -521,6 +528,11 @@ pre.code::before {
     padding-bottom: 6px;
   }
   header.nav-open #top-nav { display: flex; }
+  header.nav-open {
+    background: var(--panel);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
   #top-nav .nav-btn {
     width: 100%;
     text-align: left;
@@ -597,5 +609,29 @@ pre.code::before {
 @media (max-width: 420px) {
   .card h3 { font-size: 16px; }
   .header-actions #theme-toggle { min-width: 48px; padding-left: 10px; padding-right: 10px; }
+}
+
+/* ---------- 横屏手机：降低纵向留白，避免内容被截断 ---------- */
+@media (max-height: 500px) and (orientation: landscape) {
+  header { padding-top: 6px; padding-bottom: 6px; }
+  .header-bar { gap: 10px; }
+  header h1 { font-size: 16px; }
+  .hero { padding: 22px 16px 8px; }
+  .hero h2 { font-size: 22px; margin-bottom: 6px; }
+  .cards { gap: 12px; padding: 14px 14px 28px; }
+  .card { min-height: 0; padding: 14px 16px; }
+  .card-icon { width: 40px; height: 40px; font-size: 16px; margin-bottom: 10px; }
+  .docs-toolbar { padding-top: 6px; padding-bottom: 6px; }
+  #doc-content { padding: 14px 14px 32px; }
+}
+
+/* ---------- 触控优化：禁用长按选区（按钮/导航），保留代码可选 ---------- */
+@media (hover: none) and (pointer: coarse) {
+  .nav-btn, .nav-link, .card, .toolbar-btn, .icon-btn, #feature-list li.feat {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+  pre.code { -webkit-user-select: text; user-select: text; }
 }
 
