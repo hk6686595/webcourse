@@ -91,6 +91,33 @@ module.exports = [
       '    actions.Add(() => copy);\n' +
       '}\n' +
       'Console.WriteLine(string.Join(",", actions.Select(f => f()))); // 0,1,2'
+    ,
+    example2Title: '实战：lambda 在排序、分组与聚合中的综合应用',
+    example2:
+      'var people = new[]\n' +
+      '{\n' +
+      '    new { Name = "张三", Score = 88, Age = 22 },\n' +
+      '    new { Name = "李四", Score = 95, Age = 30 },\n' +
+      '    new { Name = "王五", Score = 76, Age = 18 },\n' +
+      '};\n\n' +
+      '// 多级排序：分数降序，同分按年龄升序\n' +
+      'var sorted = people\n' +
+      '    .OrderByDescending(p => p.Score)\n' +
+      '    .ThenBy(p => p.Age);\n' +
+      'sorted.ToList().ForEach(p => Console.WriteLine($"{p.Name} {p.Score} {p.Age}"));\n' +
+      '// 李四 95 30 / 张三 88 22 / 王五 76 18\n\n' +
+      '// 分组 + 聚合\n' +
+      'var stats = people.GroupBy(p => p.Score >= 80 ? "优秀" : "普通")\n' +
+      '    .Select(g => new { Group = g.Key, Count = g.Count(), AvgAge = g.Average(p => p.Age) });\n' +
+      'foreach (var s in stats)\n' +
+      '    Console.WriteLine($"{s.Group}: {s.Count}人, 平均年龄 {s.AvgAge:F0}");\n\n' +
+      '// lambda 捕获并修改外部状态（谨慎使用）\n' +
+      'int total = 0;\n' +
+      'people.ToList().ForEach(p => total += p.Score);\n' +
+      'Console.WriteLine($"总分 {total}");      // 259\n\n' +
+      '// 作为参数传递：自定义比较器\n' +
+      'var byName = people.OrderBy(p => p.Name, StringComparer.OrdinalIgnoreCase);\n' +
+      'Console.WriteLine(string.Join(",", byName.Select(p => p.Name)));  // 张三,李四,王五'
   },
   {
     id: 'linq',
@@ -183,6 +210,31 @@ module.exports = [
       'var materialized = query.ToList();\n' +
       'nums.Clear();\n' +
       'Console.WriteLine(materialized.Count);     // 仍保持为 2'
+    ,
+    example2Title: '实战：延迟执行在真实业务中的坑与对策',
+    example2:
+      '// 场景：统计数据报表\n' +
+      'var orders = new List<Order>\n' +
+      '{\n' +
+      '    new(1, "张三", 100), new(2, "李四", 200), new(3, "张三", 50),\n' +
+      '};\n' +
+      'record Order(int Id, string Customer, decimal Amount);\n\n' +
+      '// 坑：同一查询多次枚举 = 多次执行\n' +
+      'var big = orders.Where(o => o.Amount > 60);       // 惰性\n' +
+      'Console.WriteLine(big.Count());                    // 执行 1 次\n' +
+      'orders.Add(new(4, "王五", 300));                   // 中途数据变化\n' +
+      'Console.WriteLine(big.Count());                    // 执行 2 次，结果不同\n\n' +
+      '// 对策一：立即物化，与数据源解耦\n' +
+      'var snapshot = orders.Where(o => o.Amount > 60).ToList();\n' +
+      'orders.Clear();\n' +
+      'Console.WriteLine(snapshot.Count);                 // 仍是 2\n\n' +
+      '// 对策二：先物化再算多个统计（避免重复执行）\n' +
+      'var seq = orders.Where(o => o.Amount > 60);\n' +
+      'var summary = (Count: seq.Count(), Total: seq.Sum(o => o.Amount));\n' +
+      '// ↑ 这样其实枚举了两次！正确做法：\n' +
+      'var materialized = orders.Where(o => o.Amount > 60).ToList();\n' +
+      'var once = (Count: materialized.Count, Total: materialized.Sum(o => o.Amount));\n' +
+      'Console.WriteLine($"{once.Count} 笔，共 {once.Total:C}");'
   },
   {
     id: 'local-functions',
@@ -217,6 +269,42 @@ module.exports = [
       '// 完整演示\n' +
       'Console.WriteLine(Fib(10));                       // 55\n' +
       'Console.WriteLine(string.Join(",", Positive(new[] { -1, 2, -3, 4 }))); // 2,4'
+    ,
+    example2Title: '实战：本地函数实现快速排序与词频统计',
+    example2:
+      '// 本地递归：原地快速排序（无需额外类型）\n' +
+      'static void QuickSort<T>(T[] arr) where T : IComparable<T>\n' +
+      '{\n' +
+      '    void Sort(int lo, int hi)\n' +
+      '    {\n' +
+      '        if (lo >= hi) return;\n' +
+      '        int i = lo, j = hi;\n' +
+      '        var pivot = arr[(lo + hi) / 2];\n' +
+      '        while (i <= j)\n' +
+      '        {\n' +
+      '            while (arr[i].CompareTo(pivot) < 0) i++;\n' +
+      '            while (arr[j].CompareTo(pivot) > 0) j--;\n' +
+      '            if (i <= j) (arr[i], arr[j]) = (arr[j], arr[i]);  // 交换\n' +
+      '            i++; j--;\n' +
+      '        }\n' +
+      '        Sort(lo, j); Sort(i, hi);\n' +
+      '    }\n' +
+      '    Sort(0, arr.Length - 1);\n' +
+      '}\n\n' +
+      'var nums = new[] { 5, 2, 8, 1, 9, 3 };\n' +
+      'QuickSort(nums);\n' +
+      'Console.WriteLine(string.Join(",", nums));   // 1,2,3,5,8,9\n\n' +
+      '// 本地函数 + 闭包：统计字符频率\n' +
+      'static Dictionary<char, int> CountChars(string s)\n' +
+      '{\n' +
+      '    var dict = new Dictionary<char, int>();\n' +
+      '    void Add(char c) => dict[c] = dict.TryGetValue(c, out var n) ? n + 1 : 1;\n' +
+      '    foreach (var c in s) Add(char.ToLower(c));\n' +
+      '    return dict;\n' +
+      '}\n' +
+      'var freq = CountChars("Hello World");\n' +
+      'Console.WriteLine(string.Join(",", freq.OrderByDescending(kv => kv.Value)\n' +
+      '    .Select(kv => $"{kv.Key}:{kv.Value}")));   // l:3, o:2, h:1, e:1, w:1, r:1, d:1'
   },
   {
     id: 'expression-trees',
@@ -253,6 +341,45 @@ module.exports = [
       'var compiled = rule.Compile();\n' +
       'Console.WriteLine(compiled(new Person("小明", 20)));  // True\n' +
       'Console.WriteLine(compiled(new Person("小红", 15)));  // False'
+    ,
+    example2Title: '实战：动态组合多条件查询（迷你规则引擎）',
+    example2:
+      'using System.Linq.Expressions;\n\n' +
+      'public record Product(int Id, string Name, decimal Price, bool InStock);\n\n' +
+      '// 动态拼接：p => p.Price >= min && p.Price <= max\n' +
+      'static Expression<Func<T, bool>> InRange<T>(string prop, double min, double max)\n' +
+      '{\n' +
+      '    var p = Expression.Parameter(typeof(T), "x");\n' +
+      '    var member = Expression.Property(p, prop);\n' +
+      '    var lo = Expression.Constant(Convert.ChangeType(min, member.Type), member.Type);\n' +
+      '    var hi = Expression.Constant(Convert.ChangeType(max, member.Type), member.Type);\n' +
+      '    var body = Expression.AndAlso(\n' +
+      '        Expression.GreaterThanOrEqual(member, lo),\n' +
+      '        Expression.LessThanOrEqual(member, hi));\n' +
+      '    return Expression.Lambda<Func<T, bool>>(body, p);\n' +
+      '}\n\n' +
+      '// 动态拼接：p => p.Name.Contains(keyword)\n' +
+      'static Expression<Func<T, bool>> NameContains<T>(string keyword)\n' +
+      '{\n' +
+      '    var p = Expression.Parameter(typeof(T), "x");\n' +
+      '    var name = Expression.Property(p, "Name");\n' +
+      '    var contains = Expression.Call(name,\n' +
+      '        typeof(string).GetMethod("Contains", new[] { typeof(string) })!,\n' +
+      '        Expression.Constant(keyword));\n' +
+      '    return Expression.Lambda<Func<T, bool>>(contains, p);\n' +
+      '}\n\n' +
+      '// 演示：把表达式当数据传递，编译后执行\n' +
+      'var products = new[]\n' +
+      '{\n' +
+      '    new Product(1, "机械键盘", 399m, true),\n' +
+      '    new Product(2, "鼠标", 99m, true),\n' +
+      '    new Product(3, "显示器", 1299m, false),\n' +
+      '};\n\n' +
+      'var priceRule = InRange<Product>("Price", 100, 500);\n' +
+      'foreach (var p in products.Where(priceRule.Compile()))\n' +
+      '    Console.WriteLine(p.Name);   // 机械键盘\n\n' +
+      'var nameRule = NameContains<Product>("键");\n' +
+      'Console.WriteLine(products.Count(nameRule.Compile()));   // 1'
   },
 
   // ==================== 异步与并发 ====================
@@ -299,6 +426,38 @@ module.exports = [
       '}\n\n' +
       'public record User(string Name);\n' +
       'public record Order(int Id);'
+    ,
+    example2Title: '实战：指数退避重试 + 并发下载',
+    example2:
+      'using System.Net.Http;\n\n' +
+      '// 指数退避重试：最多尝试 4 次，间隔 1s/2s/4s\n' +
+      'static async Task<string> FetchWithRetryAsync(HttpClient http, string url, int maxRetries = 4)\n' +
+      '{\n' +
+      '    for (int attempt = 1; ; attempt++)\n' +
+      '    {\n' +
+      '        try\n' +
+      '        {\n' +
+      '            return await http.GetStringAsync(url);\n' +
+      '        }\n' +
+      '        catch (HttpRequestException) when (attempt < maxRetries)\n' +
+      '        {\n' +
+      '            int delayMs = (int)Math.Pow(2, attempt - 1) * 1000;   // 1s, 2s, 4s\n' +
+      '            Console.WriteLine($"第 {attempt} 次失败，{delayMs / 1000}s 后重试");\n' +
+      '            await Task.Delay(delayMs);\n' +
+      '        }\n' +
+      '    }\n' +
+      '}\n\n' +
+      '// 并发下载多个资源（WhenAll）：总耗时≈最慢的那个\n' +
+      'static async Task DownloadAllAsync(HttpClient http, params string[] urls)\n' +
+      '{\n' +
+      '    var tasks = urls.Select(url => http.GetStringAsync(url)).ToArray();\n' +
+      '    var results = await Task.WhenAll(tasks);      // 全部完成才继续\n' +
+      '    foreach (var r in results) Console.WriteLine($"收到 {r.Length} 字符");\n' +
+      '}\n\n' +
+      'var http = new HttpClient();\n' +
+      'var html = await FetchWithRetryAsync(http, "https://example.com");\n' +
+      'Console.WriteLine(html.Length);\n\n' +
+      'await DownloadAllAsync(http, "https://a.com", "https://b.com", "https://c.com");'
   },
   {
     id: 'async-streams',
@@ -333,6 +492,35 @@ module.exports = [
       'static Task<List<User>> FetchPageAsync(int page, int size, CancellationToken ct)\n' +
       '    => Task.FromResult(new List<User> { new("p" + page) });\n' +
       'public record User(string Name);'
+    ,
+    example2Title: '实战：流式统计大文件的行与单词',
+    example2:
+      '// 生产端：逐行读取，不整文件进内存\n' +
+      'static async IAsyncEnumerable<string> ReadLinesAsync(string path,\n' +
+      '    [EnumeratorCancellation] CancellationToken ct = default)\n' +
+      '{\n' +
+      '    using var reader = File.OpenText(path);\n' +
+      '    while (await reader.ReadLineAsync(ct) is { } line)\n' +
+      '        yield return line;\n' +
+      '}\n\n' +
+      '// 消费端：边读边统计，内存占用恒定\n' +
+      'static async Task AnalyzeAsync(string path, CancellationToken ct)\n' +
+      '{\n' +
+      '    long lines = 0, words = 0;\n' +
+      '    await foreach (var line in ReadLinesAsync(path, ct))\n' +
+      '    {\n' +
+      '        if (string.IsNullOrWhiteSpace(line)) continue;\n' +
+      '        lines++;\n' +
+      '        words += line.Split(\' \', StringSplitOptions.RemoveEmptyEntries).Length;\n' +
+      '    }\n' +
+      '    Console.WriteLine($"行数 {lines}，单词数 {words}");\n' +
+      '}\n\n' +
+      '// 流式管道：过滤 + 转换（.NET 9 起可用 System.Linq.AsyncEnumerable）\n' +
+      'await foreach (var line in ReadLinesAsync("log.txt"))\n' +
+      '{\n' +
+      '    if (!line.Contains("ERROR")) continue;\n' +
+      '    Console.WriteLine(line.ToUpperInvariant());\n' +
+      '}'
   },
   {
     id: 'valuetask-cancellation',
@@ -372,6 +560,34 @@ module.exports = [
       'using var linked = CancellationTokenSource.CreateLinkedTokenSource(reqAborted, appStopping);\n' +
       'await WorkAsync(linked.Token);\n' +
       'public record User(int Id);'
+    ,
+    example2Title: '实战：带进度报告的下载 + 取消传播',
+    example2:
+      '// 下载并报告进度；取消时优雅退出\n' +
+      'static async Task DownloadWithProgressAsync(HttpClient http, string url, string dest,\n' +
+      '    IProgress<double>? progress, CancellationToken ct)\n' +
+      '{\n' +
+      '    using var resp = await http.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, ct);\n' +
+      '    resp.EnsureSuccessStatusCode();\n' +
+      '    var total = resp.Content.Headers.ContentLength ?? 0;\n\n' +
+      '    await using var src = await resp.Content.ReadAsStreamAsync(ct);\n' +
+      '    await using var dst = File.Create(dest);\n\n' +
+      '    var buffer = new byte[81920];\n' +
+      '    long read = 0;\n' +
+      '    while (true)\n' +
+      '    {\n' +
+      '        int n = await src.ReadAsync(buffer, ct);\n' +
+      '        if (n == 0) break;\n' +
+      '        await dst.WriteAsync(buffer.AsMemory(0, n), ct);\n' +
+      '        read += n;\n' +
+      '        progress?.Report(total > 0 ? (double)read / total * 100 : 0);\n' +
+      '    }\n' +
+      '}\n\n' +
+      '// 组合令牌：用户取消 或 全局停机 都能终止\n' +
+      'using var cts = CancellationTokenSource.CreateLinkedTokenSource(userToken, appToken);\n\n' +
+      'var progress = new Progress<double>(p => Console.WriteLine($"进度 {p:F1}%"));\n' +
+      'await DownloadWithProgressAsync(new HttpClient(), "https://x.com/big.iso",\n' +
+      '    "big.iso", progress, cts.Token);'
   },
   {
     id: 'task-combinators',
@@ -416,6 +632,48 @@ module.exports = [
       'static Task<string> SlowApiAsync() => Task.Delay(5000).ContinueWith(_ => "ok");\n' +
       'static Task<string> MirrorAAsync() => Task.FromResult("A");\n' +
       'static Task<string> MirrorBAsync() => Task.FromResult("B");'
+    ,
+    example2Title: '实战：分批并发、信号量限流与首败即停',
+    example2:
+      '// 分批执行：一次最多并发 3 个，批次间串行\n' +
+      'static async Task RunInBatchesAsync(IEnumerable<string> urls, int batchSize)\n' +
+      '{\n' +
+      '    var list = urls.ToList();\n' +
+      '    for (int i = 0; i < list.Count; i += batchSize)\n' +
+      '    {\n' +
+      '        var batch = list.Skip(i).Take(batchSize);\n' +
+      '        var tasks = batch.Select(u => FetchAsync(u));\n' +
+      '        await Task.WhenAll(tasks);      // 等本批全部完成再开下一批\n' +
+      '        Console.WriteLine($"批次 {i / batchSize + 1} 完成");\n' +
+      '    }\n' +
+      '}\n\n' +
+      '// 信号量限流：全局最多 N 个并发（更平滑，无批次边界）\n' +
+      'static async Task RunThrottledAsync(IEnumerable<string> urls, int maxConcurrent)\n' +
+      '{\n' +
+      '    using var sem = new SemaphoreSlim(maxConcurrent);\n' +
+      '    var tasks = urls.Select(async u =>\n' +
+      '    {\n' +
+      '        await sem.WaitAsync();\n' +
+      '        try { return await FetchAsync(u); }\n' +
+      '        finally { sem.Release(); }\n' +
+      '    });\n' +
+      '    var results = await Task.WhenAll(tasks);\n' +
+      '    Console.WriteLine($"全部完成，共 {results.Length} 个结果");\n' +
+      '}\n\n' +
+      '// 首败即停：任何任务失败就取消其余\n' +
+      'static async Task RunFailFastAsync(IEnumerable<string> urls, CancellationToken ct)\n' +
+      '{\n' +
+      '    using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);\n' +
+      '    var tasks = urls.Select(u => FetchAsync(u, cts.Token)).ToArray();\n' +
+      '    var first = await Task.WhenAny(tasks);        // 谁先完成/失败\n' +
+      '    if (first.IsFaulted) cts.Cancel();            // 失败则取消所有\n' +
+      '    await Task.WhenAll(tasks);                    // 等全部收尾\n' +
+      '}\n\n' +
+      'static async Task<string> FetchAsync(string url, CancellationToken ct = default)\n' +
+      '{\n' +
+      '    await Task.Delay(Random.Shared.Next(50, 300), ct);\n' +
+      '    return url;\n' +
+      '}'
   },
   {
     id: 'thread-safe-collections',
@@ -451,6 +709,31 @@ module.exports = [
       'await foreach (var item in channel.Reader.ReadAllAsync())\n' +
       '    Console.WriteLine(item);                 // 0..9\n\n' +
       'static int LoadExpensive(string k) => k.Length;'
+    ,
+    example2Title: '实战：并行词频统计与惰性缓存',
+    example2:
+      'using System.Collections.Concurrent;\n\n' +
+      'var text = "the quick brown fox jumps over the lazy dog the fox";\n' +
+      'var words = text.Split(\' \');\n\n' +
+      'var freq = new ConcurrentDictionary<string, int>();\n\n' +
+      '// 并行分词计数：AddOrUpdate 原子更新\n' +
+      'Parallel.ForEach(words, w =>\n' +
+      '{\n' +
+      '    freq.AddOrUpdate(w, 1, (_, old) => old + 1);\n' +
+      '});\n\n' +
+      'foreach (var kv in freq.OrderByDescending(kv => kv.Value))\n' +
+      '    Console.WriteLine($"{kv.Key}: {kv.Value}");\n' +
+      '// the: 3, fox: 2, quick: 1, ...\n\n' +
+      '// GetOrAdd：惰性初始化 + 原子（工厂可能被调用多次，无副作用）\n' +
+      'var cache = new ConcurrentDictionary<string, int>();\n' +
+      'int GetLen(string key) => cache.GetOrAdd(key, k => ExpensiveCompute(k));\n' +
+      'Console.WriteLine(GetLen("hello"));     // 5\n\n' +
+      '// ConcurrentQueue：无锁 FIFO\n' +
+      'var q = new ConcurrentQueue<int>();\n' +
+      'q.Enqueue(1); q.Enqueue(2);\n' +
+      'q.TryDequeue(out var first);\n' +
+      'Console.WriteLine(first);               // 1\n\n' +
+      'static int ExpensiveCompute(string s) { Thread.Sleep(10); return s.Length; }'
   },
   {
     id: 'sync-primitives',
@@ -496,5 +779,42 @@ module.exports = [
       'Console.WriteLine(demo._counter);   // 1000（线程安全）\n\n' +
       'class CounterDemo { public int _counter; }\n' +
       '// 注：上面 Parallel 仅为演示，实际类见方法体'
+    ,
+    example2Title: '实战：读写锁缓存 + 原子计数器的完整示例',
+    example2:
+      '// 读写锁：读多写少的缓存（读者可并行，写者独占）\n' +
+      'public class SafeCache<TKey, TValue> where TKey : notnull\n' +
+      '{\n' +
+      '    private readonly Dictionary<TKey, TValue> _map = new();\n' +
+      '    private readonly ReaderWriterLockSlim _lock = new();\n\n' +
+      '    public TValue? Get(TKey key)\n' +
+      '    {\n' +
+      '        _lock.EnterReadLock();      // 多个读者可并行\n' +
+      '        try { return _map.TryGetValue(key, out var v) ? v : default; }\n' +
+      '        finally { _lock.ExitReadLock(); }\n' +
+      '    }\n\n' +
+      '    public void Set(TKey key, TValue value)\n' +
+      '    {\n' +
+      '        _lock.EnterWriteLock();     // 写者独占\n' +
+      '        try { _map[key] = value; }\n' +
+      '        finally { _lock.ExitWriteLock(); }\n' +
+      '    }\n' +
+      '}\n\n' +
+      '// 演示：多线程读写\n' +
+      'var cache = new SafeCache<string, int>();\n' +
+      'Parallel.For(0, 100, i =>\n' +
+      '{\n' +
+      '    cache.Set($"k{i}", i);\n' +
+      '    _ = cache.Get($"k{Random.Shared.Next(100)}");\n' +
+      '});\n' +
+      'Console.WriteLine(cache.Get("k42"));   // 42\n\n' +
+      '// Interlocked：无锁计数器（性能最高）\n' +
+      'int counter = 0;\n' +
+      'Parallel.For(0, 10000, _ => Interlocked.Increment(ref counter));\n' +
+      'Console.WriteLine(counter);            // 10000\n\n' +
+      '// CompareExchange：CAS，仅在旧值匹配时更新\n' +
+      'int current = 5;\n' +
+      'int old = Interlocked.CompareExchange(ref current, 10, 5);  // 期望旧值 5\n' +
+      'Console.WriteLine($"{old} -> {current}");   // 5 -> 10'
   }
 ];

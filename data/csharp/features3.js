@@ -36,6 +36,35 @@ module.exports = [
       '    else                    Console.WriteLine("其他");\n' +
       '}\n' +
       'Describe(42); Describe("hi"); Describe(null);'
+    ,
+    example2Title: '实战：类型分派 + 模式匹配解析',
+    example2:
+      '// 实战：按运行时类型分派处理\n' +
+      'record Shape(string Kind, double Area);\n\n' +
+      'object[] items = { 42, "hello", 3.14, null, new Shape("圆", 12.5) };\n\n' +
+      'foreach (var item in items)\n' +
+      '{\n' +
+      '    string desc = item switch\n' +
+      '    {\n' +
+      '        int n when n > 100 => $"大整数 {n}",\n' +
+      '        int n              => $"整数 {n}",\n' +
+      '        string s           => $"字符串「{s}」长度 {s.Length}",\n' +
+      '        double d           => $"浮点数 {d:F2}",\n' +
+      '        Shape { Kind: "圆" } s => $"圆形面积 {s.Area}",\n' +
+      '        null               => "空值",\n' +
+      '        _                  => "其他"\n' +
+      '    };\n' +
+      '    Console.WriteLine(desc);\n' +
+      '}\n\n' +
+      '// is not null 判空 + 声明模式一步完成\n' +
+      'void TryProcess(object? data)\n' +
+      '{\n' +
+      '    if (data is not string text) return;   // 非 string 或 null 直接返回\n' +
+      '    Console.WriteLine($"处理文本：{text.ToUpper()}");\n' +
+      '}\n' +
+      'TryProcess("abc");     // 处理文本：ABC\n' +
+      'TryProcess(123);       // 无输出\n' +
+      'TryProcess(null);      // 无输出'
   },
   {
     id: 'switch-expressions',
@@ -74,6 +103,37 @@ module.exports = [
       'Console.WriteLine(Grade(55));     // 不及格\n' +
       'Console.WriteLine(Toll(new Car(0, false)));  // 2.50\n' +
       'Console.WriteLine(Toll(new Car(3, false)));  // 1.00'
+    ,
+    example2Title: '实战：订单状态机的 switch 表达式',
+    example2:
+      'public enum OrderStatus { Pending, Paid, Shipped, Completed, Cancelled, Refunded }\n\n' +
+      '// 状态机：根据当前状态 + 动作计算下一个状态\n' +
+      'static OrderStatus Next(OrderStatus s, string action) => (s, action) switch\n' +
+      '{\n' +
+      '    (OrderStatus.Pending, "pay")      => OrderStatus.Paid,\n' +
+      '    (OrderStatus.Paid, "ship")        => OrderStatus.Shipped,\n' +
+      '    (OrderStatus.Shipped, "deliver")  => OrderStatus.Completed,\n' +
+      '    (OrderStatus.Pending, "cancel")   => OrderStatus.Cancelled,\n' +
+      '    (OrderStatus.Paid, "refund")      => OrderStatus.Refunded,\n' +
+      '    (OrderStatus.Cancelled, "reopen") => OrderStatus.Pending,\n' +
+      '    _ => throw new InvalidOperationException($"非法迁移：{s} -> {action}")\n' +
+      '};\n\n' +
+      '// 元组模式 + when 子句：运费计算\n' +
+      'static decimal ShippingFee(decimal amount, bool vip, bool rush) => (vip, rush) switch\n' +
+      '{\n' +
+      '    (true, _)            => 0m,               // VIP 免邮\n' +
+      '    (false, true)        => amount * 0.2m,    // 加急 20%\n' +
+      '    (false, false) when amount >= 99 => 0m,   // 满 99 包邮\n' +
+      '    _                    => 8m\n' +
+      '};\n\n' +
+      '// 演示\n' +
+      'var st = OrderStatus.Pending;\n' +
+      'st = Next(st, "pay");\n' +
+      'st = Next(st, "ship");\n' +
+      'Console.WriteLine(st);                       // Shipped\n' +
+      'Console.WriteLine(ShippingFee(50, false, false));  // 8\n' +
+      'Console.WriteLine(ShippingFee(150, false, false)); // 0（满 99 包邮）\n' +
+      'Console.WriteLine(ShippingFee(30, true, true));    // 0（VIP）'
   },
   {
     id: 'relational-patterns',
@@ -107,6 +167,33 @@ module.exports = [
       'Console.WriteLine(Check(42)); // 两位数\n' +
       'Console.WriteLine(IsLeap(2024)); // True\n' +
       'Console.WriteLine(IsLeap(1900)); // False'
+    ,
+    example2Title: '实战：综合业务规则判断',
+    example2:
+      '// 体温分级\n' +
+      'static string FeverLevel(double t) => t switch\n' +
+      '{\n' +
+      '    < 36.0                => "体温偏低",\n' +
+      '    >= 36.0 and < 37.3    => "正常",\n' +
+      '    >= 37.3 and < 38.0    => "低烧",\n' +
+      '    >= 38.0 and < 39.0    => "高烧",\n' +
+      '    >= 39.0               => "危险高热",\n' +
+      '    _                     => "无效数据"\n' +
+      '};\n\n' +
+      '// 优惠券判断：金额 + 会员等级组合\n' +
+      'record User(string Name, int Level);   // Level: 1普通 2银 3金\n' +
+      'static string Discount(User u, decimal amount) => (u.Level, amount) switch\n' +
+      '{\n' +
+      '    (3, _)                    => $"金卡 8 折，实付 {amount * 0.8m:C}",\n' +
+      '    (2, >= 200)               => $"银卡满200减50，实付 {amount - 50:C}",\n' +
+      '    (_, >= 300)               => $"普通满300减30，实付 {amount - 30:C}",\n' +
+      '    _                         => $"无优惠，实付 {amount:C}"\n' +
+      '};\n\n' +
+      'Console.WriteLine(FeverLevel(36.5));    // 正常\n' +
+      'Console.WriteLine(FeverLevel(38.5));    // 高烧\n' +
+      'Console.WriteLine(Discount(new("张三", 3), 100));     // 金卡 8 折，实付 ¥80.00\n' +
+      'Console.WriteLine(Discount(new("李四", 2), 250));     // 银卡满200减50，实付 ¥200.00\n' +
+      'Console.WriteLine(Discount(new("王五", 1), 100));     // 无优惠，实付 ¥100.00'
   },
   {
     id: 'list-patterns',
@@ -141,6 +228,37 @@ module.exports = [
       'Console.WriteLine(Describe(numbers));       // 首 1 尾 5\n' +
       'Console.WriteLine(ParseArgs(new[] { "build", "-c", "Release" })); // 构建，参数：-c,Release\n' +
       'Console.WriteLine(ParseArgs(new[] { "run", "app.dll" }));        // 运行目标：app.dll'
+    ,
+    example2Title: '实战：矩阵形状判断与序列校验',
+    example2:
+      '// 判断二维数组形状\n' +
+      'static string Shape(int[][] m) => m switch\n' +
+      '{\n' +
+      '    []                          => "空矩阵",\n' +
+      '    [var row]                   => $"1×{row.Length} 向量",\n' +
+      '    [var r1, .. var rest] when rest.All(r => r.Length == r1.Length) =>\n' +
+      '        $"{m.Length}×{r1.Length} 矩阵",\n' +
+      '    _                           => "锯齿数组"\n' +
+      '};\n\n' +
+      '// 校验序列：必须 [a, b, c] 且严格递增\n' +
+      'static string Validate(int[] seq) => seq switch\n' +
+      '{\n' +
+      '    [int a, int b, int c] when a < b && b < c => "严格递增三元组",\n' +
+      '    [int a, int b, int c] => "非递增三元组",\n' +
+      '    [var f, ..] when f < 0 => "负数开头",\n' +
+      '    _ => "其他"\n' +
+      '};\n\n' +
+      '// 子序列匹配\n' +
+      'static int CountPattern(int[] data) => data switch\n' +
+      '{\n' +
+      '    [.., 1, 2, 3, ..] => 1,     // 包含子序列 1,2,3\n' +
+      '    _ => 0\n' +
+      '};\n\n' +
+      'Console.WriteLine(Shape([[1, 2], [3, 4]]));       // 2×2 矩阵\n' +
+      'Console.WriteLine(Shape([[1], [2, 3]]));          // 锯齿数组\n' +
+      'Console.WriteLine(Validate(new[] { 1, 2, 3 }));   // 严格递增三元组\n' +
+      'Console.WriteLine(Validate(new[] { 3, 2, 1 }));   // 非递增三元组\n' +
+      'Console.WriteLine(CountPattern(new[] { 0, 1, 2, 3, 9 }));  // 1'
   },
   {
     id: 'property-patterns',
@@ -178,6 +296,33 @@ module.exports = [
       'Console.WriteLine(Region(e1));   // 华北\n' +
       'Console.WriteLine(Region(e2));   // 未成年\n' +
       'Console.WriteLine(Describe(e1)); // 张三（北京员工）'
+    ,
+    example2Title: '实战：深嵌套配置校验',
+    example2:
+      'record ServerConfig(string Name, Network Network, Security Security);\n' +
+      'record Network(string Host, int Port, bool Tls);\n' +
+      'record Security(string? ApiKey, int MaxRetries);\n\n' +
+      '// 深嵌套模式：逐层匹配\n' +
+      'static string Audit(ServerConfig? cfg) => cfg switch\n' +
+      '{\n' +
+      '    // 三层嵌套 + 逻辑组合\n' +
+      '    { Network: { Host: "localhost", Port: > 0 and < 65536, Tls: true },\n' +
+      '      Security: { ApiKey: { Length: >= 16 }, MaxRetries: <= 5 } }\n' +
+      '        => "配置安全且合规",\n\n' +
+      '    { Network: { Host: "localhost" } } => "仅本机允许，但 TLS 或密钥不合规",\n' +
+      '    { Network: { Tls: false } }        => "未启用 TLS，存在风险",\n' +
+      '    { Security: { ApiKey: null } }     => "缺少 API Key",\n' +
+      '    null                               => "配置为空",\n' +
+      '    _                                  => "其他"\n' +
+      '};\n\n' +
+      '// 演示\n' +
+      'var good = new ServerConfig("prod",\n' +
+      '    new Network("localhost", 443, true),\n' +
+      '    new Security("k".PadRight(16, \'x\'), 3));\n' +
+      'Console.WriteLine(Audit(good));   // 配置安全且合规\n\n' +
+      'var bad1 = new ServerConfig("dev", new Network("localhost", 80, false), null!);\n' +
+      'Console.WriteLine(Audit(bad1));   // 未启用 TLS，存在风险\n\n' +
+      'Console.WriteLine(Audit(null));   // 配置为空'
   },
 
   // ==================== 语法糖 ====================
@@ -213,6 +358,29 @@ module.exports = [
       'var re1 = "\\\\d{3}-\\\\d{4}";        // 转义地狱：要写四个反斜杠\n' +
       'var re2 = """\\d{3}-\\d{4}""";      // 一目了然\n' +
       'Console.WriteLine(re1 == re2);       // True（两者表示同样的字符串）'
+    ,
+    example2Title: '实战：对齐、格式与文化的综合用法',
+    example2:
+      '// 表格化输出：对齐字段\n' +
+      'var rows = new[]\n' +
+      '{\n' +
+      '    new { Name = "苹果", Price = 5.5m, Qty = 12 },\n' +
+      '    new { Name = "香蕉", Price = 3.2m, Qty = 30 },\n' +
+      '    new { Name = "榴莲", Price = 199.9m, Qty = 1 },\n' +
+      '};\n' +
+      'Console.WriteLine($"{"商品",-8}{"单价",8}{"数量",6}{"小计",10}");\n' +
+      'foreach (var r in rows)\n' +
+      '    Console.WriteLine($"{r.Name,-8}{r.Price,8:C}{r.Qty,6}{r.Price * r.Qty,10:C}");\n\n' +
+      '// 不同文化的数字格式\n' +
+      'var n = 1234567.89;\n' +
+      'Console.WriteLine(n.ToString("N2", new System.Globalization.CultureInfo("zh-CN")));  // 1,234,567.89\n' +
+      'Console.WriteLine(n.ToString("N2", new System.Globalization.CultureInfo("de-DE")));  // 1.234.567,89\n\n' +
+      '// 插值内写表达式与三元\n' +
+      'var score = 78;\n' +
+      'Console.WriteLine($"{nameof(score)} = {score}，结果：{(score >= 60 ? "及格" : "不及格")}");\n\n' +
+      '// 日期复合格式\n' +
+      'var now = DateTime.Now;\n' +
+      'Console.WriteLine($"{now:yyyy年MM月dd日 dddd HH:mm:ss}");'
   },
   {
     id: 'null-operators',
@@ -250,6 +418,36 @@ module.exports = [
       '// 触发事件的经典姿势\n' +
       'Action<string>? onMsg = null;\n' +
       'onMsg?.Invoke("hello");    // 无订阅者也不抛 NRE'
+    ,
+    example2Title: '实战：深层对象图的空安全访问',
+    example2:
+      '// 订单 -> 客户 -> 地址 三级对象图\n' +
+      'record Address(string City, string? Street);\n' +
+      'record Customer(string Name, Address? Address);\n' +
+      'record Order(int Id, Customer? Customer, string? Remark);\n\n' +
+      'Order?[] orders =\n' +
+      '{\n' +
+      '    new(1, new Customer("张三", new Address("北京", "长安街")), "加急"),\n' +
+      '    new(2, new Customer("李四", null), null),\n' +
+      '    new(3, null, null),\n' +
+      '    null,\n' +
+      '};\n\n' +
+      '// 逐个安全取城市\n' +
+      'foreach (var o in orders)\n' +
+      '{\n' +
+      '    string city = o?.Customer?.Address?.City ?? "（未知）";\n' +
+      '    string remark = o?.Remark ?? "无备注";\n' +
+      '    Console.WriteLine($"订单 {o?.Id ?? -1}: {city}, {remark}");\n' +
+      '}\n\n' +
+      '// 字典 + 空条件索引\n' +
+      'Dictionary<string, List<int>?> scores = new() { ["a"] = [1, 2] };\n' +
+      'int? first = scores.TryGetValue("a", out var list) ? list?[0] : null;\n' +
+      'Console.WriteLine(first ?? -1);      // 1\n\n' +
+      '// ??= 惰性缓存\n' +
+      'List<string>? cache = null;\n' +
+      'List<string> GetCache() => cache ??= Load();\n' +
+      'static List<string> Load() => new() { "x", "y" };\n' +
+      'Console.WriteLine(GetCache().Count);  // 2'
   },
   {
     id: 'ranges-indexes',
@@ -276,6 +474,32 @@ module.exports = [
       '// Span 上零拷贝切片\n' +
       'ReadOnlySpan<char> span = url.AsSpan();\n' +
       'Console.WriteLine(span[8..].ToString());   // "example.com/api"，无中间分配'
+    ,
+    example2Title: '实战：URL 解析与分页切片',
+    example2:
+      '// 解析 URL 的各部分\n' +
+      'string url = "https://user:pass@example.com:8080/api/v1/users?page=2";\n' +
+      'int schemeEnd = url.IndexOf("://") + 3;\n' +
+      'string scheme = url[..url.IndexOf("://")];              // "https"\n' +
+      'string host = url[schemeEnd..url.IndexOf('/', schemeEnd)];  // "example.com:8080"\n' +
+      'string path = url[url.IndexOf('/', schemeEnd)..];      // "/api/v1/users?page=2"\n' +
+      'Console.WriteLine($"{scheme} | {host} | {path}");\n\n' +
+      '// 分页切片：用 .. 代替 Length 计算\n' +
+      'static IEnumerable<T> Page<T>(IEnumerable<T> src, int page, int size)\n' +
+      '{\n' +
+      '    var arr = src.ToArray();\n' +
+      '    int start = (page - 1) * size;\n' +
+      '    if (start >= arr.Length) return Array.Empty<T>();\n' +
+      '    return arr[start..Math.Min(start + size, arr.Length)];\n' +
+      '}\n\n' +
+      'var items = Enumerable.Range(0, 10);\n' +
+      'Console.WriteLine(string.Join(",", Page(items, 1, 3)));   // 0,1,2\n' +
+      'Console.WriteLine(string.Join(",", Page(items, 4, 3)));   // 9\n\n' +
+      '// 末元素与尾部切片\n' +
+      'int[] nums = [10, 20, 30];\n' +
+      'Console.WriteLine(nums[^1]);        // 30\n' +
+      'string s = "abcdef";\n' +
+      'Console.WriteLine(s[^2..]);          // ef'
   },
   {
     id: 'top-level-statements',
@@ -309,6 +533,40 @@ module.exports = [
       '// <ItemGroup>\n' +
       '//   <Using Include="System.Diagnostics.CodeAnalysis" />\n' +
       '// </ItemGroup>'
+    ,
+    example2Title: '实战：完整命令行小工具（统计目录文件）',
+    example2:
+      '// ===== Program.cs —— 顶级语句完整工具 =====\n' +
+      '// 用法：dotnet run -- <目录> [扩展名过滤]\n' +
+      'string dir = args.Length > 0 ? args[0] : ".";\n' +
+      'string filter = args.Length > 1 ? args[1] : "*.*";\n\n' +
+      'if (!Directory.Exists(dir))\n' +
+      '{\n' +
+      '    Console.Error.WriteLine($"目录不存在：{dir}");\n' +
+      '    return 1;\n' +
+      '}\n\n' +
+      'var files = Directory.EnumerateFiles(dir, filter, SearchOption.AllDirectories)\n' +
+      '    .Select(f => new FileInfo(f))\n' +
+      '    .OrderByDescending(f => f.Length);\n\n' +
+      'int count = 0;\n' +
+      'long total = 0;\n' +
+      'foreach (var f in files.Take(10))\n' +
+      '{\n' +
+      '    Console.WriteLine($"{f.Name,-40} {f.Length,12:N0} B");\n' +
+      '    count++; total += f.Length;\n' +
+      '}\n' +
+      'Console.WriteLine($"\n共匹配 {count} 个文件，合计 {total:N0} 字节");\n\n' +
+      '// 局部函数 + 顶级语句混用\n' +
+      'string Humanize(long bytes) =>\n' +
+      '    bytes >= 1 << 30 ? $"{bytes / (double)(1 << 30):F2} GB"\n' +
+      '    : bytes >= 1 << 20 ? $"{bytes / (double)(1 << 20):F1} MB"\n' +
+      '    : $"{bytes / (double)(1 << 10):F0} KB";\n' +
+      'Console.WriteLine(Humanize(total));\n\n' +
+      'return 0;\n\n' +
+      '// ===== GlobalUsings.cs =====\n' +
+      '// global using System;\n' +
+      '// global using System.IO;\n' +
+      '// global using System.Linq;'
   },
   {
     id: 'target-typed-new',
@@ -335,6 +593,35 @@ module.exports = [
       'Console.WriteLine(string.Join(",", more));   // 1,2,3,4,5\n\n' +
       'static void Process(List<int> xs) => Console.WriteLine(xs.Count);\n' +
       '// 注：上面 Task.Run 仅为展示语法；运行时请保证 new() 有明确目标类型'
+    ,
+    example2Title: '实战：泛型工厂与集合表达式组合',
+    example2:
+      '// 泛型工厂：new() 推断目标类型\n' +
+      'static T Make<T>() where T : new() => new();\n\n' +
+      'var point = Make<Point>();                    // new() 推断为 Point\n' +
+      'Console.WriteLine(point);                     // Point { X = 0, Y = 0 }\n\n' +
+      '// 字段与属性初始化\n' +
+      'class Store\n' +
+      '{\n' +
+      '    public List<int> Items { get; } = new();  // 属性初始化器里同样适用\n' +
+      '    private Dictionary<string, Action> Handlers = new();\n' +
+      '}\n' +
+      'record Point(int X, int Y);\n\n' +
+      '// 与集合表达式组合\n' +
+      'List<int[]> batches = new()\n' +
+      '{\n' +
+      '    [1, 2, 3],\n' +
+      '    [4, 5],\n' +
+      '};\n' +
+      'Console.WriteLine(batches.Count);             // 2\n\n' +
+      '// 派生类场景：new() 推断为基类\n' +
+      'Animal a = new();                             // 推断 Animal，不是 Dog\n' +
+      '// Animal a2 = new Dog();                     // 想用派生类必须写全名\n\n' +
+      'class Animal { }\n' +
+      'class Dog : Animal { }\n\n' +
+      '// 三元目标类型（C# 9）：两侧统一推断\n' +
+      'int? maybe = true ? null : 0;\n' +
+      'Console.WriteLine(maybe is null);             // True'
   },
   {
     id: 'default-named-args',
@@ -365,6 +652,35 @@ module.exports = [
       'Send("bob@x.com", "Hi", retries: 5);\n\n' +
       '// 命名实参还能"跳过中间参数"\n' +
       'Send("bob@x.com", "Hi", retries: 5, ccAdmin: true);'
+    ,
+    example2Title: '实战：可读性极佳的配置 API 设计',
+    example2:
+      '// 参数较多的方法：可选参数 + 命名实参保持调用点清晰\n' +
+      'static async Task<string> HttpGetAsync(\n' +
+      '    string url,\n' +
+      '    int timeoutSeconds = 30,\n' +
+      '    bool followRedirects = true,\n' +
+      '    string? userAgent = null,\n' +
+      '    IDictionary<string, string>? headers = null)\n' +
+      '{\n' +
+      '    Console.WriteLine($"GET {url} timeout={timeoutSeconds}s redirect={followRedirects} ua={userAgent ?? "默认"}");\n' +
+      '    await Task.Delay(1);\n' +
+      '    return url;\n' +
+      '}\n\n' +
+      '// 只指定需要的参数，顺序随意\n' +
+      'await HttpGetAsync("https://api.x.com/v1");\n' +
+      'await HttpGetAsync("https://api.x.com/v1", timeoutSeconds: 5, userAgent: "my-app/1.0");\n' +
+      'await HttpGetAsync("https://api.x.com/v1", followRedirects: false, timeoutSeconds: 10);\n\n' +
+      '// 注意：命名实参可以跳过中间参数，但不能打乱位置实参顺序\n' +
+      '// HttpGetAsync("https://x.com", , true);   // ✘ 语法错误\n' +
+      '// 应写作：HttpGetAsync("https://x.com", followRedirects: true);\n\n' +
+      '// 与 params 结合\n' +
+      'static void Log(string level, string message, params object?[] args)\n' +
+      '{\n' +
+      '    Console.WriteLine($"[{level}] " + string.Format(message, args));\n' +
+      '}\n' +
+      'Log("INFO", "用户 {0} 登录成功", "张三");\n' +
+      'Log("ERROR", "请求失败：{0}", "超时");'
   },
   {
     id: 'alias-any-type',
@@ -390,5 +706,28 @@ module.exports = [
       'Console.WriteLine(p.X);           // 3 —— 元组元素名保留\n\n' +
       'Matrix m = [[1, 2], [3, 4]];\n' +
       'Console.WriteLine(m[0][1]);        // 2'
+    ,
+    example2Title: '实战：别名简化复杂泛型与回调签名',
+    example2:
+      '// 别名的组合使用\n' +
+      'using EventBus = System.Collections.Generic.Dictionary<\n' +
+      '    string, System.Collections.Generic.List<System.Func<object?, System.Threading.Tasks.Task>>>;\n' +
+      'using HttpResult = (int Status, string Body, bool Ok);\n\n' +
+      '// 事件总线：类型别名让签名可读\n' +
+      'EventBus bus = new();\n' +
+      'bus["user.created"] = new()\n' +
+      '{\n' +
+      '    async _ => { Console.WriteLine("发通知"); await Task.CompletedTask; },\n' +
+      '    async _ => { Console.WriteLine("写日志"); await Task.CompletedTask; },\n' +
+      '};\n\n' +
+      'await bus["user.created"][0](null);\n\n' +
+      '// 元组别名 + 解构\n' +
+      'HttpResult Get() => (200, """{"id":1}""", true);\n' +
+      'var (status, body, ok) = Get();\n' +
+      'Console.WriteLine($"{status} {ok} 长度 {body.Length}");  // 200 True 8\n\n' +
+      '// 泛型嵌套别名\n' +
+      'using StringMap = System.Collections.Generic.Dictionary<string, string>;\n' +
+      'StringMap env = new() { ["HOME"] = "/root" };\n' +
+      'Console.WriteLine(env["HOME"]);'
   }
 ];

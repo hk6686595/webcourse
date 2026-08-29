@@ -181,6 +181,60 @@ module.exports = [
       '}\n\n' +
       '// 异步释放\n' +
       'await using var stream = await OpenAsync();'
+    ,
+    example2Title: '实战：完整自定义资源类的 Dispose 实现',
+    example2:
+      '// 同时支持同步与异步释放的资源类\n' +
+      'public sealed class TempFile : IDisposable, IAsyncDisposable\n' +
+      '{\n' +
+      '    private readonly string _path;\n' +
+      '    private FileStream? _stream;\n' +
+      '    private bool _disposed;\n\n' +
+      '    public TempFile(string prefix)\n' +
+      '    {\n' +
+      '        _path = Path.GetTempFileName();\n' +
+      '        _stream = File.Create(_path);\n' +
+      '        Console.WriteLine($"已创建临时文件：{_path}");\n' +
+      '    }\n\n' +
+      '    public void Write(string text)\n' +
+      '    {\n' +
+      '        ObjectDisposedException.ThrowIf(_disposed, this);\n' +
+      '        using var w = new StreamWriter(_stream, leaveOpen: true);\n' +
+      '        w.Write(text);\n' +
+      '    }\n\n' +
+      '    public void Dispose()\n' +
+      '    {\n' +
+      '        if (_disposed) return;\n' +
+      '        _stream?.Dispose();\n' +
+      '        File.Delete(_path);\n' +
+      '        _disposed = true;\n' +
+      '        Console.WriteLine("同步释放完成");\n' +
+      '        GC.SuppressFinalize(this);\n' +
+      '    }\n\n' +
+      '    public async ValueTask DisposeAsync()\n' +
+      '    {\n' +
+      '        if (_disposed) return;\n' +
+      '        if (_stream != null) await _stream.DisposeAsync();\n' +
+      '        File.Delete(_path);\n' +
+      '        _disposed = true;\n' +
+      '        Console.WriteLine("异步释放完成");\n' +
+      '        GC.SuppressFinalize(this);\n' +
+      '    }\n' +
+      '}\n\n' +
+      '// 传统 using 块：块结束自动释放\n' +
+      'using (var f = new TempFile("log"))\n' +
+      '{\n' +
+      '    f.Write("hello");\n' +
+      '}   // 同步释放完成\n\n' +
+      '// 异步释放\n' +
+      'await using (var f = new TempFile("log"))\n' +
+      '{\n' +
+      '    f.Write("world");\n' +
+      '}   // 异步释放完成\n\n' +
+      '// 释放后禁止使用\n' +
+      'using var f2 = new TempFile("x");\n' +
+      'f2.Write("a");\n' +
+      '// f2.Write("b");  // ✘ ObjectDisposedException'
   },
   {
     id: 'exception-handling',
@@ -222,6 +276,59 @@ module.exports = [
       'if (int.TryParse("123", out var n)) Console.WriteLine($"解析成功：{n}");\n' +
       '// 反例：try { n = int.Parse(input); } catch { }\n\n' +
       'static void Validate(int id) => throw new InsufficientBalanceException(50);'
+    ,
+    example2Title: '实战：重试策略 + 异常筛选的健壮调用',
+    example2:
+      '// 稳定的重试封装：区分“可重试”与“致命”错误\n' +
+      'static async Task<T> RetryAsync<T>(Func<Task<T>> action, int maxAttempts = 3)\n' +
+      '{\n' +
+      '    int attempt = 0;\n' +
+      '    while (true)\n' +
+      '    {\n' +
+      '        attempt++;\n' +
+      '        try\n' +
+      '        {\n' +
+      '            return await action();\n' +
+      '        }\n' +
+      '        catch (Exception ex) when (IsRetryable(ex) && attempt < maxAttempts)\n' +
+      '        {\n' +
+      '            Console.WriteLine($"第 {attempt} 次失败（{ex.Message}），重试中…");\n' +
+      '            await Task.Delay(attempt * 500);\n' +
+      '        }\n' +
+      '        // 不可重试或次数用尽：原样上抛（保留堆栈）\n' +
+      '    }\n\n' +
+      '    static bool IsRetryable(Exception ex) => ex switch\n' +
+      '    {\n' +
+      '        HttpRequestException { StatusCode: >= HttpStatusCode.InternalServerError } => true,\n' +
+      '        TimeoutException => true,\n' +
+      '        IOException => true,\n' +
+      '        _ => false\n' +
+      '    };\n' +
+      '}\n\n' +
+      '// 聚合异常：包一层再抛，调用方统一处理\n' +
+      'try\n' +
+      '{\n' +
+      '    try { throw new InvalidOperationException("内部错误"); }\n' +
+      '    catch (Exception ex) when (ex.Message.Contains("内部"))\n' +
+      '    {\n' +
+      '        throw new AggregateException("外层包装", ex);\n' +
+      '    }\n' +
+      '}\n' +
+      'catch (AggregateException agg)\n' +
+      '{\n' +
+      '    Console.WriteLine($"聚合异常，内部 {agg.InnerExceptions.Count} 个");\n' +
+      '}\n\n' +
+      '// 自定义异常携带结构化数据\n' +
+      'public class InsufficientBalanceException(decimal shortfall)\n' +
+      '    : Exception($"余额不足，还差 {shortfall:C}")\n' +
+      '{\n' +
+      '    public decimal Shortfall { get; } = shortfall;\n' +
+      '}\n\n' +
+      'try { throw new InsufficientBalanceException(120); }\n' +
+      'catch (InsufficientBalanceException ex)\n' +
+      '{\n' +
+      '    Console.WriteLine($"余额不足，还差 {ex.Shortfall:C}");   // 还差 ¥120.00\n' +
+      '}'
   },
 
   // ==================== 性能与底层 ====================
@@ -266,6 +373,46 @@ module.exports = [
       '// 切片零拷贝\n' +
       'ReadOnlySpan<char> hello = "Hello World".AsSpan(0, 5);\n' +
       'Console.WriteLine(hello.ToString());         // Hello'
+    ,
+    example2Title: '实战：Span 高性能解析 CSV 行',
+    example2:
+      '// 零分配解析 CSV 行：直接用 Span 切片\n' +
+      'static int CountCsvFields(ReadOnlySpan<char> line)\n' +
+      '{\n' +
+      '    int fields = 1;\n' +
+      '    bool inQuotes = false;\n' +
+      '    foreach (char c in line)\n' +
+      '    {\n' +
+      '        if (c == \'\"\') inQuotes = !inQuotes;\n' +
+      '        else if (c == \',\' && !inQuotes) fields++;\n' +
+      '    }\n' +
+      '    return fields;\n' +
+      '}\n\n' +
+      '// 逐字段提取（避免 string.Split 分配数组）\n' +
+      'static void SplitCsvLine(ReadOnlySpan<char> line)\n' +
+      '{\n' +
+      '    int start = 0;\n' +
+      '    for (int i = 0; i <= line.Length; i++)\n' +
+      '    {\n' +
+      '        if (i == line.Length || line[i] == \',\')\n' +
+      '        {\n' +
+      '            var field = line[start..i].Trim();\n' +
+      '            Console.WriteLine($"字段: {field.ToString()}");\n' +
+      '            start = i + 1;\n' +
+      '        }\n' +
+      '    }\n' +
+      '}\n\n' +
+      '// 大文件逐行流式处理（每行都是 Span 切片）\n' +
+      'using var reader = File.OpenText("data.csv");\n' +
+      'string? line;\n' +
+      'int total = 0;\n' +
+      'while ((line = reader.ReadLine()) != null)\n' +
+      '    total += CountCsvFields(line.AsSpan());\n' +
+      'Console.WriteLine($"共 {total} 个字段");\n\n' +
+      '// 演示\n' +
+      'SplitCsvLine("张三,25,北京".AsSpan());\n' +
+      '// 字段: 张三 / 字段: 25 / 字段: 北京\n' +
+      'Console.WriteLine(CountCsvFields("\"a,b\",c,d".AsSpan()));   // 3'
   },
   {
     id: 'in-params',
@@ -297,6 +444,56 @@ module.exports = [
       'ref int biggest = ref Max(ref xs[0], ref xs[1]);\n' +
       'biggest = 100;                      // 通过别名直接改原数组\n' +
       'Console.WriteLine(string.Join(",", xs)); // 1,100,3'
+    ,
+    example2Title: '实战：矩阵运算中的 in / ref / readonly struct 组合',
+    example2:
+      '// 8 字节小结构体：in 传参避免拷贝\n' +
+      'readonly struct Point2D\n' +
+      '{\n' +
+      '    public double X { get; }\n' +
+      '    public double Y { get; }\n' +
+      '    public Point2D(double x, double y) { X = x; Y = y; }\n' +
+      '}\n\n' +
+      'static double Distance(in Point2D a, in Point2D b)\n' +
+      '{\n' +
+      '    double dx = a.X - b.X, dy = a.Y - b.Y;\n' +
+      '    return Math.Sqrt(dx * dx + dy * dy);\n' +
+      '}\n\n' +
+      '// 大结构体（64 字节）：in 传参收益明显\n' +
+      'readonly struct Matrix4x4\n' +
+      '{\n' +
+      '    public double M11, M12, M13, M14;\n' +
+      '    public double M21, M22, M23, M24;\n' +
+      '    public double M31, M32, M33, M34;\n' +
+      '    public double M41, M42, M43, M44;\n\n' +
+      '    public Matrix4x4(double v) : this() { M11 = M22 = M33 = M44 = v; }\n\n' +
+      '    // in 参数：只读引用，避免整块拷贝\n' +
+      '    public static Matrix4x4 Multiply(in Matrix4x4 a, in Matrix4x4 b)\n' +
+      '    {\n' +
+      '        var r = new Matrix4x4();\n' +
+      '        r.M11 = a.M11 * b.M11 + a.M12 * b.M21 + a.M13 * b.M31 + a.M14 * b.M41;\n' +
+      '        r.M22 = a.M21 * b.M12 + a.M22 * b.M22 + a.M23 * b.M32 + a.M24 * b.M42;\n' +
+      '        // ...（实际 16 项，此处省略）\n' +
+      '        return r;\n' +
+      '    }\n' +
+      '}\n\n' +
+      '// ref 返回 + ref 局部：直接操作矩阵对角线元素\n' +
+      'static ref double Diag(ref Matrix4x4 m, int i) => ref (i switch\n' +
+      '{\n' +
+      '    0 => ref m.M11, 1 => ref m.M22, 2 => ref m.M33, _ => ref m.M44\n' +
+      '});\n\n' +
+      'var m = new Matrix4x4(1);\n' +
+      'ref double d = ref Diag(ref m, 1);\n' +
+      'd = 99;                               // 直接改 m.M22\n' +
+      'Console.WriteLine(m.M22);             // 99\n\n' +
+      '// out：多返回值惯用法\n' +
+      'static bool TryDivide(double a, double b, out double result)\n' +
+      '{\n' +
+      '    if (Math.Abs(b) < 1e-12) { result = 0; return false; }\n' +
+      '    result = a / b;\n' +
+      '    return true;\n' +
+      '}\n' +
+      'if (TryDivide(10, 3, out var q)) Console.WriteLine(q);   // 3.333...'
   },
   {
     id: 'collection-expressions',
@@ -336,6 +533,39 @@ module.exports = [
       '    return m;\n' +
       '}\n' +
       'Console.WriteLine(Max(3, 1, 4, 1, 5));   // 5'
+    ,
+    example2Title: '实战：集合表达式在字典与条件展开中的妙用',
+    example2:
+      '// ?? 右侧直接用集合表达式\n' +
+      'static int Count(IEnumerable<int>? src = null)\n' +
+      '    => (src ?? [1, 2, 3]).Count();\n' +
+      'Console.WriteLine(Count());              // 3\n\n' +
+      '// 构造并合并字典\n' +
+      'var cfg = new Dictionary<string, int>\n' +
+      '{\n' +
+      '    ["retries"] = 3,\n' +
+      '    ["timeout"] = 30,\n' +
+      '};\n' +
+      'var merged = new Dictionary<string, int>(cfg)\n' +
+      '{\n' +
+      '    ["timeout"] = 60,                    // 覆盖\n' +
+      '    ["verbose"] = 1,                     // 新增\n' +
+      '};\n' +
+      'Console.WriteLine(merged["timeout"]);    // 60\n\n' +
+      '// 返回集合表达式\n' +
+      'static int[] FirstN(int n) => [.. Enumerable.Range(1, n)];\n' +
+      'Console.WriteLine(string.Join(",", FirstN(5)));   // 1,2,3,4,5\n\n' +
+      '// 条件展开：按开关注入参数\n' +
+      'bool debug = true;\n' +
+      'List<string> args = ["--prod", .. (debug ? ["--debug", "--trace"] : [])];\n' +
+      'Console.WriteLine(string.Join(" ", args));   // --prod --debug --trace\n\n' +
+      '// 与 Span 结合：零堆分配区间判断\n' +
+      'static bool InRange(ReadOnlySpan<int> s, int lo, int hi)\n' +
+      '{\n' +
+      '    foreach (var v in s) if (v < lo || v > hi) return false;\n' +
+      '    return true;\n' +
+      '}\n' +
+      'Console.WriteLine(InRange([5, 6, 7], 1, 10));   // True'
   },
   {
     id: 'arraypool',
@@ -371,6 +601,37 @@ module.exports = [
       '}\n\n' +
       'var result = Process(100);\n' +
       'Console.WriteLine($"长度 {result.Length}，首字节 {result[0]}");'
+    ,
+    example2Title: '实战：流复制与池化复用的完整演示',
+    example2:
+      '// 把流复制到目标（池化缓冲，避免每请求分配 8KB）\n' +
+      'public static void CopyStream(Stream src, Stream dst)\n' +
+      '{\n' +
+      '    byte[] buffer = ArrayPool<byte>.Shared.Rent(8192);\n' +
+      '    try\n' +
+      '    {\n' +
+      '        int read;\n' +
+      '        while ((read = src.Read(buffer, 0, buffer.Length)) > 0)\n' +
+      '            dst.Write(buffer, 0, read);\n' +
+      '    }\n' +
+      '    finally\n' +
+      '    {\n' +
+      '        ArrayPool<byte>.Shared.Return(buffer);\n' +
+      '    }\n' +
+      '}\n\n' +
+      '// 统计池命中：Rent 返回的数组可能复用\n' +
+      'var pool = ArrayPool<int>.Shared;\n' +
+      'int[] a = pool.Rent(100);\n' +
+      'int[] b = pool.Rent(100);\n' +
+      'Console.WriteLine($"数组 a 容量 {a.Length}，b 容量 {b.Length}");  // 都 ≥100\n' +
+      'pool.Return(a);\n' +
+      'int[] c = pool.Rent(100);       // 很可能复用刚归还的 a\n' +
+      'Console.WriteLine(ReferenceEquals(a, c));   // 可能 True（池内复用）\n\n' +
+      '// 敏感数据归还前清零\n' +
+      'byte[] secret = pool.Rent(16);\n' +
+      'try { secret.AsSpan(0, 16).Fill(0xAB); }\n' +
+      'finally { pool.Return(secret, clearArray: true); }\n' +
+      'Console.WriteLine("已安全归还");'
   },
 
   // ==================== 特性与反射 ====================
@@ -415,5 +676,59 @@ module.exports = [
       '}\n\n' +
       '// 强制弃用：编译期直接报错\n' +
       '// [Obsolete("已移除", true)] void Removed() { }'
+    ,
+    example2Title: '实战：自建迷你验证框架（属性驱动）',
+    example2:
+      '// 自定义验证特性\n' +
+      '[AttributeUsage(AttributeTargets.Property)]\n' +
+      'class NotEmptyAttribute : Attribute\n' +
+      '{\n' +
+      '    public string Message { get; set; } = "不能为空";\n' +
+      '}\n\n' +
+      '[AttributeUsage(AttributeTargets.Property)]\n' +
+      'class RangeAttribute : Attribute\n' +
+      '{\n' +
+      '    public double Min { get; }\n' +
+      '    public double Max { get; }\n' +
+      '    public RangeAttribute(double min, double max) { Min = min; Max = max; }\n' +
+      '}\n\n' +
+      '// 应用特性\n' +
+      'class OrderForm\n' +
+      '{\n' +
+      '    [NotEmpty]\n' +
+      '    public string? ProductName { get; set; }\n\n' +
+      '    [Range(1, 999)]\n' +
+      '    public int Qty { get; set; }\n\n' +
+      '    [Range(0.01, 100000)]\n' +
+      '    public decimal Price { get; set; }\n' +
+      '}\n\n' +
+      '// 验证引擎：反射读取特性并校验\n' +
+      'static List<string> Validate(object obj)\n' +
+      '{\n' +
+      '    var errors = new List<string>();\n' +
+      '    foreach (var prop in obj.GetType().GetProperties())\n' +
+      '    {\n' +
+      '        var value = prop.GetValue(obj);\n\n' +
+      '        if (prop.GetCustomAttribute<NotEmptyAttribute>() is { } ne\n' +
+      '            && (value == null || string.IsNullOrWhiteSpace(value.ToString())))\n' +
+      '            errors.Add($"{prop.Name}: {ne.Message}");\n\n' +
+      '        if (prop.GetCustomAttribute<RangeAttribute>() is { } ra && value is not null)\n' +
+      '        {\n' +
+      '            double d = Convert.ToDouble(value);\n' +
+      '            if (d < ra.Min || d > ra.Max)\n' +
+      '                errors.Add($"{prop.Name}: 必须在 {ra.Min}~{ra.Max} 之间");\n' +
+      '        }\n' +
+      '    }\n' +
+      '    return errors;\n' +
+      '}\n\n' +
+      '// 演示\n' +
+      'var bad = new OrderForm { Qty = 0, Price = 999999m };\n' +
+      'foreach (var e in Validate(bad))\n' +
+      '    Console.WriteLine(e);\n' +
+      '// ProductName: 不能为空\n' +
+      '// Qty: 必须在 1~999 之间\n' +
+      '// Price: 必须在 0.01~100000 之间\n\n' +
+      'var ok = new OrderForm { ProductName = "键盘", Qty = 2, Price = 399m };\n' +
+      'Console.WriteLine(Validate(ok).Count);   // 0'
   }
 ];

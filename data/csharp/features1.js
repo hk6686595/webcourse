@@ -66,6 +66,37 @@ module.exports = [
       's.Value = 95;             // ✔\n' +
       '// s.Value = 150;        // ✘ 抛 ArgumentOutOfRangeException\n' +
       'Console.WriteLine(s.Value);'
+    ,
+    example2Title: '实战：ViewModel 属性变更通知（INotifyPropertyChanged）',
+    example2:
+      '// 自动属性 + 手动访问器混用：UI 数据绑定的经典场景\n' +
+      'public class ViewModel : System.ComponentModel.INotifyPropertyChanged\n' +
+      '{\n' +
+      '    public event System.ComponentModel.PropertyChangedEventHandler? PropertyChanged;\n\n' +
+      '    private string _name = "";\n' +
+      '    public string Name\n' +
+      '    {\n' +
+      '        get => _name;\n' +
+      '        set\n' +
+      '        {\n' +
+      '            if (_name == value) return;        // 值未变不通知\n' +
+      '            _name = value;\n' +
+      '            PropertyChanged?.Invoke(this, new(nameof(Name)));\n' +
+      '        }\n' +
+      '    }\n\n' +
+      '    // 自动属性 + 私有 set：外部只读、内部可改\n' +
+      '    public DateTime LoadedAt { get; private set; } = DateTime.Now;\n\n' +
+      '    // 自动属性 + 只读：构造函数赋值\n' +
+      '    public string Source { get; } = "cache";\n\n' +
+      '    public void Refresh() => LoadedAt = DateTime.Now;\n' +
+      '}\n\n' +
+      '// 完整演示：订阅变更事件\n' +
+      'var vm = new ViewModel();\n' +
+      'vm.PropertyChanged += (_, e) => Console.WriteLine($"属性 {e.PropertyName} 变化");\n' +
+      'vm.Name = "张三";      // 输出：属性 Name 变化\n' +
+      'vm.Name = "张三";      // 相同值：不触发事件\n' +
+      'vm.Refresh();          // 内部修改 LoadedAt（外部无法赋值）\n' +
+      'Console.WriteLine($"{vm.Name} / {vm.LoadedAt:HH:mm:ss} / {vm.Source}");'
   },
   {
     id: 'expression-bodied-members',
@@ -100,6 +131,28 @@ module.exports = [
       'Console.WriteLine(a);                 // (3, 4)\n' +
       'Console.WriteLine(a.Length);          // 5\n' +
       'Console.WriteLine(a.DistanceTo(b));   // 5'
+    ,
+    example2Title: '实战：用表达式主体成员构建计算工具类',
+    example2:
+      'public static class Geometry\n' +
+      '{\n' +
+      '    public const double Pi = Math.PI;\n' +
+      '    public static double Tau => 2 * Math.PI;\n\n' +
+      '    // 面积 / 周长：一行表达式\n' +
+      '    public static double CircleArea(double r) => Pi * r * r;\n' +
+      '    public static double CirclePerimeter(double r) => Tau * r;\n' +
+      '    public static double RectArea(double w, double h) => w * h;\n\n' +
+      '    // 多个分支也可写成表达式主体（嵌套三元）\n' +
+      '    public static string Classify(double r) =>\n' +
+      '        r <= 0 ? "无效半径" : r < 1 ? "小圆" : r < 10 ? "中圆" : "大圆";\n\n' +
+      '    // 表达式主体属性\n' +
+      '    public static double GoldenRatio => (1 + Math.Sqrt(5)) / 2;\n' +
+      '}\n\n' +
+      '// 完整演示\n' +
+      'Console.WriteLine(Geometry.CircleArea(1));       // 3.141592653589793\n' +
+      'Console.WriteLine(Geometry.CirclePerimeter(1));  // 6.283185307179586\n' +
+      'Console.WriteLine(Geometry.Classify(5));         // 中圆\n' +
+      'Console.WriteLine(Geometry.GoldenRatio);         // 1.618033988749895'
   },
   {
     id: 'nullable-reference-types',
@@ -151,6 +204,42 @@ module.exports = [
       'Console.WriteLine(svc.GetNameLength(99));     // 0（不存在）\n' +
       'Console.WriteLine(svc.NameOrDefault(2));      // 李四\n' +
       'Console.WriteLine(svc.NameOrDefault(99));     // 未知用户'
+    ,
+    example2Title: '实战：判空链路的四种写法对比',
+    example2:
+      'public class Order\n' +
+      '{\n' +
+      '    public string Customer { get; set; } = "";\n' +
+      '    public string? Note { get; set; }\n' +
+      '    public Address? ShipTo { get; set; }\n' +
+      '}\n' +
+      'public class Address\n' +
+      '{\n' +
+      '    public string City { get; set; } = "";\n' +
+      '    public string? Street { get; set; }\n' +
+      '}\n\n' +
+      'Order? order = null;\n\n' +
+      '// ① 传统写法：层层判空（啰嗦）\n' +
+      'if (order != null && order.ShipTo != null && order.ShipTo.City != null)\n' +
+      '    Console.WriteLine(order.ShipTo.City);\n\n' +
+      '// ② ?. 链式：一行搞定，任一环节为 null 整体为 null\n' +
+      'string? city1 = order?.ShipTo?.City;\n' +
+      'Console.WriteLine(city1 ?? "（无城市信息）");\n\n' +
+      '// ③ switch 属性模式：结构化的判空分支\n' +
+      'string label = order switch\n' +
+      '{\n' +
+      '    { ShipTo: { City: { Length: > 0 } c } } => $"收货城市：{c}",\n' +
+      '    { ShipTo: null }                        => "未填写收货地址",\n' +
+      '    _                                       => "信息缺失"\n' +
+      '};\n' +
+      'Console.WriteLine(label);\n\n' +
+      '// ④ null 合并 + TryGetValue 安全取值\n' +
+      'Dictionary<int, string> users = new() { [1] = "张三" };\n' +
+      'string name = users.TryGetValue(2, out var n) ? n : "匿名";\n' +
+      'Console.WriteLine(name);                    // 匿名\n\n' +
+      '// 有值的情况\n' +
+      'order = new Order { Customer = "李四", ShipTo = new Address { City = "北京" } };\n' +
+      'Console.WriteLine(order?.ShipTo?.City ?? "无");   // 北京'
   },
   {
     id: 'record-types',
@@ -245,6 +334,32 @@ module.exports = [
       'var item = new OrderItem("BOOK", 2, 59.9m);\n' +
       'Console.WriteLine(item.Subtotal);             // 119.8\n' +
       '// item.Qty = 3;   // ✘ init 不可变'
+    ,
+    example2Title: '实战：不可变 DTO 与序列化往返',
+    example2:
+      'using System.Text.Json;\n\n' +
+      '// 不可变数据模型：init 让反序列化可赋值，之后不可变\n' +
+      'public class Product\n' +
+      '{\n' +
+      '    public required string Sku { get; init; }\n' +
+      '    public required string Name { get; init; }\n' +
+      '    public decimal Price { get; init; }\n' +
+      '    public string[] Tags { get; init; } = Array.Empty<string>();\n' +
+      '}\n\n' +
+      '// 构造并序列化\n' +
+      'var p = new Product { Sku = "A-001", Name = "机械键盘", Price = 399.5m, Tags = ["外设", "办公"] };\n' +
+      'string json = JsonSerializer.Serialize(p);\n' +
+      'Console.WriteLine(json);\n' +
+      '// {"Sku":"A-001","Name":"机械键盘","Price":399.5,"Tags":["外设","办公"]}\n\n' +
+      '// 反序列化回不可变对象：init 属性由 JSON 填充，之后只读\n' +
+      'var back = JsonSerializer.Deserialize<Product>(json)!;\n' +
+      'Console.WriteLine($"{back.Sku} {back.Name} {back.Price:C}");\n\n' +
+      '// p.Price = 0;   // ✘ CS8852：init 属性初始化后不可变\n\n' +
+      '// 与 with 结合（record）：生成“改了一点”的新副本\n' +
+      'public record Config(string Host, int Port);\n' +
+      'var cfg = new Config("localhost", 5432);\n' +
+      'var prod = cfg with { Host = "db.internal" };\n' +
+      'Console.WriteLine($"{prod.Host}:{prod.Port}");   // db.internal:5432'
   },
   {
     id: 'required-members',
@@ -282,6 +397,39 @@ module.exports = [
       '// ✘ 编译错误 CS9035：缺少 required 属性 ProductName\n' +
       '// var bad = new Order { Amount = 10 };\n' +
       'Console.WriteLine($"{ok1.ProductName} / {ok1.Amount}");'
+    ,
+    example2Title: '实战：required + System.Text.Json 反序列化校验（.NET 8）',
+    example2:
+      'using System.Text.Json;\n\n' +
+      'public class CreateOrderDto\n' +
+      '{\n' +
+      '    public required string ProductName { get; init; }\n' +
+      '    public required int Qty { get; init; }\n' +
+      '    public decimal UnitPrice { get; init; } = 1.0m;   // 可选：有默认值\n' +
+      '}\n\n' +
+      '// ✔ 完整 JSON：全部字段齐全\n' +
+      'var jsonOk = """{ "ProductName": "键盘", "Qty": 2, "UnitPrice": 199.5 }""";\n' +
+      'var dto = JsonSerializer.Deserialize<CreateOrderDto>(jsonOk)!;\n' +
+      'Console.WriteLine($"{dto.ProductName} x{dto.Qty} = {dto.Qty * dto.UnitPrice}");\n\n' +
+      '// ✘ 缺少 required 字段：.NET 8 反序列化直接抛 JsonException\n' +
+      'try\n' +
+      '{\n' +
+      '    var bad = """{ "Qty": 1 }""";\n' +
+      '    JsonSerializer.Deserialize<CreateOrderDto>(bad);\n' +
+      '}\n' +
+      'catch (JsonException ex)\n' +
+      '{\n' +
+      '    Console.WriteLine($"校验失败：{ex.Message}");\n' +
+      '}\n\n' +
+      '// 构造函数 + [SetsRequiredMembers]：显式通道绕开初始化器校验\n' +
+      'public class Order2\n' +
+      '{\n' +
+      '    public required string Id { get; init; }\n\n' +
+      '    [SetsRequiredMembers]\n' +
+      '    public Order2(string id) => Id = id;\n' +
+      '}\n' +
+      'var o = new Order2("ORD-1001");        // 合法\n' +
+      'Console.WriteLine(o.Id);'
   },
   {
     id: 'primary-constructors',
@@ -326,6 +474,40 @@ module.exports = [
       '// 演示\n' +
       'var logger = new Logger();\n' +
       'logger.Write("启动完成");     // [LOG] 启动完成'
+    ,
+    example2Title: '实战：依赖注入服务与接口的组合用法',
+    example2:
+      '// 接口定义\n' +
+      'public interface IWeatherService\n' +
+      '{\n' +
+      '    Task<string> GetForecastAsync(string city);\n' +
+      '}\n\n' +
+      '// 主构造函数 + 接口实现：DI 注入 HttpClient 与配置\n' +
+      'public class WeatherService(string apiBase, HttpClient http) : IWeatherService\n' +
+      '{\n' +
+      '    public async Task<string> GetForecastAsync(string city)\n' +
+      '    {\n' +
+      '        var url = $"{apiBase}/weather?city={Uri.EscapeDataString(city)}";\n' +
+      '        // 主构造函数捕获的 apiBase / http 直接可用\n' +
+      '        return await http.GetStringAsync(url);\n' +
+      '    }\n' +
+      '}\n\n' +
+      '// 主构造函数参数可以带默认值\n' +
+      'public class Logger(string prefix = "[LOG]", int verbosity = 1)\n' +
+      '{\n' +
+      '    public void Info(string msg)\n' +
+      '    {\n' +
+      '        if (verbosity >= 1) Console.WriteLine($"{prefix} {msg}");\n' +
+      '    }\n' +
+      '}\n\n' +
+      '// 完整演示\n' +
+      'var svc = new WeatherService("https://api.example.com", new HttpClient());\n' +
+      'var forecast = await svc.GetForecastAsync("北京");\n' +
+      'Console.WriteLine(forecast);\n\n' +
+      'var logger = new Logger();            // 全部默认值\n' +
+      'logger.Info("启动");                   // [LOG] 启动\n' +
+      'var verbose = new Logger("[DBG]", 2); // 显式指定\n' +
+      'verbose.Info("查询耗时 12ms");         // [DBG] 查询耗时 12ms'
   },
   {
     id: 'tuples',
@@ -414,6 +596,38 @@ module.exports = [
       '// 属性模式安全解包（C# 9）\n' +
       'int? maybe = 10;\n' +
       'if (maybe is { } v) Console.WriteLine(v);  // 10'
+    ,
+    example2Title: '实战：Nullable 在数据统计与数据库映射中的典型用法',
+    example2:
+      '// 模拟数据库记录：可空列\n' +
+      'record DbRow(int Id, string Name, int? Score, DateTime? GraduatedAt);\n\n' +
+      'var rows = new[]\n' +
+      '{\n' +
+      '    new DbRow(1, "张三", 88, DateTime.Parse("2024-06-30")),\n' +
+      '    new DbRow(2, "李四", null, null),          // 缺考 & 未毕业\n' +
+      '    new DbRow(3, "王五", 72, null),\n' +
+      '};\n\n' +
+      '// 统计：只统计有成绩的行\n' +
+      'var avgScore = rows\n' +
+      '    .Where(r => r.Score.HasValue)\n' +
+      '    .Average(r => r.Score!.Value);             // ! 告知编译器已判空\n' +
+      'Console.WriteLine($"平均分：{avgScore:F1}");    // 80.0\n\n' +
+      '// 展示时给缺省值\n' +
+      'foreach (var r in rows)\n' +
+      '{\n' +
+      '    string score = r.Score?.ToString() ?? "缺考";\n' +
+      '    string grad  = r.GraduatedAt?.ToString("yyyy") ?? "在读";\n' +
+      '    Console.WriteLine($"{r.Name}: 成绩={score}, 毕业={grad}");\n' +
+      '}\n\n' +
+      '// 三态 bool：未表态/同意/拒绝\n' +
+      'bool? agreed = null;\n' +
+      'string state = agreed switch\n' +
+      '{\n' +
+      '    true  => "同意",\n' +
+      '    false => "拒绝",\n' +
+      '    null  => "未表态"\n' +
+      '};\n' +
+      'Console.WriteLine(state);          // 未表态'
   },
 
   // ==================== 面向对象 ====================
@@ -461,6 +675,34 @@ module.exports = [
       'Console.WriteLine((-3).Clamp(0, 10));         // 0\n\n' +
       'string?[] names = { "a", null, "b" };\n' +
       'Console.WriteLine(string.Join(",", names.WhereNotNull()));  // a,b'
+    ,
+    example2Title: '实战：日期与枚举的扩展方法 + 链式调用',
+    example2:
+      'public static class DateExtensions\n' +
+      '{\n' +
+      '    // 是否为工作日（周一~周五）\n' +
+      '    public static bool IsWeekday(this DateTime d)\n' +
+      '        => d.DayOfWeek is >= DayOfWeek.Monday and <= DayOfWeek.Friday;\n\n' +
+      '    // 下一个周一\n' +
+      '    public static DateTime NextMonday(this DateTime d)\n' +
+      '    {\n' +
+      '        int days = ((int)DayOfWeek.Monday - (int)d.DayOfWeek + 7) % 7;\n' +
+      '        return days == 0 ? d.AddDays(7) : d.AddDays(days);\n' +
+      '    }\n\n' +
+      '    // 周岁计算（处理闰日生日）\n' +
+      '    public static int AgeOn(this DateTime birth, DateTime today)\n' +
+      '    {\n' +
+      '        int age = today.Year - birth.Year;\n' +
+      '        return today < birth.AddYears(age) ? age - 1 : age;\n' +
+      '    }\n' +
+      '}\n\n' +
+      '// 链式使用\n' +
+      'var today = new DateTime(2024, 8, 29);\n' +
+      'Console.WriteLine(today.IsWeekday());            // True\n' +
+      'Console.WriteLine(today.NextMonday().ToString("yyyy-MM-dd"));  // 2024-09-02\n\n' +
+      'var birth = new DateTime(2000, 2, 29);\n' +
+      'Console.WriteLine(birth.AgeOn(today));           // 24（闰日生日的周岁算法）\n' +
+      'Console.WriteLine(birth.AgeOn(today.AddYears(1))); // 25'
   },
   {
     id: 'default-interface-methods',
@@ -497,6 +739,41 @@ module.exports = [
       '{\n' +
       '    static abstract T operator +(T left, T right);\n' +
       '}'
+    ,
+    example2Title: '接口默认实现 + 显式实现与 base 调用',
+    example2:
+      'public interface IReporter\n' +
+      '{\n' +
+      '    void Report(string message);\n\n' +
+      '    // 默认实现：组合出新的方法\n' +
+      '    void ReportWarning(string message) => Report($"[警告] {message}");\n' +
+      '    void ReportError(string message)   => Report($"[错误] {message}");\n\n' +
+      '    // 默认属性实现\n' +
+      '    string Prefix { get; set; } = "[报告]";\n' +
+      '}\n\n' +
+      'public class ConsoleReporter : IReporter\n' +
+      '{\n' +
+      '    public void Report(string message) => Console.WriteLine(message);\n' +
+      '    // Prefix / ReportWarning / ReportError 全部继承默认实现\n' +
+      '}\n\n' +
+      'public class StyledReporter : IReporter\n' +
+      '{\n' +
+      '    public void Report(string message) => Console.WriteLine($"══ {message} ══");\n\n' +
+      '    // 想改写默认实现时，用 base 调用接口版本再增强\n' +
+      '    public void ReportError(string message)\n' +
+      '    {\n' +
+      '        Console.WriteLine("--- 错误开始 ---");\n' +
+      '        base.ReportError(message);     // 调用 IReporter 的默认实现\n' +
+      '        Console.WriteLine("--- 错误结束 ---");\n' +
+      '    }\n' +
+      '}\n\n' +
+      '// 完整演示\n' +
+      'IReporter a = new ConsoleReporter();\n' +
+      'a.ReportWarning("CPU 过高");      // [警告] CPU 过高\n' +
+      'a.ReportError("磁盘将满");        // [错误] 磁盘将满\n\n' +
+      'IReporter b = new StyledReporter();\n' +
+      'b.Report("启动");                 // ══ 启动 ══\n' +
+      'b.ReportError("连接超时");        // 带边框的完整错误流程'
   },
   {
     id: 'operator-overloading-modern',
@@ -531,6 +808,34 @@ module.exports = [
       'Console.WriteLine($"{total.Amount} {total.Currency}");         // 35 CNY\n' +
       'decimal d = total;                                            // 隐式转换 -> 35\n' +
       'Console.WriteLine(d);'
+    ,
+    example2Title: '实战：复数类型的完整运算符集',
+    example2:
+      'public readonly record struct Complex(double Re, double Im)\n' +
+      '{\n' +
+      '    public double Magnitude => Math.Sqrt(Re * Re + Im * Im);\n\n' +
+      '    public static Complex operator +(Complex a, Complex b) => new(a.Re + b.Re, a.Im + b.Im);\n' +
+      '    public static Complex operator -(Complex a, Complex b) => new(a.Re - b.Re, a.Im - b.Im);\n' +
+      '    public static Complex operator *(Complex a, Complex b) =>\n' +
+      '        new(a.Re * b.Re - a.Im * b.Im, a.Re * b.Im + a.Im * b.Re);\n\n' +
+      '    // 复数 × 实数\n' +
+      '    public static Complex operator *(Complex a, double k) => new(a.Re * k, a.Im * k);\n\n' +
+      '    // 一元负号\n' +
+      '    public static Complex operator -(Complex a) => new(-a.Re, -a.Im);\n\n' +
+      '    // 显式转换：复数 -> 实数（取模）\n' +
+      '    public static explicit operator double(Complex c) => c.Magnitude;\n\n' +
+      '    public override string ToString() =>\n' +
+      '        Im >= 0 ? $"{Re} + {Im}i" : $"{Re} - {-Im}i";\n' +
+      '}\n\n' +
+      '// 完整演示：复数运算\n' +
+      'var z1 = new Complex(3, 4);\n' +
+      'var z2 = new Complex(1, -2);\n\n' +
+      'Console.WriteLine(z1 + z2);        // 4 + 2i\n' +
+      'Console.WriteLine(z1 - z2);        // 2 + 6i\n' +
+      'Console.WriteLine(z1 * z2);        // 11 - 2i\n' +
+      'Console.WriteLine(z1 * 2);         // 6 + 8i\n' +
+      'Console.WriteLine(-z1);            // -3 - 4i\n' +
+      'Console.WriteLine((double)z1);     // 5（模长，显式转换）'
   },
   {
     id: 'generics-constraints',
@@ -566,6 +871,39 @@ module.exports = [
       'var e1 = repo.New();\n' +
       'Console.WriteLine(e1.Id != Guid.Empty);   // True\n\n' +
       'public class MyEntity : IEntity { public Guid Id { get; set; } }'
+    ,
+    example2Title: '实战：泛型数学（INumber<T>）与 unmanaged 约束',
+    example2:
+      'using System.Numerics;\n\n' +
+      '// 泛型数学：任何数值类型都能直接求和（.NET 7+）\n' +
+      'public static class Stats\n' +
+      '{\n' +
+      '    public static T Sum<T>(IEnumerable<T> values) where T : INumber<T>\n' +
+      '    {\n' +
+      '        T total = T.Zero;\n' +
+      '        foreach (var v in values) total += v;\n' +
+      '        return total;\n' +
+      '    }\n\n' +
+      '    public static T Max2<T>(IEnumerable<T> values) where T : IComparisonOperators<T, T, bool>\n' +
+      '    {\n' +
+      '        T best = values.First();\n' +
+      '        foreach (var v in values) if (v > best) best = v;\n' +
+      '        return best;\n' +
+      '    }\n' +
+      '}\n\n' +
+      '// int / double / decimal 全部适用\n' +
+      'Console.WriteLine(Stats.Sum(new[] { 1, 2, 3 }));        // 6\n' +
+      'Console.WriteLine(Stats.Sum(new[] { 1.5, 2.5 }));       // 4.0\n' +
+      'Console.WriteLine(Stats.Sum(new[] { 1.5m, 2.5m }));     // 4.0\n' +
+      'Console.WriteLine(Stats.Max2(new[] { 3, 9, 2 }));       // 9\n\n' +
+      '// 泛型 + unmanaged 约束：直接操作内存块\n' +
+      'static void Fill<T>(Span<T> span, T value) where T : unmanaged\n' +
+      '{\n' +
+      '    for (int i = 0; i < span.Length; i++) span[i] = value;\n' +
+      '}\n' +
+      'Span<int> buf = stackalloc int[4];\n' +
+      'Fill(buf, 7);\n' +
+      'Console.WriteLine(string.Join(",", buf.ToArray()));     // 7,7,7,7'
   },
   {
     id: 'partial-types',
@@ -606,6 +944,40 @@ module.exports = [
       '// 完整演示\n' +
       'var c = new Customer { Id = 1, Name = "旧名" };\n' +
       'c.Rename("新名");     // 输出：改名: 旧名 -> 新名'
+    ,
+    example2Title: '实战：脚手架生成 + 手写业务逻辑分离',
+    example2:
+      '// ===== DbModels.cs —— 由脚手架/代码生成器产生 =====\n' +
+      'public partial class Employee\n' +
+      '{\n' +
+      '    public int Id { get; set; }\n' +
+      '    public string Name { get; set; } = "";\n' +
+      '    public decimal Salary { get; set; }\n' +
+      '}\n\n' +
+      '// ===== Employee.Logic.cs —— 手写的业务扩展 =====\n' +
+      'public partial class Employee\n' +
+      '{\n' +
+      '    public decimal AnnualBonus => Salary * 12 * 0.1m;   // 年终奖\n\n' +
+      '    public partial void OnSalaryChanged(decimal old, decimal now);\n\n' +
+      '    public void Raise(decimal amount)\n' +
+      '    {\n' +
+      '        var old = Salary;\n' +
+      '        Salary += amount;\n' +
+      '        OnSalaryChanged(old, Salary);   // 调用分部方法\n' +
+      '    }\n' +
+      '}\n\n' +
+      '// ===== Employee.Hooks.cs —— 由 AOP/生成器补全实现 =====\n' +
+      'public partial class Employee\n' +
+      '{\n' +
+      '    // 实现分部方法：记录工资变动日志\n' +
+      '    partial void OnSalaryChanged(decimal old, decimal now)\n' +
+      '        => Console.WriteLine($"调薪：{old:C} -> {now:C}");\n' +
+      '}\n\n' +
+      '// 完整演示\n' +
+      'var e = new Employee { Id = 1, Name = "张三", Salary = 10000 };\n' +
+      'e.Raise(2000);\n' +
+      '// 输出：调薪：¥10,000.00 -> ¥12,000.00\n' +
+      'Console.WriteLine($"年终奖 {e.AnnualBonus:C}");   // ¥12,000.00'
   },
   {
     id: 'enum-flags',
@@ -642,6 +1014,40 @@ module.exports = [
       'p &= ~Permissions.Write;                        // 去掉 Write\n' +
       'Console.WriteLine(p);                           // Read, Delete\n' +
       'Console.WriteLine((Permissions)7 == Permissions.Admin); // True'
+    ,
+    example2Title: '实战：基于 [Flags] 的权限校验服务',
+    example2:
+      '[Flags]\n' +
+      'public enum Permissions\n' +
+      '{\n' +
+      '    None   = 0,\n' +
+      '    Read   = 1 << 0,     // 1\n' +
+      '    Write  = 1 << 1,     // 2\n' +
+      '    Delete = 1 << 2,     // 4\n' +
+      '    Admin  = Read | Write | Delete\n' +
+      '}\n\n' +
+      'public static class Auth\n' +
+      '{\n' +
+      '    // 全部包含才算通过\n' +
+      '    public static bool Has(this Permissions user, Permissions required)\n' +
+      '        => (user & required) == required;\n\n' +
+      '    public static Permissions Grant(Permissions user, Permissions add)\n' +
+      '        => user | add;\n\n' +
+      '    public static Permissions Revoke(Permissions user, Permissions remove)\n' +
+      '        => user & ~remove;\n' +
+      '}\n\n' +
+      '// 完整演示\n' +
+      'var alice = Permissions.Read | Permissions.Write;\n' +
+      'Console.WriteLine(alice);                       // Read, Write\n' +
+      'Console.WriteLine(alice.Has(Permissions.Read));    // True\n' +
+      'Console.WriteLine(alice.Has(Permissions.Admin));   // False（缺 Delete）\n\n' +
+      'alice = Auth.Grant(alice, Permissions.Delete);\n' +
+      'Console.WriteLine(alice.Has(Permissions.Admin));   // True\n\n' +
+      'alice = Auth.Revoke(alice, Permissions.Write);\n' +
+      'Console.WriteLine(alice);                          // Read, Delete\n\n' +
+      '// 位运算判断 vs HasFlag\n' +
+      'Console.WriteLine((alice & Permissions.Read) != 0);   // True\n' +
+      'Console.WriteLine(alice.HasFlag(Permissions.Read));   // True'
   },
   {
     id: 'generic-variance',
@@ -674,5 +1080,27 @@ module.exports = [
       '    (x, y) => x.Age.CompareTo(y.Age));\n' +
       'dogs.Sort(byAge);                                    // ✔\n' +
       'Console.WriteLine(dogs.Count);'
+    ,
+    example2Title: '实战：委托逆变 + 集合协变的真实应用',
+    example2:
+      'public class Animal { public string Name = ""; }\n' +
+      'public class Cat : Animal { public void Meow() => Console.WriteLine("喵"); }\n' +
+      'public class Dog : Animal { public void Bark() => Console.WriteLine("汪"); }\n\n' +
+      '// ===== 协变应用：批量处理更具体的类型 =====\n' +
+      'IEnumerable<Cat> cats = new[] { new Cat { Name = "咪咪" } };\n' +
+      'IEnumerable<Animal> animals = cats;            // ✔ List<Cat> -> IEnumerable<Animal>\n' +
+      'foreach (var a in animals) Console.WriteLine(a.Name);\n\n' +
+      '// ===== 逆变应用：一个比较器处理多个子类型 =====\n' +
+      'var comparer = Comparer<Animal>.Create((x, y) => x.Name.CompareTo(y.Name));\n' +
+      'var dogs = new List<Dog> { new() { Name = "旺财" }, new() { Name = "阿黄" } };\n' +
+      'dogs.Sort(comparer);                           // ✔ Comparer<Animal> 用于 List<Dog>\n\n' +
+      '// ===== 委托逆变：Action<in T> =====\n' +
+      'Action<Animal> feed = a => Console.WriteLine($"喂食 {a.Name}");\n' +
+      'Action<Cat> feedCat = feed;                    // ✔ 逆变\n' +
+      'feedCat(new Cat { Name = "小白" });\n\n' +
+      '// ===== 协变返回：Func<out T> =====\n' +
+      'Func<Cat> getCat = () => new Cat { Name = "橘子" };\n' +
+      'Func<Animal> getAnimal = getCat;               // ✔ 协变\n' +
+      'Console.WriteLine(getAnimal().Name);'
   }
 ];
