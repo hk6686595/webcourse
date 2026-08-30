@@ -192,7 +192,7 @@ async function openFeature(id, li) {
       `<pre class="code">${highlight(f.example2, codeLang)}</pre>`;
   }
   if (f.example3) {
-    html += `<h3>${esc(f.example3Title || '实战示例')}</h3>` +
+    html += `<h3>${esc(f.example3Title || '实战进阶示例')}</h3>` +
       `<pre class="code">${highlight(f.example3, codeLang)}</pre>`;
   }
   $('doc-sections').innerHTML = html;

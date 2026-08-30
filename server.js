@@ -30,7 +30,7 @@ app.get('/api/csharp', (req, res) => {
   if (q) {
     const kw = String(q).toLowerCase();
     list = list.filter(f =>
-      (f.title + f.summary + f.detail.join(' ') + f.example).toLowerCase().includes(kw));
+      (f.title + f.summary + f.detail.join(' ') + f.example + (f.example3 || '')).toLowerCase().includes(kw));
     // 搜索时只返回摘要，避免大 payload
     return res.json(list.map(({ id, title, version, category: c, level: l, summary }) =>
       ({ id, title, version, category: c, level: l, summary })));
@@ -58,7 +58,7 @@ app.get('/api/cpp20', (req, res) => {
   if (q) {
     const kw = String(q).toLowerCase();
     list = list.filter(f =>
-      (f.title + f.summary + f.detail.join(' ') + f.example).toLowerCase().includes(kw));
+      (f.title + f.summary + f.detail.join(' ') + f.example + (f.example3 || '')).toLowerCase().includes(kw));
   }
   res.json(list.map(({ id, title, category, status, level, summary }) =>
     ({ id, title, category, status, level, summary })));
@@ -77,7 +77,7 @@ app.get('/api/cpp11', (req, res) => {
   if (q) {
     const kw = String(q).toLowerCase();
     list = list.filter(f =>
-      (f.title + f.summary + f.detail.join(' ') + f.example).toLowerCase().includes(kw));
+      (f.title + f.summary + f.detail.join(' ') + f.example + (f.example3 || '')).toLowerCase().includes(kw));
   }
   res.json(list.map(({ id, title, category, version, level, summary }) =>
     ({ id, title, category, version, level, summary })));
@@ -96,7 +96,7 @@ app.get('/api/js', (req, res) => {
   if (q) {
     const kw = String(q).toLowerCase();
     list = list.filter(f =>
-      (f.title + f.summary + f.detail.join(' ') + f.example).toLowerCase().includes(kw));
+      (f.title + f.summary + f.detail.join(' ') + f.example + (f.example3 || '')).toLowerCase().includes(kw));
   }
   res.json(list.map(({ id, title, category, version, level, summary }) =>
     ({ id, title, category, version, level, summary })));
@@ -115,7 +115,7 @@ app.get('/api/patterns', (req, res) => {
   if (q) {
     const kw = String(q).toLowerCase();
     list = list.filter(f =>
-      (f.title + f.summary + f.detail.join(' ') + f.example).toLowerCase().includes(kw));
+      (f.title + f.summary + f.detail.join(' ') + f.example + (f.example3 || '')).toLowerCase().includes(kw));
   }
   res.json(list.map(({ id, title, category, version, level, summary }) =>
     ({ id, title, category, version, level, summary })));
@@ -134,7 +134,7 @@ app.get('/api/python', (req, res) => {
   if (q) {
     const kw = String(q).toLowerCase();
     list = list.filter(f =>
-      (f.title + f.summary + f.detail.join(' ') + f.example).toLowerCase().includes(kw));
+      (f.title + f.summary + f.detail.join(' ') + f.example + (f.example3 || '')).toLowerCase().includes(kw));
   }
   res.json(list.map(({ id, title, category, version, level, summary }) =>
     ({ id, title, category, version, level, summary })));
@@ -153,7 +153,7 @@ app.get('/api/ts', (req, res) => {
   if (q) {
     const kw = String(q).toLowerCase();
     list = list.filter(f =>
-      (f.title + f.summary + f.detail.join(' ') + f.example).toLowerCase().includes(kw));
+      (f.title + f.summary + f.detail.join(' ') + f.example + (f.example3 || '')).toLowerCase().includes(kw));
   }
   res.json(list.map(({ id, title, category, version, level, summary }) =>
     ({ id, title, category, version, level, summary })));
@@ -172,7 +172,7 @@ app.get('/api/agent', (req, res) => {
   if (q) {
     const kw = String(q).toLowerCase();
     list = list.filter(f =>
-      (f.title + f.summary + f.detail.join(' ') + f.example).toLowerCase().includes(kw));
+      (f.title + f.summary + f.detail.join(' ') + f.example + (f.example3 || '')).toLowerCase().includes(kw));
   }
   res.json(list.map(({ id, title, category, version, level, summary }) =>
     ({ id, title, category, version, level, summary })));
