@@ -25,7 +25,23 @@ module.exports = [
       'function mul(a, b = 2) {\n' +
       '  return a * b;\n' +
       '}\n' +
-      'console.log(mul(3));           // 6（b 取默认值）'
+      'console.log(mul(3));           // 6（b 取默认值）',
+    example3Title: '实战：函数作为一等公民（回调 / 工厂）',
+    example3:
+      '// 1) 回调：把函数传给另一个函数\n' +
+      'const nums = [5, 2, 8, 1];\n' +
+      'nums.sort((a, b) => a - b);\n' +
+      'console.log(nums);            // [1, 2, 5, 8]\n\n' +
+      '// 2) 工厂函数：返回一个"记住参数"的函数\n' +
+      'function multiply(factor) {\n' +
+      '  return x => x * factor;\n' +
+      '}\n' +
+      'const double = multiply(2);\n' +
+      'const triple = multiply(3);\n' +
+      'console.log(double(10), triple(10)); // 20 30\n\n' +
+      '// 3) 对象里的方法也是函数\n' +
+      'const math = { add: (a, b) => a + b };\n' +
+      'console.log(math.add(4, 5)); // 9'
   },
   {
     id: 'js-arrow',
@@ -49,7 +65,27 @@ module.exports = [
       '  value: 10,\n' +
       '  get: () => this.value        // 这里的 this 不是 obj！\n' +
       '};\n' +
-      '// obj.get();  // undefined（箭头函数 this 非 obj）'
+      '// obj.get();  // undefined（箭头函数 this 非 obj）',
+    example3Title: '实战：箭头函数正确捕获 this',
+    example3:
+      '// 错误示范：对象方法用箭头函数，this 指向外层（window/undefined）\n' +
+      'const bad = {\n' +
+      '  value: 1,\n' +
+      '  get: () => this.value        // this 不是 bad\n' +
+      '};\n' +
+      '// bad.get();  // undefined\n\n' +
+      '// 正确：方法用普通函数，回调用箭头函数\n' +
+      'const timer = {\n' +
+      '  count: 0,\n' +
+      '  start() {\n' +
+      '    // 箭头函数的 this 继承 start 的 this（即 timer）\n' +
+      '    setInterval(() => {\n' +
+      '      this.count++;\n' +
+      '      console.log(this.count);\n' +
+      '    }, 1000);\n' +
+      '  }\n' +
+      '};\n' +
+      '// timer.start();  // 每秒打印 1 2 3 ...'
   },
   {
     id: 'js-rest-params',
@@ -72,7 +108,22 @@ module.exports = [
       '  console.log("首个:", a);\n' +
       '  console.log("其余:", rest);\n' +
       '}\n' +
-      'first(1, 2, 3);                  // 首个: 1  其余: [2, 3]'
+      'first(1, 2, 3);                  // 首个: 1  其余: [2, 3]',
+    example3Title: '实战：rest 配合解构与真实可变参数',
+    example3:
+      '// 解构 + rest：取首个，其余收集\n' +
+      'const [head, ...tail] = [10, 20, 30, 40];\n' +
+      'console.log(head, tail);     // 10 [20, 30, 40]\n\n' +
+      '// 真实可变参数函数：用分隔符拼接任意字符串\n' +
+      'function join(sep, ...parts) {\n' +
+      '  return parts.join(sep);\n' +
+      '}\n' +
+      'console.log(join("-", "a", "b", "c")); // a-b-c\n\n' +
+      '// 把类数组 arguments 转成真数组（老代码兼容）\n' +
+      'function legacy() {\n' +
+      '  return [...arguments].map(Number);\n' +
+      '}\n' +
+      'console.log(legacy("1", "2")); // [1, 2]'
   },
   {
     id: 'js-scope-closure',
@@ -102,7 +153,22 @@ module.exports = [
       '// 循环闭包用 let 才正确\n' +
       'for (let i = 0; i < 3; i++) {\n' +
       '  setTimeout(() => console.log(i), 10);  // 0 1 2（var 会全输出 3）\n' +
-      '}'
+      '}',
+    example3Title: '实战：用闭包封装私有状态（模块模式）',
+    example3:
+      '// 闭包让 balance 对外不可直接访问，只能通过返回的方法修改\n' +
+      'function createBank(initial) {\n' +
+      '  let balance = initial;           // 私有变量\n' +
+      '  return {\n' +
+      '    deposit(n) { balance += n; },\n' +
+      '    withdraw(n) { if (n <= balance) balance -= n; },\n' +
+      '    getBalance() { return balance; }\n' +
+      '  };\n' +
+      '}\n' +
+      'const bank = createBank(100);\n' +
+      'bank.deposit(50);\n' +
+      'console.log(bank.getBalance());    // 150\n' +
+      '// bank.balance;  // undefined：外部无法直接读写私有变量'
   },
   {
     id: 'js-this',
@@ -126,7 +192,24 @@ module.exports = [
       'const fn = obj.say;\n' +
       'fn();                            // undefined（this 丢失）\n\n' +
       'const bound = fn.bind(obj);\n' +
-      'bound();                         // Tom（显式绑定）'
+      'bound();                         // Tom（显式绑定）',
+    example3Title: '实战：事件回调里的 this 丢失与修复',
+    example3:
+      'const btn = {\n' +
+      '  label: "提交",\n' +
+      '  onClick() { console.log("点击了", this.label); }\n' +
+      '};\n\n' +
+      '// 把方法当回调传出去，this 会丢失\n' +
+      'const handler = btn.onClick;       // this 不再指向 btn\n\n' +
+      '// 修复一：bind 永久绑定\n' +
+      'const bound = btn.onClick.bind(btn);\n\n' +
+      '// 修复二：用箭头函数包一层\n' +
+      'const wrapped = () => btn.onClick();\n\n' +
+      '// 类中使用：构造时绑定一次，避免每次渲染新建函数\n' +
+      'class View {\n' +
+      '  constructor() { this.click = this.click.bind(this); }\n' +
+      '  click() { console.log("this 稳定"); }\n' +
+      '}'
   },
   {
     id: 'js-array-basics',
@@ -150,7 +233,25 @@ module.exports = [
       'const total = nums.reduce((a, b) => a + b, 0);\n' +
       'console.log(total);           // 15\n' +
       'console.log(nums.find(n => n > 3));    // 4\n' +
-      'console.log(nums.some(n => n > 10));   // false'
+      'console.log(nums.some(n => n > 10));   // false',
+    example3Title: '实战：链式调用 map/filter/reduce 做数据聚合',
+    example3:
+      'const orders = [\n' +
+      '  { user: "A", amount: 120 },\n' +
+      '  { user: "B", amount: 80 },\n' +
+      '  { user: "A", amount: 60 }\n' +
+      '];\n\n' +
+      '// 只统计金额 > 100 的订单，并求总额\n' +
+      'const total = orders\n' +
+      '  .filter(o => o.amount > 100)\n' +
+      '  .reduce((sum, o) => sum + o.amount, 0);\n' +
+      'console.log(total);            // 120\n\n' +
+      '// 按用户分组（reduce 造对象）\n' +
+      'const byUser = orders.reduce((m, o) => {\n' +
+      '  (m[o.user] ||= []).push(o.amount);\n' +
+      '  return m;\n' +
+      '}, {});\n' +
+      'console.log(byUser);           // { A: [120, 60], B: [80] }'
   },
   {
     id: 'js-array-methods2',
@@ -171,7 +272,22 @@ module.exports = [
       'console.log(a);               // [1, "x", 4]\n\n' +
       'const b = [3, 1, 2];\n' +
       'b.sort((x, y) => x - y);\n' +
-      'console.log(b);               // [1, 2, 3]'
+      'console.log(b);               // [1, 2, 3]',
+    example3Title: '实战：不可变地排序与增删',
+    example3:
+      'const data = [3, 1, 2];\n\n' +
+      '// 错误：sort 会就地改动原数组\n' +
+      '// data.sort();  // data 已被改变\n\n' +
+      '// 正确：先拷贝再排序，保留原数组\n' +
+      'const sorted = [...data].sort((a, b) => a - b);\n' +
+      'console.log(sorted, data);     // [1,2,3] [3,1,2]\n\n' +
+      '// 不可变删除某项：用 filter\n' +
+      'const list = ["a", "b", "c"];\n' +
+      'const withoutB = list.filter(x => x !== "b");\n' +
+      'console.log(withoutB);         // ["a", "c"]\n\n' +
+      '// 不可变插入：展开运算符拼接\n' +
+      'const inserted = [...list.slice(0, 1), "x", ...list.slice(1)];\n' +
+      'console.log(inserted);         // ["a","x","b","c"]'
   },
   {
     id: 'js-string-methods',
@@ -191,7 +307,22 @@ module.exports = [
       'console.log(s.replace("World", "JS"));// Hello JS\n' +
       'console.log(s.split(" "));           // ["Hello", "World"]\n' +
       'console.log("5".padStart(3, "0"));   // 005\n' +
-      'console.log("abac".replaceAll("a", "x")); // xbxc'
+      'console.log("abac".replaceAll("a", "x")); // xbxc',
+    example3Title: '实战：用正则提取与清洗文本',
+    example3:
+      'const text = "姓名: Tom, 年龄: 18";\n\n' +
+      '// 用正则提取数字\n' +
+      'const age = text.match(/\\d+/);\n' +
+      'console.log(age && age[0]);     // 18\n\n' +
+      '// 提取 key: value 成对数据\n' +
+      'const pairs = text.split(",").map(s => s.split(":").map(p => p.trim()));\n' +
+      'console.log(pairs);             // [["姓名","Tom"],["年龄","18"]]\n\n' +
+      '// 模板替换：把 {name} 占位符换成真实值\n' +
+      'const tpl = "你好 {name}，剩余 {n} 天";\n' +
+      'const out = tpl.replace(/\\{(\\w+)\\}/g, (_, k) => ({\n' +
+      '  name: "Tom", n: 3\n' +
+      '}[k]));\n' +
+      'console.log(out);               // 你好 Tom，剩余 3 天'
   },
   {
     id: 'js-object-basics',
@@ -217,7 +348,24 @@ module.exports = [
       'user.sayHi();                // Hi Tom\n\n' +
       'const key = "score";\n' +
       'const obj = { [key]: 100 };  // 计算属性名\n' +
-      'console.log(obj.score);      // 100'
+      'console.log(obj.score);      // 100',
+    example3Title: '实战：getter / setter 与 Object 静态方法',
+    example3:
+      '// 用 getter/setter 控制属性读写\n' +
+      'const product = {\n' +
+      '  _price: 0,\n' +
+      '  get price() { return this._price; },\n' +
+      '  set price(v) { this._price = v < 0 ? 0 : v; }\n' +
+      '};\n' +
+      'product.price = -5;\n' +
+      'console.log(product.price);    // 0（负数被拦截）\n\n' +
+      '// 对象 ↔ Map 互转\n' +
+      'const obj = { a: 1, b: 2 };\n' +
+      'const map = new Map(Object.entries(obj));\n' +
+      'map.set("c", 3);\n' +
+      'console.log(Object.fromEntries(map)); // { a:1, b:2, c:3 }\n\n' +
+      '// 判断属性是否存在（含原型链用 in）\n' +
+      'console.log("toString" in obj); // true（来自原型）'
   },
   {
     id: 'js-destructuring',
@@ -241,7 +389,22 @@ module.exports = [
       'function print({ name = "匿名" }) {\n' +
       '  console.log(name);\n' +
       '}\n' +
-      'print({});                   // 匿名'
+      'print({});                   // 匿名',
+    example3Title: '实战：解构在真实场景中的妙用',
+    example3:
+      '// 1) 交换变量（无需临时变量）\n' +
+      'let a = 1, b = 2;\n' +
+      '[a, b] = [b, a];\n' +
+      'console.log(a, b);            // 2 1\n\n' +
+      '// 2) 从接口返回里取值\n' +
+      'const res = { data: { list: [1, 2], total: 2 } };\n' +
+      'const { data: { list, total } } = res;\n' +
+      'console.log(list, total);     // [1,2] 2\n\n' +
+      '// 3) 函数参数解构 + 默认值 + 重命名\n' +
+      'function draw({ x = 0, y = 0, color: c = "black" } = {}) {\n' +
+      '  console.log(c, x, y);\n' +
+      '}\n' +
+      'draw({ x: 10 });             // black 10 0'
   },
   {
     id: 'js-spread',
@@ -262,7 +425,21 @@ module.exports = [
       'const copy = [...a];          // 浅拷贝\n\n' +
       'const o1 = { x: 1 }, o2 = { y: 2 };\n' +
       'console.log({ ...o1, ...o2 });// { x: 1, y: 2 }\n' +
-      'console.log(Math.max(...[3, 7, 2])); // 7'
+      'console.log(Math.max(...[3, 7, 2])); // 7',
+    example3Title: '实战：浅拷贝的陷阱与深拷贝',
+    example3:
+      'const a = { x: 1, nest: { v: 1 } };\n' +
+      'const b = { ...a };            // 浅拷贝\n' +
+      'b.x = 9;\n' +
+      'b.nest.v = 99;          // 注意：嵌套对象仍共享引用！\n' +
+      'console.log(a.nest.v);  // 99（被改到）\n\n' +
+      '// 需要深拷贝时用 structuredClone（现代环境）\n' +
+      'const c = structuredClone(a);\n' +
+      'c.nest.v = 0;\n' +
+      'console.log(a.nest.v);  // 99（a 不受影响）\n\n' +
+      '// 数组合并并去重\n' +
+      'const merged = [...new Set([1, 2, 2, 3])];\n' +
+      'console.log(merged);     // [1, 2, 3]'
   },
   {
     id: 'js-prototype',
@@ -285,7 +462,21 @@ module.exports = [
       'const p = new Person("Tom");\n' +
       'p.sayHi();                    // Hi Tom（方法来自原型）\n' +
       'console.log(p.__proto__ === Person.prototype); // true\n' +
-      'console.log(Object.getPrototypeOf(p) === Person.prototype); // true'
+      'console.log(Object.getPrototypeOf(p) === Person.prototype); // true',
+    example3Title: '实战：原型链查找与 hasOwnProperty',
+    example3:
+      'function Animal(name) { this.name = name; }\n' +
+      'Animal.prototype.say = function () { return this.name; };\n' +
+      'const cat = new Animal("咪咪");\n\n' +
+      '// 读取 say：自身没有 → 沿原型链找到 Animal.prototype\n' +
+      'console.log(cat.say());        // 咪咪\n\n' +
+      '// 判断属性是"自身"还是"来自原型"\n' +
+      'console.log(cat.hasOwnProperty("name"));   // true\n' +
+      'console.log(cat.hasOwnProperty("say"));     // false\n\n' +
+      '// 用 Object.create 手动指定原型\n' +
+      'const proto = { greet() { return "hi"; } };\n' +
+      'const obj = Object.create(proto);\n' +
+      'console.log(obj.greet());      // hi（来自原型）'
   },
   {
     id: 'js-class',
@@ -315,7 +506,24 @@ module.exports = [
       '  inc() { this.#count++; return this.#count; }\n' +
       '}\n' +
       'const c = new Counter();\n' +
-      'console.log(c.inc(), c.inc()); // 1 2'
+      'console.log(c.inc(), c.inc()); // 1 2',
+    example3Title: '实战：继承 + 私有字段 + 静态方法',
+    example3:
+      'class Shape {\n' +
+      '  constructor(color) { this.color = color; }\n' +
+      '  describe() { return `${this.color} 形状`; }\n' +
+      '  static compare(a, b) { return a.area() - b.area(); }\n' +
+      '}\n' +
+      'class Circle extends Shape {\n' +
+      '  #r;                         // 私有字段\n' +
+      '  constructor(r) { super("红"); this.#r = r; }\n' +
+      '  area() { return Math.PI * this.#r ** 2; }\n' +
+      '  get radius() { return this.#r; }   // 只读 getter\n' +
+      '}\n' +
+      'const c = new Circle(2);\n' +
+      'console.log(c.describe());     // 红 形状\n' +
+      'console.log(Shape.compare(c, c) === 0); // true（静态方法）\n' +
+      '// c.#r;  // 语法错误：私有字段外部不可访问'
   },
   {
     id: 'js-error',
@@ -341,6 +549,26 @@ module.exports = [
       'function check(age) {\n' +
       '  if (age < 0) throw new MyError("年龄不能为负");\n' +
       '}\n' +
-      'try { check(-1); } catch (e) { console.log(e.message); }'
+      'try { check(-1); } catch (e) { console.log(e.message); }',
+    example3Title: '实战：异步错误与 Result 风格处理',
+    example3:
+      '// 1) async/await 的错误要用 try/catch 包住\n' +
+      'async function load() {\n' +
+      '  try {\n' +
+      '    const r = await fetch("/api");\n' +
+      '    if (!r.ok) throw new Error("HTTP " + r.status);\n' +
+      '    return await r.json();\n' +
+      '  } catch (e) {\n' +
+      '    console.error("加载失败:", e.message);\n' +
+      '    return null;\n' +
+      '  }\n' +
+      '}\n\n' +
+      '// 2) 可选链 + 空值合并，减少防御性报错\n' +
+      'const user = {};\n' +
+      'console.log(user?.profile?.email ?? "无邮箱"); // 无邮箱\n\n' +
+      '// 3) 统一错误类型便于区分\n' +
+      'class NetworkError extends Error {}\n' +
+      'try { throw new NetworkError("断网"); }\n' +
+      'catch (e) { console.log(e instanceof NetworkError); } // true'
   }
 ];

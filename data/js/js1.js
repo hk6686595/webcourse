@@ -25,7 +25,18 @@ module.exports = [
       '// 浏览器控制台或 node 中直接输入：\n' +
       'console.log("Hello, JavaScript");\n\n' +
       '// 也可以写在文件 hello.js 里，用 node hello.js 运行\n' +
-      '// 终端会输出：Hello, JavaScript'
+      '// 终端会输出：Hello, JavaScript',
+    example3Title: '实战：在浏览器与 Node 跑同一段逻辑',
+    example3:
+      '// 1) 浏览器：操作 DOM（Node 里没有 document）\n' +
+      '// document.querySelector("h1").textContent = "Hello JS";\n\n' +
+      '// 2) Node：处理数据（浏览器里换 fetch）\n' +
+      'console.log("现在:", new Date().toLocaleString());\n\n' +
+      '// 3) 同一套语法，不同环境提供不同全局对象\n' +
+      '// 浏览器：window、document、fetch\n' +
+      '// Node：globalThis、process、fs\n' +
+      'console.log(typeof window);    // undefined（在 Node 里）\n' +
+      'console.log(typeof process);   // "object"（Node 里才有）'
   },
   {
     id: 'js-hello',
@@ -64,7 +75,19 @@ module.exports = [
       '// 括号不配对\n' +
       '// console.log("hi";\n' +
       '// 报错：SyntaxError: missing ) after argument list\n' +
-      '// 看到 SyntaxError 就检查符号是否成对、是否漏写'
+      '// 看到 SyntaxError 就检查符号是否成对、是否漏写',
+    example3Title: '实战：用 console 辅助调试',
+    example3:
+      'const price = 100, qty = 3;\n' +
+      'const total = price * qty;\n' +
+      'console.log("price/qty/total:", price, qty, total); // 看清每一步\n\n' +
+      '// 用表格打印对象数组\n' +
+      'const list = [{ name: "A", score: 90 }, { name: "B", score: 80 }];\n' +
+      'console.table(list);           // 表格形式展示\n\n' +
+      '// 给代码块计时\n' +
+      'console.time("loop");\n' +
+      'for (let i = 0; i < 1e6; i++) {}\n' +
+      'console.timeEnd("loop");       // loop: 0.8ms（约）'
   },
   {
     id: 'js-vars',
@@ -112,7 +135,19 @@ module.exports = [
       'for (var i = 0; i < 3; i++) {}\n' +
       'console.log(i);            // 3：var 泄漏到了循环外\n\n' +
       'for (let j = 0; j < 3; j++) {}\n' +
-      '// console.log(j);         // 报错：j is not defined（正确行为）'
+      '// console.log(j);         // 报错：j is not defined（正确行为）',
+    example3Title: '实战：用 const 组织不可变配置',
+    example3:
+      '// 用 const 定义配置，避免被意外整体替换\n' +
+      'const CONFIG = { apiBase: "https://api.example.com", timeout: 5000 };\n' +
+      '// CONFIG = {};           // 报错：不能重新赋值\n' +
+      '// 但属性还能改，用 freeze 锁住（浅层）\n' +
+      'const frozen = Object.freeze({ max: 10 });\n' +
+      '// frozen.max = 20;       // 严格模式报错\n\n' +
+      '// 循环里用 let，每次迭代独立绑定\n' +
+      'const fns = [];\n' +
+      'for (let i = 0; i < 3; i++) fns.push(() => i);\n' +
+      'console.log(fns.map(f => f())); // [0, 1, 2]'
   },
   {
     id: 'js-types',
@@ -153,7 +188,22 @@ module.exports = [
       'const a = [1, 2];\n' +
       'const b = a;               // b 和 a 指向同一个数组\n' +
       'b.push(3);\n' +
-      'console.log(a);            // [1, 2, 3]：改 b 影响了 a！'
+      'console.log(a);            // [1, 2, 3]：改 b 影响了 a！',
+    example3Title: '实战：区分原始值与对象引用',
+    example3:
+      '// 原始值赋值：互不相干\n' +
+      'let x = 1; let y = x; y = 2;\n' +
+      'console.log(x);               // 1（x 没被改）\n\n' +
+      '// 对象赋值：共享引用\n' +
+      'const a = { n: 1 }; const b = a; b.n = 99;\n' +
+      'console.log(a.n);             // 99（a 也被改）\n\n' +
+      '// 判断数组用 Array.isArray，判断 null 用 === null\n' +
+      'console.log(Array.isArray([]));   // true\n' +
+      'console.log(typeof null);         // "object"（陷阱）\n' +
+      'console.log(null === null);       // true\n\n' +
+      '// 浅拷贝避免互相影响\n' +
+      'const c = { ...a }; c.n = 0;\n' +
+      'console.log(a.n);             // 99（a 不受影响）'
   },
   {
     id: 'js-numbers',
@@ -199,7 +249,19 @@ module.exports = [
       '// 进制与解析\n' +
       'console.log(0xff);            // 255（十六进制字面量）\n' +
       'console.log(parseInt("42px")); // 42\n' +
-      'console.log((3.14159).toFixed(2)); // "3.14"（注意返回的是字符串）'
+      'console.log((3.14159).toFixed(2)); // "3.14"（注意返回的是字符串）',
+    example3Title: '实战：金额计算与精确判断',
+    example3:
+      '// 1) 用整数分避免浮点误差\n' +
+      'const fen = 10 + 20;             // 30 分，精确\n' +
+      'console.log(fen / 100);          // 0.3\n\n' +
+      '// 2) 保留两位小数的安全写法\n' +
+      'function round2(n) { return Math.round(n * 100) / 100; }\n' +
+      'console.log(round2(1.005));      // 1.01\n\n' +
+      '// 3) 安全判断数字\n' +
+      'console.log(Number.isFinite(1 / 0));   // false\n' +
+      'console.log(Number.isNaN(NaN));        // true\n' +
+      'console.log(Number.isNaN("NaN"));      // false（字符串不是 NaN）'
   },
   {
     id: 'js-strings',
@@ -249,7 +311,20 @@ module.exports = [
       'const html = `<ul>\n' +
       '  <li>苹果</li>\n' +
       '  <li>香蕉</li>\n' +
-      '</ul>`;'
+      '</ul>`;',
+    example3Title: '实战：拼接 URL 与统计字符',
+    example3:
+      '// 1) 模板字符串拼 URL\n' +
+      'const base = "https://api.x.com";\n' +
+      'const url = `${base}/users/${42}?t=${Date.now()}`;\n' +
+      'console.log(url);\n\n' +
+      '// 2) 反转字符串\n' +
+      'const s = "JavaScript";\n' +
+      'console.log([...s].reverse().join(""));        // tpircSavaJ\n\n' +
+      '// 3) 统计字符出现次数\n' +
+      'const count = {};\n' +
+      'for (const ch of "banana") count[ch] = (count[ch] || 0) + 1;\n' +
+      'console.log(count);            // { b:1, a:3, n:2 }'
   },
   {
     id: 'js-type-conversion',
@@ -295,7 +370,23 @@ module.exports = [
       'function avg(x, y) {\n' +
       '  return (Number(x) + Number(y)) / 2;\n' +
       '}\n' +
-      'console.log(avg("80", "90"));     // 85'
+      'console.log(avg("80", "90"));     // 85',
+    example3Title: '实战：解析用户输入并安全比较',
+    example3:
+      '// 1) 表单值可能是 "" 或 "  "，转数字前先处理\n' +
+      'function toNum(v) {\n' +
+      '  const n = Number(String(v).trim());\n' +
+      '  return Number.isNaN(n) ? 0 : n;\n' +
+      '}\n' +
+      'console.log(toNum("  12 "));   // 12\n' +
+      'console.log(toNum("abc"));     // 0（兜底）\n\n' +
+      '// 2) 只用 ===，避免 == 陷阱\n' +
+      'console.log(null == undefined); // true（唯一特例）\n' +
+      'console.log(null === undefined);// false\n\n' +
+      '// 3) 空值用 ??，别用 ||（0/"" 会被误替换）\n' +
+      'const opt = { limit: 0 };\n' +
+      'console.log(opt.limit ?? 10);  // 0\n' +
+      'console.log(opt.limit || 10);  // 10'
   },
   {
     id: 'js-operators',
@@ -343,7 +434,21 @@ module.exports = [
       'true && check();    // 输出：check 执行了\n\n' +
       '// 利用短路代替简单 if\n' +
       'let loggedIn = false;\n' +
-      'loggedIn && console.log("欢迎回来");  // 相当于 if (loggedIn) {...}'
+      'loggedIn && console.log("欢迎回来");  // 相当于 if (loggedIn) {...}',
+    example3Title: '实战：用 ?? 和 ?. 处理接口数据',
+    example3:
+      '// 接口可能返回字段缺失的对象\n' +
+      'const res = { data: { user: { name: "Tom" } } };\n\n' +
+      '// 安全取深层字段，缺失给默认值\n' +
+      'const name = res.data?.user?.name ?? "游客";\n' +
+      'const city = res.data?.user?.city ?? "未知";\n' +
+      'console.log(name, city);       // Tom 未知\n\n' +
+      '// 短路统计：存在才累加\n' +
+      'const acc = {};\n' +
+      'acc.count = (acc.count ?? 0) + 1;\n' +
+      'console.log(acc.count);        // 1\n\n' +
+      '// 三元嵌模板\n' +
+      'console.log(`状态：${true ? "成功" : "失败"}`); // 状态：成功'
   },
   {
     id: 'js-if',
@@ -391,7 +496,26 @@ module.exports = [
       '}\n\n' +
       'console.log(isLeapYear(2024));  // true\n' +
       'console.log(isLeapYear(1900));  // false\n' +
-      'console.log(isLeapYear(2000));  // true'
+      'console.log(isLeapYear(2000));  // true',
+    example3Title: '实战：卫语句减少嵌套',
+    example3:
+      '// 传统嵌套写法\n' +
+      'function level1(score) {\n' +
+      '  if (score >= 60) {\n' +
+      '    if (score >= 90) return "优秀";\n' +
+      '    return "及格";\n' +
+      '  }\n' +
+      '  return "不及格";\n' +
+      '}\n\n' +
+      '// 卫语句（提前返回），拉平缩进更好读\n' +
+      'function level2(score) {\n' +
+      '  if (score >= 90) return "优秀";\n' +
+      '  if (score >= 60) return "及格";\n' +
+      '  return "不及格";\n' +
+      '}\n' +
+      'console.log(level1(75), level2(75)); // 及格 及格\n\n' +
+      '// 区间判断要写完整：age >= 18 && age < 60\n' +
+      'console.log(20 >= 18 && 20 < 60);    // true'
   },
   {
     id: 'js-switch',
@@ -442,7 +566,23 @@ module.exports = [
       '}\n\n' +
       'console.log(calc(6, "*", 7));   // 42\n' +
       'console.log(calc(1, "/", 0));   // 除数不能为0\n' +
-      'console.log(calc(1, "%", 2));   // 不支持的运算符'
+      'console.log(calc(1, "%", 2));   // 不支持的运算符',
+    example3Title: '实战：用对象映射替代 switch',
+    example3:
+      '// 分支很多时，对象映射可读性更好、易扩展\n' +
+      'const handlers = {\n' +
+      '  "+": (a, b) => a + b,\n' +
+      '  "-": (a, b) => a - b,\n' +
+      '  "*": (a, b) => a * b\n' +
+      '};\n' +
+      'function calc(a, op, b) {\n' +
+      '  const fn = handlers[op];\n' +
+      '  return fn ? fn(a, b) : "不支持的运算符";\n' +
+      '}\n' +
+      'console.log(calc(6, "*", 7));  // 42\n\n' +
+      '// 月份对应季节也可查表\n' +
+      'const season = { 12: "冬", 1: "冬", 2: "冬", 3: "春", 4: "春" };\n' +
+      'console.log(season[new Date().getMonth() + 1] ?? "未知");'
   },
   {
     id: 'js-loops',
@@ -494,7 +634,22 @@ module.exports = [
       '}\n' +
       '// 1×1= 1\n' +
       '// 1×2= 2  2×2= 4\n' +
-      '// ...(一直到 9)'
+      '// ...(一直到 9)',
+    example3Title: '实战：倒序遍历与条件跳出',
+    example3:
+      '// 1) 倒序遍历数组\n' +
+      'const arr = ["a", "b", "c"];\n' +
+      'for (let i = arr.length - 1; i >= 0; i--) console.log(arr[i]); // c b a\n\n' +
+      '// 2) 找到第一个偶数就停（break 提前退出）\n' +
+      'const nums = [1, 3, 4, 7];\n' +
+      'let firstEven = null;\n' +
+      'for (const n of nums) {\n' +
+      '  if (n % 2 === 0) { firstEven = n; break; }\n' +
+      '}\n' +
+      'console.log(firstEven);       // 4\n\n' +
+      '// 3) while 必须向停止条件靠近，否则死循环\n' +
+      'let k = 0;\n' +
+      'while (k < 3) { console.log(k); k++; } // 0 1 2'
   },
   {
     id: 'js-forof',
@@ -541,7 +696,21 @@ module.exports = [
       'console.log(total / Object.keys(scores).length); // 平均分\n\n' +
       'for (const [subject, s] of Object.entries(scores)) {\n' +
       '  console.log(`${subject}: ${s}`);      // 键值一起拿\n' +
-      '}'
+      '}',
+    example3Title: '实战：for...of 配 await 顺序处理',
+    example3:
+      '// 1) 遍历生成新数组\n' +
+      'const nums = [1, 2, 3];\n' +
+      'const squared = [];\n' +
+      'for (const n of nums) squared.push(n * n);\n' +
+      'console.log(squared);         // [1, 4, 9]\n\n' +
+      '// 2) 顺序执行异步任务（forEach 不支持 await）\n' +
+      'async function run(tasks) {\n' +
+      '  for (const t of tasks) await t();   // 一个接一个\n' +
+      '}\n\n' +
+      '// 3) 遍历 Map\n' +
+      'const m = new Map([["a", 1], ["b", 2]]);\n' +
+      'for (const [k, v] of m) console.log(k, v);'
   },
   {
     id: 'js-break',
@@ -595,7 +764,20 @@ module.exports = [
       '    if (j === 2) continue outer2;\n' +
       '    console.log(i, j);       // 只打印 j=1 的情况\n' +
       '  }\n' +
-      '}'
+      '}',
+    example3Title: '实战：数组查找用 find 替代手动 break',
+    example3:
+      'const users = [{ id: 1, name: "Tom" }, { id: 2, name: "Amy" }];\n\n' +
+      '// 手动 break 版\n' +
+      'let found = null;\n' +
+      'for (const u of users) {\n' +
+      '  if (u.id === 2) { found = u; break; }\n' +
+      '}\n' +
+      'console.log(found);           // { id:2, name:"Amy" }\n\n' +
+      '// 更简洁：Array.find 内部自带短路\n' +
+      'console.log(users.find(u => u.id === 2));\n\n' +
+      '// some 判断是否存在\n' +
+      'console.log(users.some(u => u.name === "Tom")); // true'
   },
   {
     id: 'js-strict',
@@ -638,7 +820,19 @@ module.exports = [
       '    return "抓到拼写错误: " + e.message;\n' +
       '  }\n' +
       '}\n' +
-      'console.log(addTax(100));  // 严格模式下立刻暴露拼写错误'
+      'console.log(addTax(100));  // 严格模式下立刻暴露拼写错误',
+    example3Title: '实战：用 ESLint 替代手写严格模式',
+    example3:
+      '// 现代项目不再手写 "use strict"，用 ESLint 规则提前标红\n' +
+      '// .eslintrc 中 "strict": ["error", "never"]（模块/class 已严格）\n\n' +
+      '// 严格模式下这些会直接报错：\n' +
+      '// x = 1;                 // 未声明\n' +
+      '// delete obj.x;          // 非严格允许，严格报错\n' +
+      '// with (obj) {}          // 已废弃\n\n' +
+      '// 普通脚本里仍建议顶部加 "use strict" 兜底\n' +
+      '"use strict";\n' +
+      'function f() { const ok = 1; return ok; }\n' +
+      'console.log(f());'
   },
   {
     id: 'js-practice1',
@@ -691,6 +885,22 @@ module.exports = [
       '  if (t === maxTries) console.log("机会用完，游戏结束");\n' +
       '}\n' +
       '// 说明：break 只跳出 for；若 g 永远不等于 answer，\n' +
-      '// 循环自然结束后由 t === maxTries 的判断给出失败提示。'
+      '// 循环自然结束后由 t === maxTries 的判断给出失败提示。',
+    example3Title: '实战：Node 版猜数字与 FizzBuzz 一行流',
+    example3:
+      '// 把一局游戏封装成函数，便于测试\n' +
+      'function play(answer, guess) {\n' +
+      '  if (guess > answer) return "大了";\n' +
+      '  if (guess < answer) return "小了";\n' +
+      '  return "猜对了";\n' +
+      '}\n' +
+      'console.log(play(7, 9));      // 大了\n' +
+      'console.log(play(7, 7));      // 猜对了\n\n' +
+      '// FizzBuzz 一行流（进阶）：用 "" 短路拼接\n' +
+      'for (let i = 1; i <= 15; i++)\n' +
+      '  console.log((i % 3 ? "" : "Fizz") + (i % 5 ? "" : "Buzz") || i);\n\n' +
+      '// Node 里用 readline 接收输入（浏览器用 prompt）\n' +
+      '// const rl = require("readline").createInterface({ input: process.stdin });\n' +
+      '// rl.question("猜数字: ", ans => { console.log(play(7, +ans)); rl.close(); });'
   }
 ];

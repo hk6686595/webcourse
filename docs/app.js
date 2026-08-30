@@ -115,7 +115,7 @@ function apiUrl(name) {
 }
 
 function featureText(f) {
-  return [f.title, f.summary, (f.detail || []).join(' '), f.example || '', f.example2 || ''].join(' ');
+  return [f.title, f.summary, (f.detail || []).join(' '), f.example || '', f.example2 || '', f.example3 || ''].join(' ');
 }
 
 /* ================= 文档加载 ================= */
@@ -190,6 +190,10 @@ async function openFeature(id, li) {
   if (f.example2) {
     html += `<h3>${esc(f.example2Title || '进阶示例')}</h3>` +
       `<pre class="code">${highlight(f.example2, codeLang)}</pre>`;
+  }
+  if (f.example3) {
+    html += `<h3>${esc(f.example3Title || '实战示例')}</h3>` +
+      `<pre class="code">${highlight(f.example3, codeLang)}</pre>`;
   }
   $('doc-sections').innerHTML = html;
 

@@ -31,7 +31,16 @@ module.exports = [
       '// HTML 里还要小心顺序：\n' +
       '// <script src="utils.js"></script>\n' +
       '// <script src="main.js"></script>\n' +
-      '// 如果写反，main.js 里调用的工具函数还不存在'
+      '// 如果写反，main.js 里调用的工具函数还不存在',
+    example3Title: '实战：用 IIFE 隔离旧代码（迁移过渡）',
+    example3:
+      '// 老代码直接挂全局会污染，用 IIFE 包一层收进函数作用域\n' +
+      'window.App = (function () {\n' +
+      '  let counter = 0;            // 私有变量\n' +
+      '  return { next() { return ++counter; } };\n' +
+      '})();\n' +
+      'console.log(App.next());      // 1\n' +
+      '// 这正是"模块思想"的雏形，ES 模块把它标准化了'
   },
   {
     id: 'js-mod-what',
@@ -74,7 +83,18 @@ module.exports = [
       '//   - 文件作用域，默认不污染全局\n' +
       '//   - 自动严格模式\n' +
       '//   - 依赖写在 import 里，引擎按图加载\n' +
-      '//   - 每个模块只执行一次（单例）'
+      '//   - 每个模块只执行一次（单例）',
+    example3Title: '实战：模块顶层 this 是 undefined',
+    example3:
+      '// math.js（ES 模块）\n' +
+      'console.log(this);            // undefined（顶层 this 不是 window）\n' +
+      'const secret = "私有";\n' +
+      'export function showSecret() { return secret; }\n\n' +
+      '// 想挂全局必须显式\n' +
+      '// globalThis.foo = 1;\n\n' +
+      '// 单例验证：不同文件 import 同一模块，拿到同一份状态\n' +
+      '// counter.js: let n=0; export function inc(){return ++n}\n' +
+      '// 多处 import 后，n 在全局只有一份'
   },
   {
     id: 'js-mod-history',
@@ -114,7 +134,17 @@ module.exports = [
       '// main.cjs\n' +
       'const { add, PI } = require("./math");\n' +
       'console.log(add(2, 3), PI);\n\n' +
-      '// 运行：node main.cjs'
+      '// 运行：node main.cjs',
+    example3Title: '实战：在 ESM 里调用 CJS 包',
+    example3:
+      '// 现代 Node 中，ESM 文件可直接 import 老 CJS 包\n' +
+      '// lodash 是 CommonJS 写的，也能这样用：\n' +
+      '// import _ from "lodash";\n' +
+      '// _.chunk([1,2,3,4], 2);   // [[1,2],[3,4]]\n\n' +
+      '// 默认导出对应 module.exports 整体\n' +
+      '// import { readFileSync } from "node:fs";  // 命名导出也好用\n\n' +
+      '// 反之：CJS 里 require 一个 ESM 文件会报 ERR_REQUIRE_ESM\n' +
+      '// 所以发布库常同时提供 .js（ESM）和 .cjs（CJS）两份'
   },
   {
     id: 'js-mod-overview',
@@ -162,7 +192,19 @@ module.exports = [
       '// app.js\n' +
       'import fallback, { greet } from "./greet.js";\n' +
       'console.log(greet("Tom"));    // 你好，Tom\n' +
-      'console.log(fallback());      // 默认问候'
+      'console.log(fallback());      // 默认问候',
+    example3Title: '实战：tree-shaking 只保留用到的导出',
+    example3:
+      '// utils.js 导出很多函数\n' +
+      'export function a() {}\n' +
+      'export function b() {}\n' +
+      'export function c() {}\n\n' +
+      '// main.js 只用到 a 和 b\n' +
+      'import { a, b } from "./utils.js";\n' +
+      'a(); b();\n\n' +
+      '// 打包器（vite/webpack）会摇掉没用到的 c\n' +
+      '// 前提：必须是静态 import（不能写进 if）\n' +
+      '// 且导出是具名的，而非整块默认导出对象'
   },
   {
     id: 'js-mod-named-export',
@@ -209,7 +251,18 @@ module.exports = [
       '// main.js —— 导入时改名，避免和本地变量撞名\n' +
       'import { add as sum, PI } from "./math.js";\n' +
       'const add = "我本地也有个 add";\n' +
-      'console.log(sum(1, 2), PI, add);'
+      'console.log(sum(1, 2), PI, add);',
+    example3Title: '实战：工具库统一命名导出',
+    example3:
+      '// 一个日期工具模块 date.js\n' +
+      'function format(d) { return d.toISOString().slice(0, 10); }\n' +
+      'function addDays(d, n) { const x = new Date(d); x.setDate(x.getDate() + n); return x; }\n' +
+      'export { format, addDays };\n\n' +
+      '// 调用方一次性拿到所有名字\n' +
+      '// import { format, addDays } from "./date.js";\n' +
+      '// format(new Date());\n\n' +
+      '// 重命名避免冲突\n' +
+      '// import { format as fmt } from "./date.js";'
   },
   {
     id: 'js-mod-default-export',
@@ -259,7 +312,20 @@ module.exports = [
       'console.log(get("/api/users"));\n\n' +
       '// 错误示范：\n' +
       '// import { default as config } from "./http.js";  // 能写，但啰嗦\n' +
-      '// import { get } 才能取到命名导出；import get 取的是 default'
+      '// import { get } 才能取到命名导出；import get 取的是 default',
+    example3Title: '实战：组件文件用默认导出',
+    example3:
+      '// Button.js（React 风格组件）\n' +
+      'export default function Button({ label }) {\n' +
+      '  return `<button>${label}</button>`;\n' +
+      '}\n\n' +
+      '// 使用方：名字随意，通常和文件名一致\n' +
+      '// import Button from "./Button.js";\n' +
+      '// 多个平级工具仍可用命名导出混在文件里：\n' +
+      '// export function submit() {}\n' +
+      '// export function reset() {}\n' +
+      '// export default function Form() {}\n' +
+      '// import Form, { submit, reset } from "./Form.js";'
   },
   {
     id: 'js-mod-import-syntax',
@@ -313,7 +379,18 @@ module.exports = [
       '//                              import AnyName from "..."\n' +
       '// export default + 命名导出    import X, { add } from "..."\n' +
       '// 全部打包                     import * as ns from "..."\n' +
-      '// 只跑代码不取值               import "..."'
+      '// 只跑代码不取值               import "..."',
+    example3Title: '实战：整体导入与副作用导入',
+    example3:
+      '// 一次性导入整个命名空间\n' +
+      'import * as fs from "node:fs";\n' +
+      'fs.readFileSync("a.txt");\n' +
+      'fs.writeFileSync("b.txt", "hi");\n\n' +
+      '// 只执行副作用（注册插件 / 加载样式）\n' +
+      '// import "core-js/stable";   // 打 polyfill\n' +
+      '// import "./styles.css";     // 打包器会处理 CSS\n\n' +
+      '// 动态决定名字：必须导出存在\n' +
+      '// import { a, b } 若 b 不存在会报：b is not exported'
   },
   {
     id: 'js-mod-browser',
@@ -361,7 +438,19 @@ module.exports = [
       '// 2) CORS / Cross origin ... not allowed\n' +
       '//    → 用了 file://，请换本地服务器\n' +
       '// 3) Failed to resolve module specifier "math.js"\n' +
-      '//    → 缺少 ./ ，应写成 "./math.js"'
+      '//    → 缺少 ./ ，应写成 "./math.js"',
+    example3Title: '实战：用 Import Map 引入 CDN 包',
+    example3:
+      '// 浏览器不认裸包名，用 importmap 映射\n' +
+      '<script type="importmap">\n' +
+      '{ "imports": { "dayjs": "https://cdn.com/dayjs.esm.js" } }\n' +
+      '</script>\n' +
+      '<script type="module">\n' +
+      '  import dayjs from "dayjs";\n' +
+      '  console.log(dayjs().format("YYYY-MM-DD"));\n' +
+      '</script>\n\n' +
+      '// 多个 module 脚本共享 importmap，只初始化一次\n' +
+      '// 本地预览：python -m http.server 后访问 http://localhost:8000'
   },
   {
     id: 'js-mod-nodejs',
@@ -406,7 +495,17 @@ module.exports = [
       'const text = readFileSync(join(__dirname, "notes.txt"), "utf8");\n' +
       'console.log(text);\n\n' +
       '// import.meta.url 是当前模块的 file:// URL\n' +
-      '// 转成路径后，就和以前的 __dirname 一样用了'
+      '// 转成路径后，就和以前的 __dirname 一样用了',
+    example3Title: '实战：用 import.meta.url 解析相对资源',
+    example3:
+      'import { fileURLToPath } from "node:url";\n' +
+      'import { dirname, join } from "node:path";\n' +
+      'import { readFileSync } from "node:fs";\n\n' +
+      'const here = dirname(fileURLToPath(import.meta.url));\n' +
+      'const pkg = JSON.parse(readFileSync(join(here, "data.json"), "utf8"));\n' +
+      'console.log(pkg);\n\n' +
+      '// 加载 CommonJS 包：import 同样可用\n' +
+      '// import chalk from "chalk";  // chalk 是 CJS，但 ESM 能 import'
   },
   {
     id: 'js-mod-live-binding',
@@ -453,7 +552,19 @@ module.exports = [
       'console.log(c.count);           // 仍是 0！\n' +
       '// require 时把当时的数字 0 拷进了导出对象\n' +
       '// 内部 count 变了，导出对象上的 count 还是旧的\n' +
-      '// CJS 若要看到更新，应导出 getter 或只导出 inc 并提供 getCount()'
+      '// CJS 若要看到更新，应导出 getter 或只导出 inc 并提供 getCount()',
+    example3Title: '实战：用活绑定做共享计数器',
+    example3:
+      '// shared.js\n' +
+      'export let version = "1.0";\n' +
+      'export function bump() { version = "2.0"; }\n\n' +
+      '// a.js\n' +
+      'import { version, bump } from "./shared.js";\n' +
+      'console.log(version);        // 1.0\n' +
+      'bump();\n' +
+      'console.log(version);        // 2.0（看到了更新）\n\n' +
+      '// 注意：导入方 version = "3.0" 会报错（只读绑定）\n' +
+      '// 只能通过导出方提供的函数修改'
   },
   {
     id: 'js-mod-reexport',
@@ -495,7 +606,19 @@ module.exports = [
       '  return nums.reduce((s, n) => add(s, n), 0);\n' +
       '}\n' +
       'export { add, sub };            // 再转发出去\n\n' +
-      '// export * from "./add.js";    // 快捷转发全部命名导出'
+      '// export * from "./add.js";    // 快捷转发全部命名导出',
+    example3Title: '实战：CLI 工具聚合子命令',
+    example3:
+      '// cmds/init.js  export function run(){}\n' +
+      '// cmds/build.js export function run(){}\n' +
+      '// cmds/index.js 统一转发\n' +
+      'export { run as init } from "./init.js";\n' +
+      'export { run as build } from "./build.js";\n\n' +
+      '// 入口根据参数分发\n' +
+      '// import * as cmds from "./cmds/index.js";\n' +
+      '// const cmd = process.argv[2];\n' +
+      '// cmds[cmd]?.run();\n\n' +
+      '// 对外只暴露一个入口，内部结构随便拆'
   },
   {
     id: 'js-mod-sideeffect-cycle',
@@ -544,7 +667,17 @@ module.exports = [
       '// 放到函数里，等双方就绪再调用就安全：\n' +
       'export function start() {\n' +
       '  return ping();\n' +
-      '}'
+      '}',
+    example3Title: '实战：把共享逻辑抽到第三个文件破环',
+    example3:
+      '// 原来：a.js import b，b.js import a（循环）\n' +
+      '// 改：把两边都用的常量抽到 shared.js\n' +
+      '// shared.js\n' +
+      'export const API = "https://api.x.com";\n\n' +
+      '// a.js / b.js 都改成只 import { API } from "./shared.js"\n' +
+      '// 依赖图变成树，循环消失\n\n' +
+      '// 若必须循环：两边都只 import 函数，值放到函数体里读\n' +
+      '// 等双方模块都执行完，调用时才读，安全'
   },
   {
     id: 'js-mod-dynamic',
@@ -588,7 +721,19 @@ module.exports = [
       '// 顶层 await（该文件本身必须是模块）\n' +
       'const locale = await import(`./i18n/${navigator.language}.js`)\n' +
       '  .catch(() => import("./i18n/en.js"));\n' +
-      'console.log(locale.default);'
+      'console.log(locale.default);',
+    example3Title: '实战：首屏只加载核心，路由再懒加载',
+    example3:
+      '// router.js\n' +
+      'const routes = {\n' +
+      '  "/": () => import("./pages/home.js"),\n' +
+      '  "/admin": () => import("./pages/admin.js")  // 重型后台，点进去才加载\n' +
+      '};\n' +
+      'window.addEventListener("hashchange", async () => {\n' +
+      '  const mod = await routes[location.hash]();\n' +
+      '  document.body.innerHTML = mod.render();\n' +
+      '});\n\n' +
+      '// 打包后 admin.js 是独立 chunk，首屏不下载'
   },
   {
     id: 'js-mod-cjs-vs-esm',
@@ -632,7 +777,22 @@ module.exports = [
       '// CJS:  module.exports = class User {}\n' +
       '// ESM:  export default class User {}\n' +
       '// CJS 导入：const User = require("./user");\n' +
-      '// ESM 导入：import User from "./user.js";'
+      '// ESM 导入：import User from "./user.js";',
+    example3Title: '实战：双格式发布库的 package.json',
+    example3:
+      '// 库作者：同时服务 ESM 和 CJS 用户\n' +
+      '// {\n' +
+      '//   "type": "module",\n' +
+      '//   "exports": {\n' +
+      '//     ".": {\n' +
+      '//       "import": "./dist/index.js",\n' +
+      '//       "require": "./dist/index.cjs"\n' +
+      '//     }\n' +
+      '//   }\n' +
+      '// }\n\n' +
+      '// 使用者：\n' +
+      '// ESM 项目：import pkg from "my-lib";\n' +
+      '// CJS 项目：const pkg = require("my-lib");'
   },
   {
     id: 'js-mod-path-pkg',
@@ -683,7 +843,17 @@ module.exports = [
       '<script type="module">\n' +
       '  import { add } from "utils";\n' +
       '  console.log(add(1, 2));\n' +
-      '</script>'
+      '</script>',
+    example3Title: '实战：本地项目用相对路径 vs 包名',
+    example3:
+      '// 自己写的文件：必须 ./ 或 ../\n' +
+      'import { add } from "./utils/math.js";\n' +
+      'import { User } from "../models/user.js";\n\n' +
+      '// 第三方包：裸名，由 node_modules 解析\n' +
+      '// import express from "express";\n\n' +
+      '// 报错 ERR_MODULE_NOT_FOUND 自查清单：\n' +
+      '// 1) 漏了 ./ ？  2) 漏了 .js ？\n' +
+      '// 3) 大小写拼错（Linux 区分）？  4) 文件真在那个路径？'
   },
   {
     id: 'js-mod-practice',
@@ -741,6 +911,23 @@ module.exports = [
       'if (USE_STATS) {\n' +
       '  const { average: avg } = await import("./lib/number.js");\n' +
       '  console.log("avg", avg(1, 2, 3));\n' +
+      '}',
+    example3Title: '实战：给库加默认导出 + 动态加载加分项',
+    example3:
+      '// lib/string.js 增加默认导出对象\n' +
+      'function capitalize(s) { return s ? s[0].toUpperCase() + s.slice(1) : ""; }\n' +
+      'function repeat(s, n) { return String(s).repeat(n); }\n' +
+      'export { capitalize, repeat };\n' +
+      'export default { capitalize, repeat };\n\n' +
+      '// main.js 同时演示两种导入\n' +
+      'import str, { capitalize } from "./lib/string.js";\n' +
+      'console.log(capitalize("hi"));   // Hi（命名导入）\n' +
+      'console.log(str.repeat("ok", 2)); // okok（默认导入）\n\n' +
+      '// 动态加载只有开启开关才跑（顶层 await 需模块环境）\n' +
+      'const USE_NUM = false;\n' +
+      'if (USE_NUM) {\n' +
+      '  const num = await import("./lib/number.js");\n' +
+      '  console.log(num.average(1, 2, 3));\n' +
       '}'
   }
 ];

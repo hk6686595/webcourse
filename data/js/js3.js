@@ -22,7 +22,23 @@ module.exports = [
       '// 自定义迭代钩子\n' +
       'const iterable = {\n' +
       '  [Symbol.iterator]() { return [1, 2, 3][Symbol.iterator](); }\n' +
-      '};'
+      '};',
+    example3Title: '实战：用 Symbol 实现隐藏元数据与自定义迭代',
+    example3:
+      '// 1) 用 Symbol 作键，避免与普通属性名冲突\n' +
+      'const ID = Symbol("id");\n' +
+      'const u1 = { name: "Tom", [ID]: 7 };\n' +
+      'const u2 = { name: "Tom", [ID]: 8 };\n' +
+      'console.log(u1[ID], u2[ID]);     // 7 8（互不影响）\n\n' +
+      '// 2) 给对象加自定义迭代能力，使其可被 for...of\n' +
+      'const range = {\n' +
+      '  from: 1, to: 3,\n' +
+      '  [Symbol.iterator]() {\n' +
+      '    let cur = this.from;\n' +
+      '    return { next: () => ({ done: cur > this.to, value: cur++ }) };\n' +
+      '  }\n' +
+      '};\n' +
+      'console.log([...range]);         // [1, 2, 3]'
   },
   {
     id: 'es-modules',
@@ -50,7 +66,19 @@ module.exports = [
       'import Calc, { PI, add as plus } from "./math.js";\n' +
       'import * as math from "./math.js";\n\n' +
       'console.log(PI, plus(1, 2), new Calc());\n' +
-      'console.log(math.add(3, 4));'
+      'console.log(math.add(3, 4));',
+    example3Title: '实战：模块聚合与按需重导出',
+    example3:
+      '// utils/index.js：把多个子模块汇总后统一导出\n' +
+      'export { add } from "./math.js";\n' +
+      'export { default as Logger } from "./logger.js";\n' +
+      'export * from "./string.js";     // 转发所有命名导出\n\n' +
+      '// 使用方只需 import 一个入口\n' +
+      '// import { add, Logger } from "./utils/index.js";\n\n' +
+      '// 默认导出 vs 命名导出混用时的导入写法\n' +
+      '// import Calculator, { add, PI } from "./math.js";\n' +
+      '// 重命名避免冲突\n' +
+      '// import { add as sum } from "./math.js";'
   },
   {
     id: 'dynamic-import',
@@ -73,7 +101,22 @@ module.exports = [
       '// 条件加载 polyfill\n' +
       'if (!window.fetch) {\n' +
       '  await import("whatwg-fetch");\n' +
-      '}'
+      '}',
+    example3Title: '实战：路由懒加载与失败兜底',
+    example3:
+      '// 点击时才加载对应页面模块，减小首屏体积\n' +
+      'async function go(page) {\n' +
+      '  try {\n' +
+      '    const mod = await import(`./pages/${page}.js`);\n' +
+      '    mod.render();\n' +
+      '  } catch (e) {\n' +
+      '    console.error("页面加载失败:", e.message);\n' +
+      '  }\n' +
+      '}\n\n' +
+      '// 动态加载同时拿到命名导出与默认导出\n' +
+      'const mod = await import("./editor.js");\n' +
+      'mod.default.mount();     // 默认导出\n' +
+      'mod.openEditor();        // 命名导出'
   },
   {
     id: 'collections-map-set',
@@ -101,7 +144,25 @@ module.exports = [
       's.has(2);                     // true\n\n' +
       '// 私有数据弱引用缓存\n' +
       'const cache = new WeakMap();\n' +
-      'cache.set(obj, expensive);    // obj 被回收时缓存一并释放'
+      'cache.set(obj, expensive);    // obj 被回收时缓存一并释放',
+    example3Title: '实战：Map 以对象为键、Set 去重数组',
+    example3:
+      '// 1) Map 以对象为键：普通对象做不到\n' +
+      'const visits = new Map();\n' +
+      'function hit(obj) { visits.set(obj, (visits.get(obj) || 0) + 1); }\n' +
+      'const a = {}; hit(a); hit(a);\n' +
+      'console.log(visits.get(a));      // 2\n\n' +
+      '// 2) Set 给数组去重（保持顺序）\n' +
+      'const uniq = [...new Set([1, 1, 2, 3, 3])];\n' +
+      'console.log(uniq);               // [1, 2, 3]\n\n' +
+      '// 3) WeakMap 做私有缓存，键可被 GC 回收\n' +
+      'const cache = new WeakMap();\n' +
+      'function heavy(obj) {\n' +
+      '  if (cache.has(obj)) return cache.get(obj);\n' +
+      '  const r = obj.value * 2;\n' +
+      '  cache.set(obj, r);\n' +
+      '  return r;\n' +
+      '}'
   },
   {
     id: 'proxy-reflect',
@@ -133,7 +194,27 @@ module.exports = [
       '  }\n' +
       '});\n\n' +
       'proxy.name;        // 日志：读取 name\n' +
-      'proxy.age = -1;    // 抛错'
+      'proxy.age = -1;    // 抛错',
+    example3Title: '实战：用 Proxy 实现只读包装与懒代理',
+    example3:
+      '// 1) 只读代理：任何写入都报错\n' +
+      'function readonly(obj) {\n' +
+      '  return new Proxy(obj, {\n' +
+      '    set() { throw new Error("禁止修改"); },\n' +
+      '    deleteProperty() { throw new Error("禁止删除"); }\n' +
+      '  });\n' +
+      '}\n' +
+      'const cfg = readonly({ port: 8080 });\n' +
+      '// cfg.port = 1;  // 抛错\n\n' +
+      '// 2) 访问时自动懒代理嵌套对象\n' +
+      'function trace(target) {\n' +
+      '  return new Proxy(target, {\n' +
+      '    get(t, k, r) {\n' +
+      '      const v = Reflect.get(t, k, r);\n' +
+      '      return typeof v === "object" && v ? trace(v) : v;\n' +
+      '    }\n' +
+      '  });\n' +
+      '}'
   },
   {
     id: 'bigint',
@@ -158,7 +239,20 @@ module.exports = [
       'big * 2n;\n\n' +
       '// 与 Number 不能混算\n' +
       '// big + 1;                          // TypeError\n' +
-      'big + BigInt(1);                     // OK'
+      'big + BigInt(1);                     // OK',
+    example3Title: '实战：大整数运算与序列化',
+    example3:
+      '// 1) 超大 ID 不丢精度\n' +
+      'const id = 9007199254740993n;\n' +
+      'console.log(id + 1n);           // 9007199254740994n\n\n' +
+      '// 2) 与 Number 互转（注意范围）\n' +
+      'Number(10n);                    // 10\n' +
+      'BigInt(10);                     // 10n\n\n' +
+      '// 3) JSON 不直接支持 BigInt，需自定义序列化\n' +
+      'const data = { id: 9007199254740993n };\n' +
+      'const json = JSON.stringify(data, (_, v) =>\n' +
+      '  typeof v === "bigint" ? v.toString() : v);\n' +
+      'console.log(json);              // {"id":"9007199254740993"}'
   },
   {
     id: 'logical-assignment',
@@ -177,7 +271,23 @@ module.exports = [
       'config.timeout ??= 3000;          // timeout 为空则设默认\n' +
       'config.debug ||= false;           // 假值则补默认\n\n' +
       'let user = { name: "x" };\n' +
-      'user.name &&= user.name.toUpperCase();   // 有值才转大写'
+      'user.name &&= user.name.toUpperCase();   // 有值才转大写',
+    example3Title: '实战：配置合并与默认值填充',
+    example3:
+      '// 1) 给配置对象填充缺失字段\n' +
+      'const cfg = { retries: 0 };\n' +
+      'cfg.retries ||= 3;              // 假值才补\n' +
+      'cfg.timeout ??= 5000;           // 仅 null/undefined 才补\n' +
+      'console.log(cfg);               // { retries: 0, timeout: 5000 }\n\n' +
+      '// 2) 链式读取属性，缺失即初始化\n' +
+      'const store = {};\n' +
+      'store.user ||= {};\n' +
+      'store.user.name ??= "匿名";\n' +
+      'console.log(store.user.name);   // 匿名\n\n' +
+      '// 区别：??= 不把 0/"" 当"空"\n' +
+      'let n = 0;\n' +
+      'n ??= 10; console.log(n);       // 0（0 保留）\n' +
+      'n ||= 10; console.log(n);       // 10（0 被替换）'
   },
   {
     id: 'object-static-methods',
@@ -201,7 +311,24 @@ module.exports = [
       'Object.fromEntries(map);  // { a:1, b:2, c:3 }\n\n' +
       'const merged = Object.assign({}, obj, { b: 9 });  // { a:1, b:9 }\n' +
       'const frozen = Object.freeze({ x: 1 });\n' +
-      'Object.hasOwn(frozen, "x");           // true'
+      'Object.hasOwn(frozen, "x");           // true',
+    example3Title: '实战：用 entries/fromEntries 做对象转换',
+    example3:
+      '// 1) 把对象所有值翻倍\n' +
+      'const prices = { a: 10, b: 20 };\n' +
+      'const doubled = Object.fromEntries(\n' +
+      '  Object.entries(prices).map(([k, v]) => [k, v * 2])\n' +
+      ');\n' +
+      'console.log(doubled);           // { a: 20, b: 40 }\n\n' +
+      '// 2) 仅挑选部分字段\n' +
+      'const src = { id: 1, name: "Tom", secret: "x" };\n' +
+      'const pick = Object.fromEntries(\n' +
+      '  Object.entries(src).filter(([k]) => k !== "secret")\n' +
+      ');\n' +
+      'console.log(pick);              // { id:1, name:"Tom" }\n\n' +
+      '// 3) 冻结只锁第一层（浅冻结）\n' +
+      'const f = Object.freeze({ n: { v: 1 } });\n' +
+      '// f.n = 2; 报错；但 f.n.v = 9 仍可改（浅冻结）'
   },
   {
     id: 'numeric-separators',
@@ -220,7 +347,20 @@ module.exports = [
       'const mask = 0b1111_0000;\n\n' +
       '// module.mjs 顶层 await\n' +
       'const config = await fetch("/config.json").then(r => r.json());\n' +
-      'export const apiBase = config.apiBase;   // 导入方拿到的已是就绪配置'
+      'export const apiBase = config.apiBase;   // 导入方拿到的已是就绪配置',
+    example3Title: '实战：顶层 await 等待初始化（模块级）',
+    example3:
+      '// db.mjs：连接数据库后再导出可用实例\n' +
+      'const conn = await connect(process.env.DB_URL);\n' +
+      'export const db = conn;\n\n' +
+      '// 导入方：拿到 db 时连接已完成（顶层 await 会阻塞该模块）\n' +
+      '// import { db } from "./db.mjs";\n\n' +
+      '// 顶层 await 让"条件导出"成为可能\n' +
+      '// const isDev = (await fetch("/env").then(r => r.json())).isDev;\n' +
+      '// export const api = isDev ? devApi : prodApi;\n\n' +
+      '// 数值分隔符提升可读性\n' +
+      'const fileSize = 1_048_576;     // 1 MiB\n' +
+      'const ip = 0xFF_FF_FF_FF;       // 4294967295'
   },
   {
     id: 'strict-mode',
@@ -247,6 +387,19 @@ module.exports = [
       '  const ok = 1;\n' +
       '  return ok;\n' +
       '}\n\n' +
-      '// 禁止重复参数名、八进制字面量 010 也会报错'
+      '// 禁止重复参数名、八进制字面量 010 也会报错',
+    example3Title: '实战：严格模式下的常见报错',
+    example3:
+      '// 1) 给未声明的变量赋值 → 抛 ReferenceError\n' +
+      '"use strict";\n' +
+      '// x = 1;            // ReferenceError: x is not defined\n\n' +
+      '// 2) 删除不可删属性 → 抛 TypeError\n' +
+      '// delete Object.prototype;  // 严格模式报错\n\n' +
+      '// 3) 重复参数名 → 语法错误\n' +
+      '// function f(a, a) {}      // 严格模式不允许\n\n' +
+      '// 4) 八进制字面量 010 不再可用\n' +
+      '// const n = 010;    // 严格模式报错\n\n' +
+      '// 现代写法：模块/类自带严格模式，无需手写\n' +
+      '// <script type="module"> 自动严格'
   }
 ];
