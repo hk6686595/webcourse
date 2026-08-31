@@ -165,7 +165,9 @@ async function openFeature(id, li) {
   const codeLang = state.lang === 'csharp' || state.lang === 'patterns' || state.lang === 'unity' ? 'cs'
     : state.lang === 'python' || state.lang === 'agent' || state.lang === 'opencv' ? 'py'
     : state.lang === 'js' ? 'js'
-    : state.lang === 'ts' ? 'ts' : 'cpp';
+    : state.lang === 'ts' ? 'ts'
+    : state.lang === 'docker' || state.lang === 'sqlite' || state.lang === 'linux' ? 'py'
+    : 'cpp';
 
   const badgeCls = (v) => 'badge lvl-' + v;
   $('doc-badges').innerHTML =
@@ -232,11 +234,14 @@ $('cs-count').textContent = meta.csharp;
   $('py-count').textContent = meta.python;
   $('unity-count').textContent = meta.unity;
   $('opencv-count').textContent = meta.opencv;
+  $('docker-count').textContent = meta.docker;
+  $('sqlite-count').textContent = meta.sqlite;
+  $('linux-count').textContent = meta.linux;
   } catch { /* 忽略 */ }
 })();
 
 /* 支持 #csharp / #cpp20 直达 */
-const HASH_VIEWS = ['csharp', 'patterns', 'python', 'js', 'ts', 'agent', 'cpp11', 'cpp20', 'unity', 'opencv'];
+const HASH_VIEWS = ['csharp', 'patterns', 'python', 'js', 'ts', 'agent', 'cpp11', 'cpp20', 'unity', 'opencv', 'docker', 'sqlite', 'linux'];
 {
   const h = location.hash.slice(1);
   if (HASH_VIEWS.includes(h)) showView(h);

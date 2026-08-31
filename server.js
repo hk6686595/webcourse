@@ -20,6 +20,12 @@ const agentFeatures = require('./data/agentFeatures');
 const unityFeatures = require('./data/unityFeatures');
 // OpenCV 图像处理教程
 const opencvFeatures = require('./data/opencvFeatures');
+// Docker 容器教程
+const dockerFeatures = require('./data/dockerFeatures');
+// SQLite 数据库教程
+const sqliteFeatures = require('./data/sqliteFeatures');
+// Linux 命令教程
+const linuxFeatures = require('./data/linuxFeatures');
 
 const app = express();
 app.use(express.json({ limit: '256kb' }));
@@ -222,6 +228,60 @@ app.get('/api/opencv', (req, res) => {
 
 app.get('/api/opencv/:id', (req, res) => {
   const f = opencvFeatures.find(x => x.id === req.params.id);
+  if (!f) return res.status(404).json({ error: '特性不存在' });
+  res.json(f);
+});
+
+// ---------- Docker 教程 ----------
+app.get('/api/docker', (req, res) => {
+  const { q } = req.query;
+  let list = dockerFeatures;
+  if (q) {
+    const kw = String(q).toLowerCase();
+    list = list.filter(f =>
+      (f.title + f.summary + f.detail.join(' ') + f.example + (f.example3 || '')).toLowerCase().includes(kw));
+  }
+  res.json(list.map(({ id, title, category, version, level, summary }) =>
+    ({ id, title, category, version, level, summary })));
+});
+app.get('/api/docker/:id', (req, res) => {
+  const f = dockerFeatures.find(x => x.id === req.params.id);
+  if (!f) return res.status(404).json({ error: '特性不存在' });
+  res.json(f);
+});
+
+// ---------- SQLite 教程 ----------
+app.get('/api/sqlite', (req, res) => {
+  const { q } = req.query;
+  let list = sqliteFeatures;
+  if (q) {
+    const kw = String(q).toLowerCase();
+    list = list.filter(f =>
+      (f.title + f.summary + f.detail.join(' ') + f.example + (f.example3 || '')).toLowerCase().includes(kw));
+  }
+  res.json(list.map(({ id, title, category, version, level, summary }) =>
+    ({ id, title, category, version, level, summary })));
+});
+app.get('/api/sqlite/:id', (req, res) => {
+  const f = sqliteFeatures.find(x => x.id === req.params.id);
+  if (!f) return res.status(404).json({ error: '特性不存在' });
+  res.json(f);
+});
+
+// ---------- Linux 教程 ----------
+app.get('/api/linux', (req, res) => {
+  const { q } = req.query;
+  let list = linuxFeatures;
+  if (q) {
+    const kw = String(q).toLowerCase();
+    list = list.filter(f =>
+      (f.title + f.summary + f.detail.join(' ') + f.example + (f.example3 || '')).toLowerCase().includes(kw));
+  }
+  res.json(list.map(({ id, title, category, version, level, summary }) =>
+    ({ id, title, category, version, level, summary })));
+});
+app.get('/api/linux/:id', (req, res) => {
+  const f = linuxFeatures.find(x => x.id === req.params.id);
   if (!f) return res.status(404).json({ error: '特性不存在' });
   res.json(f);
 });

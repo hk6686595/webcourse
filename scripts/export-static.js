@@ -11,7 +11,10 @@ const dumps = {
   patterns: require('../data/patternsFeatures'),
   python: require('../data/pythonFeatures'),
   unity: require('../data/unityFeatures'),
-  opencv: require('../data/opencvFeatures')
+  opencv: require('../data/opencvFeatures'),
+  docker: require('../data/dockerFeatures'),
+  sqlite: require('../data/sqliteFeatures'),
+  linux: require('../data/linuxFeatures')
 };
 
 const outDir = path.join(__dirname, '..', 'public', 'api');
