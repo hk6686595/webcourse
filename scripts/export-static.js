@@ -9,7 +9,9 @@ const dumps = {
   ts: require('../data/tsFeatures'),
   agent: require('../data/agentFeatures'),
   patterns: require('../data/patternsFeatures'),
-  python: require('../data/pythonFeatures')
+  python: require('../data/pythonFeatures'),
+  unity: require('../data/unityFeatures'),
+  opencv: require('../data/opencvFeatures')
 };
 
 const outDir = path.join(__dirname, '..', 'public', 'api');

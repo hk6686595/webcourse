@@ -16,6 +16,10 @@ const python = require('./data/pythonFeatures');
 const tsFeatures = require('./data/tsFeatures');
 // AI Agent 开发教程
 const agentFeatures = require('./data/agentFeatures');
+// Unity3D 游戏引擎教程
+const unityFeatures = require('./data/unityFeatures');
+// OpenCV 图像处理教程
+const opencvFeatures = require('./data/opencvFeatures');
 
 const app = express();
 app.use(express.json({ limit: '256kb' }));
@@ -180,6 +184,44 @@ app.get('/api/agent', (req, res) => {
 
 app.get('/api/agent/:id', (req, res) => {
   const f = agentFeatures.find(x => x.id === req.params.id);
+  if (!f) return res.status(404).json({ error: '特性不存在' });
+  res.json(f);
+});
+
+// ---------- Unity3D 教程 ----------
+app.get('/api/unity', (req, res) => {
+  const { q } = req.query;
+  let list = unityFeatures;
+  if (q) {
+    const kw = String(q).toLowerCase();
+    list = list.filter(f =>
+      (f.title + f.summary + f.detail.join(' ') + f.example + (f.example3 || '')).toLowerCase().includes(kw));
+  }
+  res.json(list.map(({ id, title, category, version, level, summary }) =>
+    ({ id, title, category, version, level, summary })));
+});
+
+app.get('/api/unity/:id', (req, res) => {
+  const f = unityFeatures.find(x => x.id === req.params.id);
+  if (!f) return res.status(404).json({ error: '特性不存在' });
+  res.json(f);
+});
+
+// ---------- OpenCV 教程 ----------
+app.get('/api/opencv', (req, res) => {
+  const { q } = req.query;
+  let list = opencvFeatures;
+  if (q) {
+    const kw = String(q).toLowerCase();
+    list = list.filter(f =>
+      (f.title + f.summary + f.detail.join(' ') + f.example + (f.example3 || '')).toLowerCase().includes(kw));
+  }
+  res.json(list.map(({ id, title, category, version, level, summary }) =>
+    ({ id, title, category, version, level, summary })));
+});
+
+app.get('/api/opencv/:id', (req, res) => {
+  const f = opencvFeatures.find(x => x.id === req.params.id);
   if (!f) return res.status(404).json({ error: '特性不存在' });
   res.json(f);
 });

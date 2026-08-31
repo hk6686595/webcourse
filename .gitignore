@@ -3,6 +3,9 @@ node_modules/
 *.log
 .DS_Store
 
+# Windows NTFS alternate data streams
+*:Zone.Identifier
+
 # Tencent Cloud EdgeOne
 .env
 .edgeone/*

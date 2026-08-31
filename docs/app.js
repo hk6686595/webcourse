@@ -162,8 +162,8 @@ async function openFeature(id, li) {
 
   const f = state.cache[id];
   if (!f) return;
-  const codeLang = state.lang === 'csharp' || state.lang === 'patterns' ? 'cs'
-    : state.lang === 'python' || state.lang === 'agent' ? 'py'
+  const codeLang = state.lang === 'csharp' || state.lang === 'patterns' || state.lang === 'unity' ? 'cs'
+    : state.lang === 'python' || state.lang === 'agent' || state.lang === 'opencv' ? 'py'
     : state.lang === 'js' ? 'js'
     : state.lang === 'ts' ? 'ts' : 'cpp';
 
@@ -222,19 +222,21 @@ $('doc-search').addEventListener('input', () => {
 (async () => {
   try {
     const meta = await fetch(apiUrl('meta')).then(r => r.json());
-    $('cs-count').textContent = meta.csharp;
-    $('cpp-count').textContent = meta.cpp20;
-    $('cpp11-count').textContent = meta.cpp11;
-    $('js-count').textContent = meta.js;
-    $('ts-count').textContent = meta.ts;
-    $('agent-count').textContent = meta.agent;
-    $('pattern-count').textContent = meta.patterns;
-    $('py-count').textContent = meta.python;
+$('cs-count').textContent = meta.csharp;
+  $('cpp-count').textContent = meta.cpp20;
+  $('cpp11-count').textContent = meta.cpp11;
+  $('js-count').textContent = meta.js;
+  $('ts-count').textContent = meta.ts;
+  $('agent-count').textContent = meta.agent;
+  $('pattern-count').textContent = meta.patterns;
+  $('py-count').textContent = meta.python;
+  $('unity-count').textContent = meta.unity;
+  $('opencv-count').textContent = meta.opencv;
   } catch { /* 忽略 */ }
 })();
 
 /* 支持 #csharp / #cpp20 直达 */
-const HASH_VIEWS = ['csharp', 'patterns', 'python', 'js', 'ts', 'agent', 'cpp11', 'cpp20'];
+const HASH_VIEWS = ['csharp', 'patterns', 'python', 'js', 'ts', 'agent', 'cpp11', 'cpp20', 'unity', 'opencv'];
 {
   const h = location.hash.slice(1);
   if (HASH_VIEWS.includes(h)) showView(h);
