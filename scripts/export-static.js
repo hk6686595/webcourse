@@ -15,7 +15,9 @@ const dumps = {
   docker: require('../data/dockerFeatures'),
   sqlite: require('../data/sqliteFeatures'),
   linux: require('../data/linuxFeatures'),
-  rust: require('../data/rustFeatures')
+  rust: require('../data/rustFeatures'),
+  pandas: require('../data/pandasFeatures'),
+  nodejs: require('../data/nodejsFeatures')
 };
 
 const outDir = path.join(__dirname, '..', 'public', 'api');

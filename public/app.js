@@ -165,8 +165,8 @@ async function openFeature(id, li) {
   const f = state.cache[id];
   if (!f) return;
   const codeLang = state.lang === 'csharp' || state.lang === 'patterns' || state.lang === 'unity' ? 'cs'
-    : state.lang === 'python' || state.lang === 'agent' || state.lang === 'opencv' ? 'py'
-    : state.lang === 'js' ? 'js'
+    : state.lang === 'python' || state.lang === 'agent' || state.lang === 'opencv' || state.lang === 'pandas' ? 'py'
+    : state.lang === 'js' || state.lang === 'nodejs' ? 'js'
     : state.lang === 'ts' ? 'ts'
     : state.lang === 'rust' ? 'rust'
     : state.lang === 'docker' || state.lang === 'sqlite' || state.lang === 'linux' ? 'py'
@@ -241,11 +241,13 @@ $('cs-count').textContent = meta.csharp;
   $('sqlite-count').textContent = meta.sqlite;
   $('linux-count').textContent = meta.linux;
   $('rust-count').textContent = meta.rust;
+  $('pandas-count').textContent = meta.pandas;
+  $('nodejs-count').textContent = meta.nodejs;
   } catch { /* 忽略 */ }
 })();
 
 /* 支持 #csharp / #cpp20 直达 */
-const HASH_VIEWS = ['csharp', 'patterns', 'python', 'js', 'ts', 'agent', 'cpp11', 'cpp20', 'unity', 'opencv', 'docker', 'sqlite', 'linux', 'rust'];
+const HASH_VIEWS = ['csharp', 'patterns', 'python', 'js', 'ts', 'agent', 'cpp11', 'cpp20', 'unity', 'opencv', 'docker', 'sqlite', 'linux', 'rust', 'pandas', 'nodejs'];
 {
   const h = location.hash.slice(1);
   if (HASH_VIEWS.includes(h)) showView(h);
