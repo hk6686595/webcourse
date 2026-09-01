@@ -14,7 +14,8 @@ const dumps = {
   opencv: require('../data/opencvFeatures'),
   docker: require('../data/dockerFeatures'),
   sqlite: require('../data/sqliteFeatures'),
-  linux: require('../data/linuxFeatures')
+  linux: require('../data/linuxFeatures'),
+  rust: require('../data/rustFeatures')
 };
 
 const outDir = path.join(__dirname, '..', 'public', 'api');

@@ -7,14 +7,16 @@ const KW = {
   cpp: 'alignas alignof auto bool break case catch char char8_t char16_t char32_t class concept const consteval constexpr constinit const_cast continue co_await co_return co_yield decltype default delete do double dynamic_cast else enum explicit export extern false float for friend goto if import inline int long mutable namespace new noexcept nullptr operator private protected public register requires return short signed sizeof static static_assert static_cast struct switch template this thread_local throw true try typedef typeid typename union unsigned using virtual void volatile wchar_t while module suspend_always suspend_never suspend_once std size_t uint8_t uint16_t uint32_t uint64_t int8_t int16_t int32_t int64_t',
   js: 'var let const function return if else for while do switch case default break continue of in typeof instanceof new class extends super this null undefined true false void delete yield async await try catch finally throw import export from default static get set constructor debugger with arguments',
   ts: 'var let const function return if else for while do switch case default break continue of in typeof instanceof new class extends super this null undefined true false void delete yield async await try catch finally throw import export from default static get set constructor debugger type interface enum implements declare namespace abstract readonly keyof infer satisfies override module global accessor as is never unknown any',
-  py: 'def class return if elif else for while break continue in not and or is None True False import from as with try except finally raise yield lambda global nonlocal pass del assert async await match case print type isinstance'
+  py: 'def class return if elif else for while break continue in not and or is None True False import from as with try except finally raise yield lambda global nonlocal pass del assert async await match case print type isinstance',
+  rust: 'fn let mut const static use mod pub struct enum trait impl self Self super crate break continue for while loop if else match return where as async await dyn move ref type unsafe extern macro_rules in if let while let true false Some None Ok Err box'
 };
 const TYPES = {
   cs: 'int string bool double decimal float long short byte sbyte char uint ulong ushort object dynamic Task Action Func ValueTask Span ReadOnlySpan IAsyncEnumerable CancellationToken IList IDictionary IEnumerable IQueryable List Dictionary HashSet Nullable DateTime TimeSpan Guid Math Console Convert String Int32 Int64 Decimal Boolean Exception HttpClient WebApplication record class struct interface enum',
   cpp: 'string string_view vector array span map set unordered_map optional variant tuple pair unique_ptr shared_ptr weak_ptr function thread jthread mutex atomic semaphore latch barrier generator coroutine_handle promise_type stop_token counting_semaphore strong_ordering weak_ordering partial_ordering formatter hash iterator size_t',
   js: 'console Math JSON Object Array Promise Map Set Symbol Number String Boolean Date RegExp Function Proxy Reflect BigInt Int8Array Uint8Array Float64Array document window globalThis setTimeout setInterval queueMicrotask structuredClone Symbol Iterator Generator AsyncFunction',
   ts: 'string number boolean bigint symbol object undefined null any unknown never void Array Promise Record Partial Required Pick Omit Readonly Exclude Extract NonNullable ReturnType Parameters Awaited ConstructorParameters InstanceType ReadonlyArray Map Set Date Error JSON console document window fetch HTMLElement',
-  py: 'int float str bool list dict set tuple None range enumerate zip map filter open print len type object Exception str bytes frozenset complex property dataclass Enum Counter defaultdict deque Path datetime json re asyncio'
+  py: 'int float str bool list dict set tuple None range enumerate zip map filter open print len type object Exception str bytes frozenset complex property dataclass Enum Counter defaultdict deque Path datetime json re asyncio',
+  rust: 'String str Vec HashMap HashSet Box Rc RefCell Arc Mutex RwLock Option Result i8 i16 i32 i64 i128 isize u8 u16 u32 u64 u128 usize f32 f64 bool char usize isize Self std io fs path thread sync mpsc future Future tokio axum serde Serialize Deserialize Parser HashMap BTreeMap VecDeque LinkedList BinaryHeap Cow slice'
 };
 const esc = (s) => String(s == null ? '' : s)
   .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -166,6 +168,7 @@ async function openFeature(id, li) {
     : state.lang === 'python' || state.lang === 'agent' || state.lang === 'opencv' ? 'py'
     : state.lang === 'js' ? 'js'
     : state.lang === 'ts' ? 'ts'
+    : state.lang === 'rust' ? 'rust'
     : state.lang === 'docker' || state.lang === 'sqlite' || state.lang === 'linux' ? 'py'
     : 'cpp';
 
@@ -237,11 +240,12 @@ $('cs-count').textContent = meta.csharp;
   $('docker-count').textContent = meta.docker;
   $('sqlite-count').textContent = meta.sqlite;
   $('linux-count').textContent = meta.linux;
+  $('rust-count').textContent = meta.rust;
   } catch { /* 忽略 */ }
 })();
 
 /* 支持 #csharp / #cpp20 直达 */
-const HASH_VIEWS = ['csharp', 'patterns', 'python', 'js', 'ts', 'agent', 'cpp11', 'cpp20', 'unity', 'opencv', 'docker', 'sqlite', 'linux'];
+const HASH_VIEWS = ['csharp', 'patterns', 'python', 'js', 'ts', 'agent', 'cpp11', 'cpp20', 'unity', 'opencv', 'docker', 'sqlite', 'linux', 'rust'];
 {
   const h = location.hash.slice(1);
   if (HASH_VIEWS.includes(h)) showView(h);
