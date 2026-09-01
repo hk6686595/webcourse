@@ -258,7 +258,7 @@ function applyTheme(t) {
   const btn = $('theme-toggle');
   if (btn) btn.textContent = t === 'light' ? '深色' : '浅色';
   const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.setAttribute('content', t === 'light' ? '#f3f5fa' : '#0b1120');
+  if (meta) meta.setAttribute('content', t === 'light' ? '#eaeef5' : '#12131a');
 }
 (function initTheme() {
   let saved = null;
