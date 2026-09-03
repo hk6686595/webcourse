@@ -20,7 +20,8 @@ const dumps = {
   pandas: require('../data/pandasFeatures'),
   nodejs: require('../data/nodejsFeatures'),
   git: require('../data/gitFeatures'),
-  redis: require('../data/redisFeatures')
+  redis: require('../data/redisFeatures'),
+  reverse: require('../data/reverseFeatures')
 };
 
 const outDir = path.join(__dirname, '..', 'public', 'api');

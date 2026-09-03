@@ -38,6 +38,8 @@ const nodejsFeatures = require('./data/nodejsFeatures');
 const gitFeatures = require('./data/gitFeatures');
 // Redis 教程
 const redisFeatures = require('./data/redisFeatures');
+// 逆向工程基础教程
+const reverseFeatures = require('./data/reverseFeatures');
 
 const app = express();
 app.use(express.json({ limit: '256kb' }));
@@ -402,6 +404,24 @@ app.get('/api/redis', (req, res) => {
 });
 app.get('/api/redis/:id', (req, res) => {
   const f = redisFeatures.find(x => x.id === req.params.id);
+  if (!f) return res.status(404).json({ error: '特性不存在' });
+  res.json(f);
+});
+
+// ---------- 逆向工程基础教程 ----------
+app.get('/api/reverse', (req, res) => {
+  const { q } = req.query;
+  let list = reverseFeatures;
+  if (q) {
+    const kw = String(q).toLowerCase();
+    list = list.filter(f =>
+      (f.title + f.summary + f.detail.join(' ') + f.example + (f.example3 || '')).toLowerCase().includes(kw));
+  }
+  res.json(list.map(({ id, title, category, version, level, summary }) =>
+    ({ id, title, category, version, level, summary })));
+});
+app.get('/api/reverse/:id', (req, res) => {
+  const f = reverseFeatures.find(x => x.id === req.params.id);
   if (!f) return res.status(404).json({ error: '特性不存在' });
   res.json(f);
 });
