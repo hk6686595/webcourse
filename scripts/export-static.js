@@ -15,6 +15,7 @@ const dumps = {
   docker: require('../data/dockerFeatures'),
   sqlite: require('../data/sqliteFeatures'),
   linux: require('../data/linuxFeatures'),
+  linuxdev: require('../data/linuxdevFeatures'),
   rust: require('../data/rustFeatures'),
   pandas: require('../data/pandasFeatures'),
   nodejs: require('../data/nodejsFeatures'),

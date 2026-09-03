@@ -26,6 +26,8 @@ const dockerFeatures = require('./data/dockerFeatures');
 const sqliteFeatures = require('./data/sqliteFeatures');
 // Linux 命令教程
 const linuxFeatures = require('./data/linuxFeatures');
+// Linux 平台软件开发教程
+const linuxdevFeatures = require('./data/linuxdevFeatures');
 // Rust 语言教程
 const rustFeatures = require('./data/rustFeatures');
 // Python 数据分析（Pandas）教程
@@ -292,6 +294,24 @@ app.get('/api/linux', (req, res) => {
 });
 app.get('/api/linux/:id', (req, res) => {
   const f = linuxFeatures.find(x => x.id === req.params.id);
+  if (!f) return res.status(404).json({ error: '特性不存在' });
+  res.json(f);
+});
+
+// ---------- Linux 平台软件开发教程 ----------
+app.get('/api/linuxdev', (req, res) => {
+  const { q } = req.query;
+  let list = linuxdevFeatures;
+  if (q) {
+    const kw = String(q).toLowerCase();
+    list = list.filter(f =>
+      (f.title + f.summary + f.detail.join(' ') + f.example + (f.example3 || '')).toLowerCase().includes(kw));
+  }
+  res.json(list.map(({ id, title, category, version, level, summary }) =>
+    ({ id, title, category, version, level, summary })));
+});
+app.get('/api/linuxdev/:id', (req, res) => {
+  const f = linuxdevFeatures.find(x => x.id === req.params.id);
   if (!f) return res.status(404).json({ error: '特性不存在' });
   res.json(f);
 });

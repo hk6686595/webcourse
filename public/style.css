@@ -305,7 +305,8 @@ main#app { flex: 1; overflow: hidden; overscroll-behavior: contain; }
 .card-docker  { --accent: #2496ed; }
 .card-sqlite  { --accent: #0064a5; }
 .card-linux   { --accent: #fcc624; }
-.card-rust    { --accent: #dea584; }
+.card-linuxdev { --accent: #0fa88a; }
+.card-rust   { --accent: #dea584; }
 .card-pandas  { --accent: #130654; }
 .card-nodejs  { --accent: #3c873a; }
 .card-git     { --accent: #e24329; }
