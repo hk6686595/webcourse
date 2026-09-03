@@ -57,7 +57,62 @@ module.exports = [
       'H, S, V = cv2.split(hsv)\n' +
       'L, a, b  = cv2.split(lab)\n' +
       'Y, Cr, Cb = cv2.split(ycrcb)\n' +
-      'print("HSV 三通道均值:", H.mean(), S.mean(), V.mean())'
+      'print("HSV 三通道均值:", H.mean(), S.mean(), V.mean())',
+    example2:
+      'import cv2\n' +
+      'import numpy as np\n\n' +
+      'img = cv2.imread("fruits.jpg")\n' +
+      'hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)\n\n' +
+      '# ========== 1) 分离 HSV 通道并统计 ==========\n' +
+      'H, S, V = cv2.split(hsv)\n' +
+      'print("H 均值:", H.mean(), "S 均值:", S.mean(), "V 均值:", V.mean())\n\n' +
+      '# ========== 2) 按色相提取不同颜色区域 ==========\n' +
+      'lower_red = np.array([0, 70, 50])\n' +
+      'upper_red = np.array([10, 255, 255])\n' +
+      'mask_red = cv2.inRange(hsv, lower_red, upper_red)\n\n' +
+      'lower_green = np.array([35, 70, 50])\n' +
+      'upper_green = np.array([85, 255, 255])\n' +
+      'mask_green = cv2.inRange(hsv, lower_green, upper_green)\n\n' +
+      'lower_blue = np.array([100, 70, 50])\n' +
+      'upper_blue = np.array([130, 255, 255])\n' +
+      'mask_blue = cv2.inRange(hsv, lower_blue, upper_blue)\n\n' +
+      '# ========== 3) 分别提取彩色目标 ==========\n' +
+      'red_fruit = cv2.bitwise_and(img, img, mask=mask_red)\n' +
+      'green_fruit = cv2.bitwise_and(img, img, mask=mask_green)\n' +
+      'blue_fruit = cv2.bitwise_and(img, img, mask=mask_blue)\n\n' +
+      '# ========== 4) 统计每种颜色的像素占比 ==========\n' +
+      'total = img.shape[0] * img.shape[1]\n' +
+      'print("红色占比:", cv2.countNonZero(mask_red) / total * 100, "%")\n' +
+      'print("绿色占比:", cv2.countNonZero(mask_green) / total * 100, "%")\n' +
+      'print("蓝色占比:", cv2.countNonZero(mask_blue) / total * 100, "%")\n\n' +
+      'cv2.imshow("red", red_fruit)\n' +
+      'cv2.imshow("green", green_fruit)\n' +
+      'cv2.imshow("blue", blue_fruit)\n' +
+      'cv2.waitKey(0)',
+    example3:
+      'import cv2\n' +
+      'import numpy as np\n\n' +
+      'img = cv2.imread("portrait.jpg")\n' +
+      'lab = cv2.cvtColor(img, cv2.COLOR_BGR2Lab)\n\n' +
+      '# ========== 1) 转到 Lab 空间做肤色检测 ==========\n' +
+      'L, a, b = cv2.split(lab)\n' +
+      'mask肤色 = cv2.inRange(lab, (0, 120, 120), (255, 180, 240))\n\n' +
+      '# ========== 2) YCrCb 空间提取肤色 ==========\n' +
+      'ycrcb = cv2.cvtColor(img, cv2.COLOR_BGR2YCrCb)\n' +
+      'lower_skin = np.array([0, 133, 77])\n' +
+      'upper_skin = np.array([255, 173, 127])\n' +
+      'mask_skin = cv2.inRange(ycrcb, lower_skin, upper_skin)\n\n' +
+      '# ========== 3) 合并两个空间的 mask ==========\n' +
+      'combined = cv2.bitwise_and(mask肤色, mask_skin)\n' +
+      'kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))\n' +
+      'combined = cv2.morphologyEx(combined, cv2.MORPH_CLOSE, kernel)\n\n' +
+      '# ========== 4) 提取肤色区域 ==========\n' +
+      'skin_region = cv2.bitwise_and(img, img, mask=combined)\n\n' +
+      'cv2.imshow("lab a channel", a)\n' +
+      'cv2.imshow("ycrcb", ycrcb)\n' +
+      'cv2.imshow("combined skin", combined)\n' +
+      'cv2.imshow("skin region", skin_region)\n' +
+      'cv2.waitKey(0)'
   },
   {
     id: 'opencv-hsv-threshold',
@@ -135,7 +190,62 @@ module.exports = [
       '    mask = cv2.inRange(hsv, (h1, s1, v1), (h2, s2, v2))\n' +
       '    cv2.imshow("track", mask)\n' +
       '    if cv2.waitKey(30) & 0xFF == 27: break\n' +
-      'cv2.destroyAllWindows()'
+      'cv2.destroyAllWindows()',
+    example2:
+      'import cv2\n' +
+      'import numpy as np\n\n' +
+      'img = cv2.imread("sunset.jpg")\n' +
+      'hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)\n\n' +
+      '# ========== 1) 提取黄色区域（橙黄色夕阳）==========\n' +
+      'lower_yellow = np.array([15, 80, 80])\n' +
+      'upper_yellow = np.array([35, 255, 255])\n' +
+      'mask_yellow = cv2.inRange(hsv, lower_yellow, upper_yellow)\n\n' +
+      '# ========== 2) 提取蓝色天空 ==========\n' +
+      'lower_blue = np.array([100, 50, 50])\n' +
+      'upper_blue = np.array([130, 255, 255])\n' +
+      'mask_blue = cv2.inRange(hsv, lower_blue, upper_blue)\n\n' +
+      '# ========== 3) 用位运算合成两个区域的 mask ==========\n' +
+      'mask_combined = cv2.bitwise_or(mask_yellow, mask_blue)\n\n' +
+      '# ========== 4) 形态学开运算去噪 ==========\n' +
+      'kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (7, 7))\n' +
+      'mask_clean = cv2.morphologyEx(mask_combined, cv2.MORPH_OPEN, kernel)\n\n' +
+      '# ========== 5) 用 mask 提取彩色目标 ==========\n' +
+      'extracted = cv2.bitwise_and(img, img, mask=mask_clean)\n\n' +
+      'cv2.imshow("yellow mask", mask_yellow)\n' +
+      'cv2.imshow("blue mask", mask_blue)\n' +
+      'cv2.imshow("combined", mask_clean)\n' +
+      'cv2.imshow("extracted", extracted)\n' +
+      'cv2.waitKey(0)',
+    example3:
+      'import cv2\n' +
+      'import numpy as np\n\n' +
+      'img = cv2.imread("ball.jpg")\n' +
+      'hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)\n\n' +
+      '# ========== 1) 定义多种颜色的 HSV 阈值 ==========\n' +
+      'colors = {\n' +
+      '    "red":    (np.array([0, 100, 100]),   np.array([10, 255, 255])),\n' +
+      '    "red2":   (np.array([170, 100, 100]), np.array([180, 255, 255])),\n' +
+      '    "green":  (np.array([35, 100, 100]),  np.array([85, 255, 255])),\n' +
+      '    "blue":   (np.array([100, 100, 100]), np.array([130, 255, 255])),\n' +
+      '    "yellow": (np.array([15, 100, 100]),  np.array([35, 255, 255])),\n' +
+      '}\n\n' +
+      '# ========== 2) 对每种颜色做阈值分割并找轮廓 ==========\n' +
+      'for name, (low, high) in colors.items():\n' +
+      '    mask = cv2.inRange(hsv, low, high)\n' +
+      '    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))\n' +
+      '    mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)\n' +
+      '    mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)\n\n' +
+      '    cnts, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL,\n' +
+      '                               cv2.CHAIN_APPROX_SIMPLE)\n' +
+      '    for c in cnts:\n' +
+      '        if cv2.contourArea(c) < 500: continue\n' +
+      '        (x, y), r = cv2.minEnclosingCircle(c)\n' +
+      '        cv2.circle(img, (int(x), int(y)), int(r), (0, 255, 0), 2)\n' +
+      '        cv2.putText(img, name, (int(x) - 20, int(y) - 10),\n' +
+      '                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)\n\n' +
+      '# ========== 3) 显示结果 ==========\n' +
+      'cv2.imshow("detected balls", img)\n' +
+      'cv2.waitKey(0)'
   },
   {
     id: 'opencv-threshold',
@@ -195,6 +305,65 @@ module.exports = [
       '_, mask_sub = cv2.threshold(sub, 0, 255,\n' +
       '                            cv2.THRESH_BINARY + cv2.THRESH_OTSU)\n' +
       'cv2.imshow("subtracted then otsu", mask_sub)\n' +
+      'cv2.waitKey(0)',
+    example2:
+      'import cv2\n' +
+      'import numpy as np\n\n' +
+      'img = cv2.imread("handwriting.jpg")\n' +
+      'gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)\n\n' +
+      '# ========== 1) 全局固定阈值（baseline）==========\n' +
+      '_, mask_global = cv2.threshold(gray, 128, 255, cv2.THRESH_BINARY)\n\n' +
+      '# ========== 2) Otsu 自动阈值 ==========\n' +
+      'ret_otsu, mask_otsu = cv2.threshold(\n' +
+      '    gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)\n' +
+      'print(f"Otsu 自动阈值: {ret_otsu}")\n\n' +
+      '# ========== 3) 自适应高斯阈值 ==========\n' +
+      'mask_adapt_gauss = cv2.adaptiveThreshold(\n' +
+      '    gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,\n' +
+      '    cv2.THRESH_BINARY, blockSize=21, C=10)\n\n' +
+      '# ========== 4) 自适应均值阈值 ==========\n' +
+      'mask_adapt_mean = cv2.adaptiveThreshold(\n' +
+      '    gray, 255, cv2.ADAPTIVE_THRESH_MEAN_C,\n' +
+      '    cv2.THRESH_BINARY, blockSize=21, C=10)\n\n' +
+      '# ========== 5) 比较四种方法的笔画完整度 ==========\n' +
+      'methods = {"global": mask_global, "otsu": mask_otsu,\n' +
+      '           "adapt_gauss": mask_adapt_gauss, "adapt_mean": mask_adapt_mean}\n' +
+      'for name, m in methods.items():\n' +
+      '    white_ratio = cv2.countNonZero(m) / m.size * 100\n' +
+      '    print(f"{name:15s} 前景像素占比: {white_ratio:.1f}%")\n\n' +
+      'cv2.imshow("global",  mask_global)\n' +
+      'cv2.imshow("otsu",    mask_otsu)\n' +
+      'cv2.imshow("gaussian", mask_adapt_gauss)\n' +
+      'cv2.imshow("mean",    mask_adapt_mean)\n' +
+      'cv2.waitKey(0)',
+    example3:
+      'import cv2\n' +
+      'import numpy as np\n\n' +
+      'img = cv2.imread("text_photo.jpg")\n' +
+      'gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)\n\n' +
+      '# ========== 1) GaussianBlur 预处理去噪 ==========\n' +
+      'blurred = cv2.GaussianBlur(gray, (3, 3), 0)\n\n' +
+      '# ========== 2) OTSU + Triangle 两种自动阈值对比 ==========\n' +
+      '_, mask_otsu = cv2.threshold(blurred, 0, 255,\n' +
+      '                             cv2.THRESH_BINARY + cv2.THRESH_OTSU)\n' +
+      '_, mask_tri = cv2.threshold(blurred, 0, 255,\n' +
+      '                            cv2.THRESH_BINARY + cv2.THRESH_TRIANGLE)\n\n' +
+      '# ========== 3) 自适应阈值（blockSize 从小到大）==========\n' +
+      'for bs in [5, 11, 21, 41]:\n' +
+      '    mask = cv2.adaptiveThreshold(blurred, 255,\n' +
+      '                                cv2.ADAPTIVE_THRESH_GAUSSIAN_C,\n' +
+      '                                cv2.THRESH_BINARY, bs, 2)\n' +
+      '    cv2.imshow(f"blockSize={bs}", mask)\n\n' +
+      '# ========== 4) 反转 mask + 形态学开运算 ==========\n' +
+      'kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (2, 2))\n' +
+      'mask_open = cv2.morphologyEx(mask_otsu, cv2.MORPH_OPEN, kernel)\n\n' +
+      '# ========== 5) 用 mask 提取文字区域 ==========\n' +
+      'text_only = cv2.bitwise_and(img, img, mask=mask_open)\n\n' +
+      'cv2.imshow("gray", gray)\n' +
+      'cv2.imshow("otsu", mask_otsu)\n' +
+      'cv2.imshow("triangle", mask_tri)\n' +
+      'cv2.imshow("clean", mask_open)\n' +
+      'cv2.imshow("text only", text_only)\n' +
       'cv2.waitKey(0)'
   },
   {
@@ -246,6 +415,58 @@ module.exports = [
       'cv2.imshow("only fg",     only_fg)\n' +
       'cv2.imshow("composed",    composed)\n' +
       'cv2.imshow("union view",  union_view)\n' +
+      'cv2.waitKey(0)',
+    example2:
+      'import cv2\n' +
+      'import numpy as np\n\n' +
+      'img = cv2.imread("logo.jpg")\n' +
+      'h, w = img.shape[:2]\n\n' +
+      '# ========== 1) 创建环形 mask ==========\n' +
+      'mask_outer = np.zeros((h, w), dtype=np.uint8)\n' +
+      'cv2.circle(mask_outer, (w // 2, h // 2), min(h, w) // 2, 255, -1)\n' +
+      'mask_inner = np.zeros((h, w), dtype=np.uint8)\n' +
+      'cv2.circle(mask_inner, (w // 2, h // 2), min(h, w) // 4, 255, -1)\n' +
+      'mask_ring = cv2.bitwise_xor(mask_outer, mask_inner)\n\n' +
+      '# ========== 2) 用 XOR 提取环形区域 ==========\n' +
+      'ring_view = cv2.bitwise_and(img, img, mask=mask_ring)\n\n' +
+      '# ========== 3) bitwise_not 反转 mask ==========\n' +
+      'mask_inv = cv2.bitwise_not(mask_ring)\n' +
+      'bg_only = cv2.bitwise_and(img, img, mask=mask_inv)\n\n' +
+      '# ========== 4) 合成：环形内容 + 反转背景 ==========\n' +
+      'result = cv2.add(ring_view, bg_only)\n\n' +
+      'cv2.imshow("original", img)\n' +
+      'cv2.imshow("ring mask", mask_ring)\n' +
+      'cv2.imshow("ring view", ring_view)\n' +
+      'cv2.imshow("inverted mask", mask_inv)\n' +
+      'cv2.imshow("result", result)\n' +
+      'cv2.waitKey(0)',
+    example3:
+      'import cv2\n' +
+      'import numpy as np\n\n' +
+      'img = cv2.imread("scene.jpg")\n' +
+      'h, w = img.shape[:2]\n\n' +
+      '# ========== 1) 生成矩形 + 椭圆两个 mask ==========\n' +
+      'mask_rect = np.zeros((h, w), dtype=np.uint8)\n' +
+      'cv2.rectangle(mask_rect, (50, 50), (w - 50, h - 50), 255, -1)\n\n' +
+      'mask_ellipse = np.zeros((h, w), dtype=np.uint8)\n' +
+      'cv2.ellipse(mask_ellipse, (w // 2, h // 2), (w // 3, h // 3),\n' +
+      '            0, 0, 360, 255, -1)\n\n' +
+      '# ========== 2) 三种组合：并集 / 交集 / 差集 ==========\n' +
+      'mask_union = cv2.bitwise_or(mask_rect, mask_ellipse)\n' +
+      'mask_inter = cv2.bitwise_and(mask_rect, mask_ellipse)\n' +
+      'mask_diff = cv2.bitwise_xor(mask_rect, mask_ellipse)\n\n' +
+      '# ========== 3) 分别提取并显示 ==========\n' +
+      'view_union = cv2.bitwise_and(img, img, mask=mask_union)\n' +
+      'view_inter = cv2.bitwise_and(img, img, mask=mask_inter)\n' +
+      'view_diff = cv2.bitwise_and(img, img, mask=mask_diff)\n\n' +
+      '# ========== 4) copyTo: 把椭圆区域放到另一张图 ==========\n' +
+      'bg = cv2.imread("background.jpg")\n' +
+      'bg = cv2.resize(bg, (w, h))\n' +
+      'cv2.copyTo(img, mask_ellipse, bg)\n\n' +
+      'cv2.imshow("union", view_union)\n' +
+      'cv2.imshow("intersection", view_inter)\n' +
+      'cv2.imshow("difference", view_diff)\n' +
+      'cv2.imshow("copyTo result", bg)\n' +
       'cv2.waitKey(0)'
   },
   {
@@ -304,6 +525,55 @@ module.exports = [
       '    return m\n\n' +
       'clean = clean_mask(mask)\n' +
       'cv2.imshow("clean", clean)\n' +
+      'cv2.waitKey(0)',
+    example2:
+      'import cv2\n' +
+      'import numpy as np\n\n' +
+      'img = cv2.imread("coins.jpg")\n' +
+      'gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)\n' +
+      'blurred = cv2.GaussianBlur(gray, (5, 5), 0)\n\n' +
+      '# ========== 1) Otsu 阈值 ==========\n' +
+      '_, mask = cv2.threshold(blurred, 0, 255,\n' +
+      '                        cv2.THRESH_BINARY + cv2.THRESH_OTSU)\n\n' +
+      '# ========== 2) 不同结构元素对比 ==========\n' +
+      'for shape, name in [(cv2.MORPH_RECT, "rect"),\n' +
+      '                    (cv2.MORPH_ELLIPSE, "ellipse"),\n' +
+      '                    (cv2.MORPH_CROSS, "cross")]:\n' +
+      '    kernel = cv2.getStructuringElement(shape, (5, 5))\n' +
+      '    opened = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)\n' +
+      '    closed = cv2.morphologyEx(opened, cv2.MORPH_CLOSE, kernel)\n' +
+      '    cv2.imshow(f"open+close {name}", closed)\n\n' +
+      '# ========== 3) iterations 对比 ==========\n' +
+      'kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))\n' +
+      'for it in [1, 2, 3, 5]:\n' +
+      '    result = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel,\n' +
+      '                              iterations=it)\n' +
+      '    cv2.imshow(f"iterations={it}", result)\n\n' +
+      'cv2.imshow("original mask", mask)\n' +
+      'cv2.waitKey(0)',
+    example3:
+      'import cv2\n' +
+      'import numpy as np\n\n' +
+      'img = cv2.imread("road.jpg")\n' +
+      'gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)\n\n' +
+      '# ========== 1) 边缘检测 + 形态学处理 ==========\n' +
+      'edges = cv2.Canny(gray, 50, 150)\n' +
+      'kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 15))\n' +
+      'dilated = cv2.dilate(edges, kernel, iterations=2)\n\n' +
+      '# ========== 2) 闭运算连接断线 ==========\n' +
+      'kernel_close = cv2.getStructuringElement(cv2.MORPH_RECT, (25, 1))\n' +
+      'closed = cv2.morphologyEx(dilated, cv2.MORPH_CLOSE, kernel_close)\n\n' +
+      '# ========== 3) 腐蚀缩细线条 ==========\n' +
+      'kernel_erode = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))\n' +
+      'eroded = cv2.erode(closed, kernel_erode, iterations=1)\n\n' +
+      '# ========== 4) 用形态学梯度提取轮廓 ==========\n' +
+      'kernel_grad = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))\n' +
+      'gradient = cv2.morphologyEx(closed, cv2.MORPH_GRADIENT, kernel_grad)\n\n' +
+      'cv2.imshow("edges", edges)\n' +
+      'cv2.imshow("dilated", dilated)\n' +
+      'cv2.imshow("closed", closed)\n' +
+      'cv2.imshow("eroded", eroded)\n' +
+      'cv2.imshow("gradient", gradient)\n' +
       'cv2.waitKey(0)'
   }
 ];

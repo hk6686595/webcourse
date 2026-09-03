@@ -34,7 +34,49 @@ module.exports = [
       'import numpy as np\n' +
       'flipped = np.flip(img, axis=1)         # 水平翻转\n' +
       'cv2.imshow("flipped", flipped)\n' +
-      'cv2.waitKey(0)'
+      'cv2.waitKey(0)',
+    example2:
+      '# ========== 各模块能力速览 ==========\n' +
+      'import cv2\n' +
+      'import numpy as np\n\n' +
+      '# core：矩阵运算\n' +
+      'a = np.array([[1, 2], [3, 4]], dtype=np.float32)\n' +
+      'eigenvalues, eigenvectors = np.linalg.eig(a)\n' +
+      'print("特征值:", eigenvalues)\n\n' +
+      '# imgproc：高斯模糊 + Canny 边缘检测\n' +
+      'img = np.zeros((200, 300, 3), dtype=np.uint8)\n' +
+      'cv2.rectangle(img, (50, 30), (250, 170), (0, 200, 255), -1)\n' +
+      'cv2.circle(img, (150, 100), 40, (255, 0, 0), -1)\n' +
+      'blur = cv2.GaussianBlur(img, (5, 5), 0)\n' +
+      'edges = cv2.Canny(blur, 50, 150)\n' +
+      'print("边缘图 shape:", edges.shape)  # (200, 300) 单通道\n\n' +
+      '# imgcodecs：内存编解码（无需写磁盘）\n' +
+      'ok, buf = cv2.imencode(".jpg", img, [cv2.IMWRITE_JPEG_QUALITY, 90])\n' +
+      'print(f"编码后大小: {len(buf)} 字节")\n' +
+      'decoded = cv2.imdecode(buf, cv2.IMREAD_COLOR)\n' +
+      'print("解码恢复 shape:", decoded.shape)',
+    example3:
+      '# ========== 快速原型：合成测试图并保存 ==========\n' +
+      'import cv2\n' +
+      'import numpy as np\n\n' +
+      '# 创建带渐变背景的测试图\n' +
+      'h, w = 300, 400\n' +
+      'gradient = np.zeros((h, w, 3), dtype=np.uint8)\n' +
+      'gradient[:, :, 0] = np.linspace(0, 255, w, dtype=np.uint8)   # B 通道渐变\n' +
+      'gradient[:, :, 2] = np.linspace(255, 0, w, dtype=np.uint8)   # R 通道渐变\n\n' +
+      '# 叠加几何图形\n' +
+      'cv2.circle(gradient, (200, 150), 60, (0, 255, 0), -1)\n' +
+      'cv2.putText(gradient, "Test Image", (100, 280),\n' +
+      '            cv2.FONT_HERSHEY_SIMPLEX, 1.2, (255, 255, 255), 2)\n\n' +
+      '# 保存为多种格式并检查文件大小\n' +
+      'import os\n' +
+      'for ext, params in [(".jpg", [cv2.IMWRITE_JPEG_QUALITY, 95]),\n' +
+      '                    (".png", [cv2.IMWRITE_PNG_COMPRESSION, 5]),\n' +
+      '                    (".bmp", [])]:\n' +
+      '    fname = f"test_output{ext}"\n' +
+      '    cv2.imwrite(fname, gradient, params)\n' +
+      '    size = os.path.getsize(fname)\n' +
+      '    print(f"{fname}: {size} bytes")'
   },
   {
     id: 'opencv-install',
@@ -87,7 +129,45 @@ module.exports = [
       'cv2.imshow("test", img)\n' +
       'cv2.waitKey(1000)\n' +
       'cv2.destroyAllWindows()\n' +
-      'EOF'
+      'EOF',
+    example2:
+      '# ========== 用虚拟环境管理多项目 ==========\n' +
+      'python -m venv .venv\n' +
+      'source .venv/bin/activate\n' +
+      'pip install opencv-python==4.10.0.84 numpy==1.26.0\n' +
+      'python -c "import cv2; print(cv2.__version__)"  # 锁定版本\n\n' +
+      '# 导出/复现环境到 requirements.txt\n' +
+      'pip freeze > requirements.txt\n' +
+      '# 其他机器 / 服务器一键复现\n' +
+      '# pip install -r requirements.txt\n\n' +
+      '# 查看安装位置与依赖，确认没有装错包\n' +
+      'import cv2, numpy\n' +
+      'print("cv2 位置:", cv2.__file__)      # .../site-packages/cv2/\n' +
+      'print("opencv 版本:", cv2.getBuildInformation().split("\\n")[0])\n' +
+      'print("numpy:", numpy.__version__)',
+    example3:
+      '# ========== 安装完成后的冒烟测试（可直接跑） ==========\n' +
+      'import cv2\n' +
+      'import numpy as np\n\n' +
+      '# 离线测试：不依赖任何网络与样例文件\n' +
+      'img = np.zeros((240, 320, 3), dtype=np.uint8)\n' +
+      'img[:, :] = (50, 120, 200)                      # 纯色 BGR\n' +
+      'img = cv2.GaussianBlur(img, (0, 0), 3)          # 平滑\n' +
+      'gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)\n\n' +
+      '# 完整管线：模糊 -> 二值 -> 轮廓\n' +
+      '_, binary = cv2.threshold(gray, 127, 255, cv2.THRESH_BINARY)\n' +
+      'contours, _ = cv2.findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)\n' +
+      'print("识别到轮廓数:", len(contours))\n\n' +
+      '# 逐项确认核心模块都可用\n' +
+      'checks = {\n' +
+      '    "core": hasattr(cv2, "Mat"),\n' +
+      '    "imgproc": hasattr(cv2, "GaussianBlur"),\n' +
+      '    "imgcodecs": hasattr(cv2, "imwrite"),\n' +
+      '    "highgui": hasattr(cv2, "imshow"),\n' +
+      '    "videoio": hasattr(cv2, "VideoCapture"),\n' +
+      '}\n' +
+      'assert all(checks.values()), checks\n' +
+      'print("所有核心模块安装正常 ✔")'
   },
   {
     id: 'opencv-image-basic',
@@ -141,7 +221,44 @@ module.exports = [
       '# 单独显示红色通道（matplotlib 期望 2D 单通道）\n' +
       'plt.imshow(r, cmap="gray")\n' +
       'plt.title("R channel")\n' +
-      'plt.show()'
+      'plt.show()',
+    example2:
+      '# ========== 数组视图与拷贝：避免坑 ==========\n' +
+      'import cv2\n' +
+      'import numpy as np\n\n' +
+      'img = cv2.imread("lena.jpg")\n\n' +
+      '# 切片是视图（view），改它会影响原图\n' +
+      'roi = img[0:100, 0:100]\n' +
+      'roi[:] = (0, 0, 255)           # 把左上角 100x100 变红\n' +
+      'print("原图也被改:", img[50, 50])   # (0, 0, 255)\n\n' +
+      '# 用 copy 做安全副本\n' +
+      'safe = img[0:100, 0:100].copy()\n' +
+      'safe[:] = (0, 255, 0)\n' +
+      'print("副本不影响原图:", img[50, 50])\n\n' +
+      '# 维度方向理解：把图旋转 90°\n' +
+      'rotated = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)\n' +
+      'print("旋转后 shape:", rotated.shape)\n' +
+      'print("原图的行=高, 列=宽: (H,W,C) =", img.shape)',
+    example3:
+      '# ========== 通道顺序实战：灰度化与颜色校正 ==========\n' +
+      'import cv2\n' +
+      'import numpy as np\n\n' +
+      'img = cv2.imread("lena.jpg")\n\n' +
+      '# numpy 手动实现通道对调（等价 BGR -> RGB）\n' +
+      'rgb_np = img[:, :, ::-1]\n' +
+      '# 或用 OpenCV 内建函数\n' +
+      'rgb_cv = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)\n' +
+      'assert np.array_equal(rgb_np, rgb_cv)   # 两种方式结果一致\n\n' +
+      '# 提取单通道并构造伪彩色\n' +
+      'b, g, r = cv2.split(img)\n' +
+      'blue_only = np.zeros_like(img)\n' +
+      'blue_only[:, :, 0] = b                # 只保留蓝色通道\n\n' +
+      '# 数据归一化：uint8 转 float 再映射到 0~1\n' +
+      'norm = img.astype(np.float32) / 255.0\n' +
+      'print("归一化后范围:", norm.min(), "~", norm.max())\n\n' +
+      '# 验证内存共享：split 返回的视图\n' +
+      'b2 = img[:, :, 0]\n' +
+      'print("b 与 img 共享内存:", np.shares_memory(b2, img))  # True'
   },
   {
     id: 'opencv-imread',
@@ -194,7 +311,49 @@ module.exports = [
       'import urllib.request, cv2, numpy as np\n' +
       'resp = urllib.request.urlopen("https://example.com/cat.jpg")\n' +
       'buf  = np.frombuffer(resp.read(), dtype=np.uint8)\n' +
-      'net_img = cv2.imdecode(buf, cv2.IMREAD_COLOR)'
+      'net_img = cv2.imdecode(buf, cv2.IMREAD_COLOR)',
+    example2:
+      '# ========== 批量处理一个文件夹的图像 ==========\n' +
+      'import cv2\n' +
+      'import os\n' +
+      'import glob\n\n' +
+      '# 读取 all 图片，统一缩放并转灰度保存\n' +
+      'os.makedirs("processed", exist_ok=True)\n' +
+      'for path in glob.glob("images/*.jpg"):\n' +
+      '    img = cv2.imread(path)\n' +
+      '    if img is None:\n' +
+      '        continue\n' +
+      '    resized = cv2.resize(img, (320, 240))\n' +
+      '    gray = cv2.cvtColor(resized, cv2.COLOR_BGR2GRAY)\n' +
+      '    name = os.path.basename(path)\n' +
+      '    cv2.imwrite(f"processed/gray_{name}", gray,\n' +
+      '                [cv2.IMWRITE_JPEG_QUALITY, 90])\n\n' +
+      '# 计算输出总大小，方便后续评估\n' +
+      'total = sum(os.path.getsize(f) for f in glob.glob("processed/*.jpg"))\n' +
+      'print(f"处理完成，输出 {total/1024:.1f} KB")',
+    example3:
+      '# ========== 视频/图片序列帧读取 ==========\n' +
+      'import cv2\n' +
+      'import numpy as np\n\n' +
+      '# 读取视频，逐帧做简单处理并输出到新视频\n' +
+      'cap = cv2.VideoCapture("sample.mp4")\n' +
+      'fps = cap.get(cv2.CAP_PROP_FPS)\n' +
+      'w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))\n' +
+      'h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))\n\n' +
+      'writer = cv2.VideoWriter("output.mp4",\n' +
+      '                         cv2.VideoWriter_fourcc(*"mp4v"),\n' +
+      '                         fps, (w, h))\n\n' +
+      'while True:\n' +
+      '    ret, frame = cap.read()\n' +
+      '    if not ret:\n' +
+      '        break\n' +
+      '    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)\n' +
+      '    edges = cv2.Canny(gray, 100, 200)\n' +
+      '    edges_color = cv2.cvtColor(edges, cv2.COLOR_GRAY2BGR)\n' +
+      '    writer.write(edges_color)\n\n' +
+      'cap.release()\n' +
+      'writer.release()\n' +
+      'print("视频处理完成，已保存 output.mp4")'
   },
   {
     id: 'opencv-draw',
@@ -251,6 +410,56 @@ module.exports = [
       'draw.text((50, 30), "中文标注 OpenCV 教程", fill=(255, 255, 0), font=font)\n' +
       'canvas = cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR)\n' +
       'cv2.imshow("chinese", canvas)\n' +
-      'cv2.waitKey(0)'
+      'cv2.waitKey(0)',
+    example2:
+      '# ========== 交互式画板（鼠标事件） ==========\n' +
+      'import cv2\n' +
+      'import numpy as np\n\n' +
+      'canvas = np.zeros((400, 500, 3), dtype=np.uint8)\n' +
+      'drawing = False\n' +
+      'ix, iy = -1, -1\n\n' +
+      'def on_mouse(event, x, y, flags, param):\n' +
+      '    global drawing, ix, iy\n' +
+      '    if event == cv2.EVENT_LBUTTONDOWN:\n' +
+      '        drawing, ix, iy = True, x, y\n' +
+      '    elif event == cv2.EVENT_MOUSEMOVE and drawing:\n' +
+      '        cv2.line(canvas, (ix, iy), (x, y), (0, 255, 0), 3)\n' +
+      '        ix, iy = x, y\n' +
+      '    elif event == cv2.EVENT_LBUTTONUP:\n' +
+      '        drawing = False\n\n' +
+      'cv2.namedWindow("paint")\n' +
+      'cv2.setMouseCallback("paint", on_mouse)\n' +
+      'while True:\n' +
+      '    cv2.imshow("paint", canvas)\n' +
+      '    if cv2.waitKey(1) & 0xFF == 27:   # Esc 退出\n' +
+      '        break\n' +
+      'cv2.destroyAllWindows()\n' +
+      'cv2.imwrite("drawing.png", canvas)',
+    example3:
+      '# ========== 在真实图像上绘制检测框与轨迹 ==========\n' +
+      'import cv2\n' +
+      'import numpy as np\n\n' +
+      'img = cv2.imread("video_frame.jpg")\n' +
+      'overlay = img.copy()\n\n' +
+      '# 模拟目标检测结果：绘制多个边界框 + 置信度文字\n' +
+      'detections = [\n' +
+      '    ((120, 80, 260, 240), 0.92, "person"),\n' +
+      '    ((300, 150, 420, 280), 0.87, "car"),\n' +
+      '    ((50, 300, 180, 380), 0.75, "cat"),\n' +
+      ']\n' +
+      'for (x0, y0, x1, y1), conf, label in detections:\n' +
+      '    color = (0, 255, 0) if conf > 0.85 else (0, 200, 255)\n' +
+      '    cv2.rectangle(img, (x0, y0), (x1, y1), color, 2)\n' +
+      '    text = f"{label} {conf:.2f}"\n' +
+      '    cv2.putText(img, text, (x0, max(y0 - 8, 15)),\n' +
+      '                cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)\n\n' +
+      '# 绘制目标运动轨迹（折线）\n' +
+      'trajectory = [(140, 90), (170, 120), (210, 160), (250, 200), (300, 230)]\n' +
+      'pts = np.array(trajectory, np.int32)\n' +
+      'cv2.polylines(img, [pts], isClosed=False, color=(255, 0, 0), thickness=2)\n' +
+      'for i, (x, y) in enumerate(trajectory):\n' +
+      '    c = int(255 * i / len(trajectory))\n' +
+      '    cv2.circle(img, (x, y), 5, (0, 0, c), -1)\n\n' +
+      'cv2.imwrite("annotated.jpg", img)'
   }
 ];

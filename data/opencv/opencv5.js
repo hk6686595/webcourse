@@ -69,6 +69,71 @@ module.exports = [
       '        # solidity 接近 1 表示形状凸；越小越凹陷\n' +
       '        print("solidity =", solidity)\n\n' +
       'cv2.imshow("contours", canvas)\n' +
+      'cv2.waitKey(0)',
+    example2:
+      'import cv2\n' +
+      'import numpy as np\n\n' +
+      'img = cv2.imread("shapes.png")\n' +
+      'gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)\n' +
+      '_, mask = cv2.threshold(gray, 0, 255,\n' +
+      '                       cv2.THRESH_BINARY + cv2.THRESH_OTSU)\n\n' +
+      '# ========== 用 RETR_TREE 获取完整层级关系 ==========\n' +
+      'contours, hierarchy = cv2.findContours(mask, cv2.RETR_TREE,\n' +
+      '                                       cv2.CHAIN_APPROX_SIMPLE)\n' +
+      'canvas = img.copy()\n\n' +
+      '# hierarchy: [next, prev, first_child, parent]\n' +
+      'if hierarchy is not None:\n' +
+      '    h = hierarchy[0]\n' +
+      '    for i in range(len(contours)):\n' +
+      '        parent_idx = h[i][3]\n' +
+      '        child_idx = h[i][2]\n' +
+      '        color = (0, 255, 0) if parent_idx == -1 else (255, 0, 0)\n' +
+      '        cv2.drawContours(canvas, contours, i, color, 2)\n' +
+      '        x, y, _, _ = cv2.boundingRect(contours[i])\n' +
+      '        label = f"i={i} p={parent_idx} c={child_idx}"\n' +
+      '        cv2.putText(canvas, label, (x, y - 5),\n' +
+      '                    cv2.FONT_HERSHEY_SIMPLEX, 0.35, (0, 0, 255), 1)\n\n' +
+      '# ========== 过滤：只保留有子轮廓的外层 ==========\n' +
+      'print("--- 有子轮廓的外层 ---")\n' +
+      'for i in range(len(contours)):\n' +
+      '    if h[i][3] == -1 and h[i][2] != -1:\n' +
+      '        print(f"  轮廓 {i}, 子={h[i][2]}, 面积={cv2.contourArea(contours[i]):.0f}")\n\n' +
+      'cv2.imshow("hierarchy", canvas)\n' +
+      'cv2.waitKey(0)',
+    example3:
+      'import cv2\n' +
+      'import numpy as np\n\n' +
+      '# ========== 根据轮廓面积 + 圆形度 + 长宽比做目标筛选 ==========\n' +
+      'img = cv2.imread("coins.png")\n' +
+      'gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)\n' +
+      'blurred = cv2.GaussianBlur(gray, (5, 5), 0)\n' +
+      '_, thresh = cv2.threshold(blurred, 0, 255,\n' +
+      '                          cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)\n\n' +
+      'contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL,\n' +
+      '                                cv2.CHAIN_APPROX_SIMPLE)\n' +
+      'canvas = img.copy()\n' +
+      'import math\n\n' +
+      'results = []\n' +
+      'for c in contours:\n' +
+      '    area = cv2.contourArea(c)\n' +
+      '    if area < 200: continue\n' +
+      '    peri = cv2.arcLength(c, True)\n' +
+      '    circularity = 4 * math.pi * area / (peri * peri + 1e-6)\n' +
+      '    x, y, w, h = cv2.boundingRect(c)\n' +
+      '    aspect = max(w, h) / (min(w, h) + 1e-6)\n' +
+      '    results.append((c, area, circularity, aspect))\n\n' +
+      '# 按面积排序并标注\n' +
+      'results.sort(key=lambda r: r[1], reverse=True)\n' +
+      'for rank, (c, area, circ, asp) in enumerate(results[:10]):\n' +
+      '    x, y, w, h = cv2.boundingRect(c)\n' +
+      '    cv2.rectangle(canvas, (x, y), (x + w, y + h), (0, 255, 0), 1)\n' +
+      '    label = f"#{rank} a={area:.0f} c={circ:.2f} ar={asp:.1f}"\n' +
+      '    cv2.putText(canvas, label, (x, y - 3),\n' +
+      '                cv2.FONT_HERSHEY_SIMPLEX, 0.35, (0, 0, 255), 1)\n' +
+      '    # circularity > 0.8 且 aspect < 1.5 通常可判断为圆形\n' +
+      '    shape = "circle" if (circ > 0.8 and asp < 1.5) else "other"\n' +
+      '    print(f"{label} -> {shape}")\n\n' +
+      'cv2.imshow("filtered", canvas)\n' +
       'cv2.waitKey(0)'
   },
   {
@@ -149,6 +214,68 @@ module.exports = [
       '    dist = cv2.matchShapes(a, b, cv2.CONTOURS_MATCH_I1, 0)\n' +
       '    print(f"两轮廓 matchShapes 距离 = {dist:.4f}")\n\n' +
       'cv2.imshow("props", canvas)\n' +
+      'cv2.waitKey(0)',
+    example2:
+      'import cv2\n' +
+      'import numpy as np\n\n' +
+      'img = cv2.imread("parts.png")\n' +
+      'gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)\n' +
+      '_, mask = cv2.threshold(gray, 0, 255,\n' +
+      '                       cv2.THRESH_BINARY + cv2.THRESH_OTSU)\n' +
+      'contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL,\n' +
+      '                                cv2.CHAIN_APPROX_SIMPLE)\n\n' +
+      '# ========== 用 moments 质心做排序 ==========\n' +
+      'centers = []\n' +
+      'for c in contours:\n' +
+      '    m = cv2.moments(c)\n' +
+      '    if m["m00"] < 50: continue\n' +
+      '    cx = m["m10"] / m["m00"]\n' +
+      '    cy = m["m01"] / m["m00"]\n' +
+      '    centers.append((c, cx, cy))\n\n' +
+      '# 按从上到下、从左到右排序\n' +
+      'centers.sort(key=lambda r: (round(r[2] / 30), r[1]))\n' +
+      'canvas = img.copy()\n' +
+      'for rank, (c, cx, cy) in enumerate(centers):\n' +
+      '    cv2.drawContours(canvas, [c], 0, (0, 255, 0), 2)\n' +
+      '    cv2.putText(canvas, str(rank), (int(cx) - 5, int(cy) + 5),\n' +
+      '                cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)\n' +
+      '    print(f"#{rank} center=({cx:.1f}, {cy:.1f})")\n\n' +
+      'cv2.imshow("sorted by centroid", canvas)\n' +
+      'cv2.waitKey(0)',
+    example3:
+      'import cv2\n' +
+      'import numpy as np\n' +
+      'import math\n\n' +
+      '# ========== 用 Hu 不变矩做模板形状匹配 ==========\n' +
+      'template_img = cv2.imread("template_shape.png")\n' +
+      'query_img = cv2.imread("query_scene.png")\n' +
+      't_gray = cv2.cvtColor(template_img, cv2.COLOR_BGR2GRAY)\n' +
+      'q_gray = cv2.cvtColor(query_img, cv2.COLOR_BGR2GRAY)\n\n' +
+      '_, t_mask = cv2.threshold(t_gray, 0, 255,\n' +
+      '                          cv2.THRESH_BINARY + cv2.THRESH_OTSU)\n' +
+      '_, q_mask = cv2.threshold(q_gray, 0, 255,\n' +
+      '                          cv2.THRESH_BINARY + cv2.THRESH_OTSU)\n\n' +
+      't_contours, _ = cv2.findContours(t_mask, cv2.RETR_EXTERNAL,\n' +
+      '                                  cv2.CHAIN_APPROX_SIMPLE)\n' +
+      'q_contours, _ = cv2.findContours(q_mask, cv2.RETR_EXTERNAL,\n' +
+      '                                  cv2.CHAIN_APPROX_SIMPLE)\n\n' +
+      '# 取模板最大轮廓\n' +
+      't_c = max(t_contours, key=cv2.contourArea)\n' +
+      't_hu = cv2.HuMoments(cv2.moments(t_c)).flatten()\n' +
+      't_hu_log = -np.sign(t_hu) * np.log10(np.abs(t_hu) + 1e-30)\n\n' +
+      '# 与场景中每个轮廓匹配\n' +
+      'canvas = query_img.copy()\n' +
+      'for qc in q_contours:\n' +
+      '    if cv2.contourArea(qc) < 100: continue\n' +
+      '    dist = cv2.matchShapes(t_c, qc, cv2.CONTOURS_MATCH_I2, 0)\n' +
+      '    x, y, w, h = cv2.boundingRect(qc)\n' +
+      '    color = (0, 255, 0) if dist < 0.3 else (0, 0, 255)\n' +
+      '    cv2.rectangle(canvas, (x, y), (x + w, y + h), color, 2)\n' +
+      '    cv2.putText(canvas, f"d={dist:.3f}", (x, y - 5),\n' +
+      '                cv2.FONT_HERSHEY_SIMPLEX, 0.45, color, 1)\n' +
+      '    tag = "match" if dist < 0.3 else "no"\n' +
+      '    print(f"轮廓 dist={dist:.4f} -> {tag}")\n\n' +
+      'cv2.imshow("hu match", canvas)\n' +
       'cv2.waitKey(0)'
   },
   {
@@ -211,6 +338,81 @@ module.exports = [
       '    _, v, _, loc = cv2.minMaxLoc(r)\n' +
       '    print(f"{m} -> val={v:.3f} loc={loc}")\n\n' +
       'cv2.imshow("matched", img)\n' +
+      'cv2.waitKey(0)',
+    example2:
+      'import cv2\n' +
+      'import numpy as np\n\n' +
+      '# ========== 多尺度模板匹配 ==========\n' +
+      'img = cv2.imread("scene.png")\n' +
+      'templ = cv2.imread("object.png", cv2.IMREAD_GRAYSCALE)\n' +
+      'gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)\n' +
+      'th, tw = templ.shape[:2]\n\n' +
+      'best_val = -1\n' +
+      'best_loc = None\n' +
+      'best_scale = 1.0\n\n' +
+      'for scale in np.linspace(0.5, 1.5, 15):\n' +
+      '    resized = cv2.resize(templ, None, fx=scale, fy=scale)\n' +
+      '    rh, rw = resized.shape[:2]\n' +
+      '    if rw > gray.shape[1] or rh > gray.shape[0]:\n' +
+      '        continue\n' +
+      '    result = cv2.matchTemplate(gray, resized, cv2.TM_CCOEFF_NORMED)\n' +
+      '    _, max_val, _, max_loc = cv2.minMaxLoc(result)\n' +
+      '    if max_val > best_val:\n' +
+      '        best_val = max_val\n' +
+      '        best_loc = max_loc\n' +
+      '        best_scale = scale\n' +
+      '        best_w, best_h = rw, rh\n\n' +
+      'print(f"best_scale={best_scale:.2f} score={best_val:.3f}")\n' +
+      'x, y = best_loc\n' +
+      'cv2.rectangle(img, (x, y), (x + best_w, y + best_h), (0, 255, 0), 2)\n' +
+      'cv2.putText(img, f"scale={best_scale:.2f}", (x, y - 5),\n' +
+      '            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)\n\n' +
+      'cv2.imshow("multi-scale", img)\n' +
+      'cv2.waitKey(0)',
+    example3:
+      'import cv2\n' +
+      'import numpy as np\n\n' +
+      '# ========== 用 mask 排除模板边框做鲁棒匹配 ==========\n' +
+      'img = cv2.imread("scene2.png")\n' +
+      'templ = cv2.imread("logo.png", cv2.IMREAD_GRAYSCALE)\n' +
+      'gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)\n' +
+      'h, w = templ.shape[:2]\n\n' +
+      '# 创建圆形掩膜：只关注 logo 中心部分\n' +
+      'mask = np.zeros_like(templ)\n' +
+      'center = (w // 2, h // 2)\n' +
+      'radius = min(w, h) // 3\n' +
+      'cv2.circle(mask, center, radius, 255, -1)\n\n' +
+      '# TM_SQDIFF 支持 mask\n' +
+      'result = cv2.matchTemplate(gray, templ, cv2.TM_SQDIFF, mask=mask)\n' +
+      'min_val, _, min_loc, _ = cv2.minMaxLoc(result)\n' +
+      'x, y = min_loc\n' +
+      'print(f"TM_SQDIFF best = {min_val:.3f} at ({x}, {y})")\n' +
+      'cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)\n\n' +
+      '# ========== 多阈值检测多个位置 ==========\n' +
+      'result2 = cv2.matchTemplate(gray, templ, cv2.TM_CCOEFF_NORMED)\n' +
+      'for thresh in [0.9, 0.8, 0.7]:\n' +
+      '    ys, xs = np.where(result2 >= thresh)\n' +
+      '    if len(xs) == 0: continue\n' +
+      '    # 简单聚类：合并距离 < w/2 的点\n' +
+      '    pts = list(zip(xs.tolist(), ys.tolist()))\n' +
+      '    merged = []\n' +
+      '    used = [False] * len(pts)\n' +
+      '    for i in range(len(pts)):\n' +
+      '        if used[i]: continue\n' +
+      '        group = [pts[i]]\n' +
+      '        used[i] = True\n' +
+      '        for j in range(i + 1, len(pts)):\n' +
+      '            if used[j]: continue\n' +
+      '            if abs(pts[j][0] - pts[i][0]) < w // 2:\n' +
+      '                group.append(pts[j])\n' +
+      '                used[j] = True\n' +
+      '        mx = int(np.mean([p[0] for p in group]))\n' +
+      '        my = int(np.mean([p[1] for p in group]))\n' +
+      '        merged.append((mx, my))\n' +
+      '    for px, py in merged:\n' +
+      '        cv2.rectangle(img, (px, py), (px + w, py + h), (0, 0, 255), 2)\n' +
+      '    print(f"thresh={thresh}: {len(merged)} matches")\n\n' +
+      'cv2.imshow("masked match", img)\n' +
       'cv2.waitKey(0)'
   },
   {
@@ -276,7 +478,78 @@ module.exports = [
       '    h, w = g1.shape\n' +
       '    warped = cv2.warpPerspective(img1, H, (w, h))\n' +
       '    cv2.imshow("warped", warped)\n' +
-      '    cv2.waitKey(0)'
+      '    cv2.waitKey(0)',
+    example2:
+      'import cv2\n' +
+      'import numpy as np\n\n' +
+      '# ========== ORB 特征做目标定位（在场景中找目标）==========\n' +
+      'target = cv2.imread("target.png")\n' +
+      'scene = cv2.imread("scene.png")\n' +
+      't_gray = cv2.cvtColor(target, cv2.COLOR_BGR2GRAY)\n' +
+      's_gray = cv2.cvtColor(scene, cv2.COLOR_BGR2GRAY)\n\n' +
+      'orb = cv2.ORB_create(nfeatures=500)\n' +
+      'kp1, des1 = orb.detectAndCompute(t_gray, None)\n' +
+      'kp2, des2 = orb.detectAndCompute(s_gray, None)\n\n' +
+      'bf = cv2.BFMatcher(cv2.NORM_HAMMING)\n' +
+      'matches = bf.knnMatch(des1, des2, k=2)\n' +
+      'good = [m for m, n in matches if m.distance < 0.75 * n.distance]\n' +
+      'print(f"good matches: {len(good)}")\n\n' +
+      'canvas = scene.copy()\n' +
+      'if len(good) >= 10:\n' +
+      '    src_pts = np.float32([kp1[m.queryIdx].pt for m in good]).reshape(-1, 1, 2)\n' +
+      '    dst_pts = np.float32([kp2[m.trainIdx].pt for m in good]).reshape(-1, 1, 2)\n' +
+      '    H, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, 5.0)\n' +
+      '    if H is not None:\n' +
+      '        h, w = t_gray.shape\n' +
+      '        corners = np.float32([[0, 0], [w, 0], [w, h], [0, h]]).reshape(-1, 1, 2)\n' +
+      '        transformed = cv2.perspectiveTransform(corners, H)\n' +
+      '        cv2.polylines(canvas, [np.int32(transformed)], True, (0, 255, 0), 3)\n' +
+      '        inliers = mask.ravel().sum()\n' +
+      '        print(f"inliers: {inliers}, homography found")\n' +
+      '    else:\n' +
+      '        print("homography failed")\n' +
+      'else:\n' +
+      '    print("not enough matches")\n\n' +
+      'cv2.imshow("target location", canvas)\n' +
+      'cv2.waitKey(0)',
+    example3:
+      'import cv2\n' +
+      'import numpy as np\n\n' +
+      '# ========== SIFT + FLANN 做高精度特征匹配 ==========\n' +
+      'img1 = cv2.imread("book1.jpg")\n' +
+      'img2 = cv2.imread("book2.jpg")\n' +
+      'g1 = cv2.cvtColor(img1, cv2.COLOR_BGR2GRAY)\n' +
+      'g2 = cv2.cvtColor(img2, cv2.COLOR_BGR2GRAY)\n\n' +
+      'sift = cv2.SIFT_create(nfeatures=2000)\n' +
+      'kp1, des1 = sift.detectAndCompute(g1, None)\n' +
+      'kp2, des2 = sift.detectAndCompute(g2, None)\n\n' +
+      '# FLANN 参数\n' +
+      'FLANN_INDEX_KDTREE = 1\n' +
+      'index_params = dict(algorithm=FLANN_INDEX_KDTREE, trees=5)\n' +
+      'search_params = dict(checks=50)\n' +
+      'flann = cv2.FlannBasedMatcher(index_params, search_params)\n' +
+      'matches = flann.knnMatch(des1, des2, k=2)\n\n' +
+      'good = []\n' +
+      'for pair in matches:\n' +
+      '    if len(pair) == 2:\n' +
+      '        m, n = pair\n' +
+      '        if m.distance < 0.7 * n.distance:\n' +
+      '            good.append(m)\n' +
+      'print(f"FLANN good matches: {len(good)}")\n\n' +
+      'canvas = cv2.drawMatches(img1, kp1, img2, kp2, good[:80], None,\n' +
+      '                         flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)\n\n' +
+      'if len(good) >= 4:\n' +
+      '    src_pts = np.float32([kp1[m.queryIdx].pt for m in good]).reshape(-1, 1, 2)\n' +
+      '    dst_pts = np.float32([kp2[m.trainIdx].pt for m in good]).reshape(-1, 1, 2)\n' +
+      '    H, inlier_mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, 3.0)\n' +
+      '    inliers = inlier_mask.ravel().sum()\n' +
+      '    print(f"inliers: {inliers}/{len(good)}")\n' +
+      '    if H is not None:\n' +
+      '        h, w = g1.shape\n' +
+      '        warped = cv2.warpPerspective(img1, H, (w, h))\n' +
+      '        cv2.imshow("sift warped", warped)\n\n' +
+      'cv2.imshow("sift matches", canvas)\n' +
+      'cv2.waitKey(0)'
   },
   {
     id: 'opencv-straight-rect',
@@ -335,6 +608,83 @@ module.exports = [
       '    cv2.putText(canvas, str(i), tuple(p + 5),\n' +
       '                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 2)\n\n' +
       'cv2.imshow("lines + rect", canvas)\n' +
+      'cv2.waitKey(0)',
+    example2:
+      'import cv2\n' +
+      'import numpy as np\n\n' +
+      '# ========== 透视变换：把倾斜的文档矫正 ==========\n' +
+      'img = cv2.imread("doc_photo.jpg")\n' +
+      'gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)\n' +
+      'edges = cv2.Canny(gray, 50, 150)\n' +
+      'contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL,\n' +
+      '                                cv2.CHAIN_APPROX_SIMPLE)\n' +
+      'contours = sorted(contours, key=cv2.contourArea, reverse=True)\n\n' +
+      'doc_rect = None\n' +
+      'for c in contours[:5]:\n' +
+      '    peri = cv2.arcLength(c, True)\n' +
+      '    approx = cv2.approxPolyDP(c, 0.02 * peri, True)\n' +
+      '    if len(approx) == 4:\n' +
+      '        doc_rect = approx.reshape(4, 2).astype(np.float32)\n' +
+      '        break\n\n' +
+      'if doc_rect is not None:\n' +
+      '    def order_points(pts):\n' +
+      '        rect = np.zeros((4, 2), dtype=np.float32)\n' +
+      '        s = pts.sum(axis=1)\n' +
+      '        rect[0] = pts[np.argmin(s)]\n' +
+      '        rect[2] = pts[np.argmax(s)]\n' +
+      '        diff = np.diff(pts, axis=1).ravel()\n' +
+      '        rect[1] = pts[np.argmin(diff)]\n' +
+      '        rect[3] = pts[np.argmax(diff)]\n' +
+      '        return rect\n\n' +
+      '    ordered = order_points(doc_rect)\n' +
+      '    w1 = np.linalg.norm(ordered[2] - ordered[3])\n' +
+      '    w2 = np.linalg.norm(ordered[1] - ordered[0])\n' +
+      '    h1 = np.linalg.norm(ordered[1] - ordered[2])\n' +
+      '    h2 = np.linalg.norm(ordered[0] - ordered[3])\n' +
+      '    maxW = int(max(w1, w2))\n' +
+      '    maxH = int(max(h1, h2))\n' +
+      '    dst = np.float32([[0, 0], [maxW, 0],\n' +
+      '                       [maxW, maxH], [0, maxH]])\n' +
+      '    M = cv2.getPerspectiveTransform(ordered, dst)\n' +
+      '    warped = cv2.warpPerspective(img, M, (maxW, maxH))\n' +
+      '    cv2.imshow("straightened", warped)\n' +
+      '    cv2.waitKey(0)\n' +
+      'else:\n' +
+      '    print("未找到四边形文档区域")',
+    example3:
+      'import cv2\n' +
+      'import numpy as np\n\n' +
+      '# ========== 检测并统计图像中所有旋转矩形 ==========\n' +
+      'img = cv2.imread("squares.png")\n' +
+      'gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)\n' +
+      '_, thresh = cv2.threshold(gray, 0, 255,\n' +
+      '                          cv2.THRESH_BINARY + cv2.THRESH_OTSU)\n' +
+      'contours, _ = cv2.findContours(thresh, cv2.RETR_LIST,\n' +
+      '                                cv2.CHAIN_APPROX_SIMPLE)\n\n' +
+      'canvas = img.copy()\n' +
+      'rect_count = 0\n\n' +
+      'for c in contours:\n' +
+      '    area = cv2.contourArea(c)\n' +
+      '    if area < 500: continue\n' +
+      '    peri = cv2.arcLength(c, True)\n' +
+      '    approx = cv2.approxPolyDP(c, 0.02 * peri, True)\n' +
+      '    if len(approx) != 4: continue\n' +
+      '    if not cv2.isContourConvex(approx): continue\n\n' +
+      '    rect = cv2.minAreaRect(c)\n' +
+      '    box = cv2.boxPoints(rect).astype(np.int32)\n' +
+      '    rw, rh = rect[1]\n' +
+      '    if min(rw, rh) < 10: continue\n' +
+      '    aspect = max(rw, rh) / (min(rw, rh) + 1e-6)\n' +
+      '    if aspect > 3.0: continue\n\n' +
+      '    cv2.drawContours(canvas, [box], 0, (0, 255, 0), 2)\n' +
+      '    cx, cy = int(rect[0][0]), int(rect[0][1])\n' +
+      '    angle = rect[2]\n' +
+      '    cv2.putText(canvas, f"{rw:.0f}x{rh:.0f} {angle:.1f}deg",\n' +
+      '                (cx - 30, cy), cv2.FONT_HERSHEY_SIMPLEX,\n' +
+      '                0.4, (0, 0, 255), 1)\n' +
+      '    rect_count += 1\n\n' +
+      'print(f"检测到 {rect_count} 个矩形")\n' +
+      'cv2.imshow("rectangles", canvas)\n' +
       'cv2.waitKey(0)'
   }
 ];

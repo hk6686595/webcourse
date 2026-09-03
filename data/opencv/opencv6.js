@@ -73,8 +73,59 @@ module.exports = [
       '    out.write(frame)\n' +
       '    cv2.imshow("recording", frame)\n' +
       '    if cv2.waitKey(1) & 0xFF == 27: break\n' +
+       'cap.release()\n' +
+       'out.release()\n' +
+       'cv2.destroyAllWindows()',
+    example2:
+      '# 场景 2：读取视频文件，写一个简单的“倍速播放 + 逐帧取帧”工具\n' +
+      'cap = cv2.VideoCapture("clip.mp4")\n' +
+      'fps = cap.get(cv2.CAP_PROP_FPS)\n\n' +
+      'frame_idx = 0            # 当前帧号\n' +
+      'step = 2                # 每跳 2 帧 = 0.5 倍速做逐帧分析\n' +
+      'frames = []\n' +
+      'while True:\n' +
+      '    cap.set(cv2.CAP_PROP_POS_FRAMES, frame_idx)\n' +
+      '    ret, frame = cap.read()\n' +
+      '    if not ret: break\n' +
+      '    frames.append(frame)\n' +
+      '    frame_idx += step\n\n' +
+      '# 把抽出的帧拼成缩略图网格，便于快速浏览\n' +
+      'thumb = [cv2.resize(f, (160, 120)) for f in frames[:25]]\n' +
+      'grid = cv2.vconcat([cv2.hconcat(thumb[i:i + 5]) for i in range(0, len(thumb), 5)])\n' +
+      'cv2.imshow("frames", grid)\n' +
+      'cv2.waitKey(0)\n\n' +
       'cap.release()\n' +
-      'out.release()\n' +
+      'cv2.destroyAllWindows()',
+    example3:
+      '# 场景 3：双路输入（摄像头 + 视频文件）帧率优先级处理 + 实时写盘\n' +
+      'import threading\n\n' +
+      'def grab(cap, buf, stop):\n' +
+      '    while not stop.is_set():\n' +
+      '        ret, frame = cap.read()\n' +
+      '        if not ret: break\n' +
+      '        with lock:\n' +
+      '            buf[0] = frame\n\n' +
+      'lock = threading.Lock()\n' +
+      'buf = [None]\n' +
+      'stop = threading.Event()\n\n' +
+      'cam = cv2.VideoCapture(0)\n' +
+      'src = cv2.VideoCapture("movie.mp4")\n' +
+      'fourcc = cv2.VideoWriter_fourcc(*"MJPG")\n' +
+      'W, H = 640, 480\n' +
+      'out = cv2.VideoWriter("combo.avi", fourcc, 25.0, (W, H))\n\n' +
+      't1 = threading.Thread(target=grab, args=(cam, buf, stop), daemon=True)\n' +
+      't2 = threading.Thread(target=grab, args=(src, buf, stop), daemon=True)\n' +
+      't1.start(); t2.start()\n\n' +
+      'while True:\n' +
+      '    with lock:\n' +
+      '        frame = buf[0]\n' +
+      '    if frame is not None:\n' +
+      '        frame = cv2.resize(frame, (W, H))\n' +
+      '        out.write(frame)\n' +
+      '        cv2.imshow("combo", frame)\n' +
+      '    if cv2.waitKey(1) & 0xFF == 27: break\n\n' +
+      'stop.set()\n' +
+      'cam.release(); src.release(); out.release()\n' +
       'cv2.destroyAllWindows()'
   },
   {
@@ -144,9 +195,51 @@ module.exports = [
       '        cv2.circle(img, (x, y), 12, (0, 0, 255), -1)\n' +
       '        cv2.putText(img, str(i), (x + 15, y),\n' +
       '                    cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 2)\n' +
-      '    cv2.imshow("detected quad", img)\n' +
-      '    cv2.imshow("straightened", result)\n' +
-      '    cv2.waitKey(0)'
+       '    cv2.imshow("detected quad", img)\n' +
+       '    cv2.imshow("straightened", result)\n' +
+       '    cv2.waitKey(0)',
+    example2:
+      '# 场景 2：用 Harris / Shi-Tomasi 角点做“棋盘格”定位与点数\n' +
+      '# 适用：实验课标定板、图表统计、棋盘棋盘\n' +
+      'img = cv2.imread("chessboard.jpg")\n' +
+      'gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)\n\n' +
+      '# 标定板里其实“角点”有成百上千个，用 findChessboardCorners 更稳\n' +
+      'PATTERN = (6, 9)          # 内角点数（行, 列）\n' +
+      'found, corners = cv2.findChessboardCorners(gray, PATTERN, None)\n' +
+      'if found:\n' +
+      '    corners = cv2.cornerSubPix(gray, corners, (11, 11), (-1, -1),\n' +
+      '                                (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER,\n' +
+      '                                 30, 0.001))\n' +
+      '    cv2.drawChessboardCorners(img, PATTERN, corners, found)\n' +
+      '    print(f"检测到 {len(corners)} 个内角点")\n' +
+      'else:\n' +
+      '    print("未找到棋盘格，试试换尺寸或调光照")',
+    example3:
+      '# 场景 3：视频里的实时文档抓取 + 角点抖动平滑（多帧投票）\n' +
+      'cap = cv2.VideoCapture(0)\n\n' +
+      'def corners_of(frame):\n' +
+      '    return find_doc_quad(frame)   # 复用 25 节函数\n\n' +
+      'def smooth(current, prev, alpha=0.6):\n' +
+      '    if prev is None: return current\n' +
+      '    return alpha * current + (1 - alpha) * prev\n\n' +
+      'prev = None\n' +
+      'while True:\n' +
+      '    ret, frame = cap.read()\n' +
+      '    if not ret: break\n' +
+      '    quad = corners_of(frame)\n' +
+      '    if quad is not None:\n' +
+      '        quad = smooth(quad, prev)   # 减少抖动\n' +
+      '        prev = quad\n' +
+      '        quad_i = quad.astype(int)\n' +
+      '        cv2.polylines(frame, [quad_i], True, (0, 255, 0), 3)\n' +
+      '        straight, _ = straighten(frame)\n' +
+       '        if straight is not None:\n' +
+       '            small = cv2.resize(straight, (320, 400))\n' +
+       '            cv2.imshow("result", small)\n' +
+      '    cv2.imshow("live", frame)\n' +
+      '    if cv2.waitKey(1) & 0xFF == 27: break\n' +
+      'cap.release()\n' +
+      'cv2.destroyAllWindows()'
   },
   {
     id: 'opencv-trackbar',
@@ -212,7 +305,56 @@ module.exports = [
       '    canvas = np.vstack([top, bot])\n' +
       '    canvas = cv2.resize(canvas, (canvas.shape[1] // 2, canvas.shape[0] // 2))\n' +
       '    cv2.imshow("track", canvas)\n' +
-      '    if cv2.waitKey(30) & 0xFF == 27: break\n\n' +
+       '    if cv2.waitKey(30) & 0xFF == 27: break\n\n' +
+       'cv2.destroyAllWindows()',
+    example2:
+      '# 场景 2：用 trackbar 同时调 Canny 低/高阈值 + 形态学 kernel，直观理解“最优参数”\n' +
+      '# 与第 25 节文档抓取结合：调完参数保存出来\n' +
+      'img = cv2.imread("tilted_doc.jpg")\n' +
+      'gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)\n\n' +
+      'cv2.namedWindow("tune", cv2.WINDOW_NORMAL)\n' +
+      'cv2.createTrackbar("low",   "tune", 75, 255, lambda x: None)\n' +
+      'cv2.createTrackbar("high",  "tune", 200, 255, lambda x: None)\n' +
+      'cv2.createTrackbar("ks",    "tune", 3, 15, lambda x: None)\n\n' +
+      'while True:\n' +
+      '    lo  = cv2.getTrackbarPos("low", "tune")\n' +
+      '    hi  = max(lo + 1, cv2.getTrackbarPos("high", "tune"))\n' +
+      '    ks  = max(1, cv2.getTrackbarPos("ks", "tune") | 1)\n' +
+      '    edges = cv2.Canny(gray, lo, hi)\n' +
+      '    edges = cv2.morphologyEx(edges, cv2.MORPH_CLOSE,\n' +
+      '                             np.ones((ks, ks), np.uint8))\n' +
+      '    cv2.imshow("tune", np.hstack([gray, edges]))\n' +
+      '    k = cv2.waitKey(30)\n' +
+      '    if k == ord("s"):\n' +
+      '        cv2.imwrite(f"edges_{lo}_{hi}_k{ks}.png", edges)\n' +
+      '    elif k == 27: break\n' +
+      'cv2.destroyAllWindows()',
+    example3:
+      '# 场景 3：综合调参面板——颜色阈值 + 轮廓筛选 + 目标计数\n' +
+      '# 适合工业视觉：调一个颜色范围，实时看筛选出来的目标数量\n' +
+      'cv2.namedWindow("panel", cv2.WINDOW_NORMAL)\n' +
+      'names = ["H1", "S1", "V1", "H2", "S2", "V2", "Area"]\n' +
+      'init  = [0, 100, 100, 179, 255, 255, 500]\n' +
+      'for n, v in zip(names, init):\n' +
+      '    mx = 179 if n.startswith("H") else 255 if "Area" not in n else 10000\n' +
+      '    cv2.createTrackbar(n, "panel", v, mx, lambda x: None)\n\n' +
+      'cap = cv2.VideoCapture(0)\n' +
+      'while True:\n' +
+      '    ret, frame = cap.read()\n' +
+      '    if not ret: break\n' +
+      '    vals = [cv2.getTrackbarPos(n, "panel") for n in names]\n' +
+      '    h1, s1, v1, h2, s2, v2, area = vals\n' +
+      '    mask = cv2.inRange(cv2.cvtColor(frame, cv2.COLOR_BGR2HSV),\n' +
+      '                        (h1, s1, v1), (h2, s2, v2))\n' +
+      '    cnts, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL,\n' +
+      '                                cv2.CHAIN_APPROX_SIMPLE)\n' +
+      '    picked = [c for c in cnts if cv2.contourArea(c) > area]\n' +
+      '    cv2.drawContours(frame, picked, -1, (0, 0, 255), 2)\n' +
+      '    cv2.putText(frame, f"count={len(picked)}", (20, 40),\n' +
+      '                cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)\n' +
+      '    cv2.imshow("panel", np.hstack([frame, mask]))\n' +
+      '    if cv2.waitKey(30) & 0xFF == 27: break\n' +
+      'cap.release()\n' +
       'cv2.destroyAllWindows()'
   },
   {
@@ -297,10 +439,57 @@ module.exports = [
       '    out = process_one(frame)\n' +
       '    if out is not None:\n' +
       '        cv2.imshow("debug", out)\n' +
-      '    if cv2.waitKey(1) & 0xFF == 27: break\n' +
-      '    i += 1\n' +
-      'cap.release()\n' +
-      'cv2.destroyAllWindows()'
+       '    if cv2.waitKey(1) & 0xFF == 27: break\n' +
+       '    i += 1\n' +
+       'cap.release()\n' +
+       'cv2.destroyAllWindows()',
+    example2:
+      '# 场景 2：逐项自查并记录日志，快速定位“哪一步出错”\n' +
+      'import logging\n' +
+      'logging.basicConfig(level=logging.INFO, format="%(lineno)d %(message)s")\n\n' +
+      'def debug_io(path):\n' +
+      '    logging.info(f"[1] exists? {os.path.exists(path)}")\n' +
+      '    img = cv2.imread(path)\n' +
+      '    logging.info(f"[2] imread -> {type(img)}")\n' +
+      '    if img is None:\n' +
+      '        logging.error("图片为 None，检查路径/格式/编码")\n' +
+      '        return None\n' +
+      '    logging.info(f"[3] shape={img.shape} dtype={img.dtype}")\n' +
+      '    return img\n\n' +
+      'def debug_video(src):\n' +
+      '    cap = cv2.VideoCapture(src)\n' +
+      '    logging.info(f"[4] isOpened={cap.isOpened()}")\n' +
+      '    ret, f = cap.read()\n' +
+      '    logging.info(f"[5] first read ret={ret} shape={(None, None) if f is None else f.shape}")\n' +
+      '    cap.release()\n\n' +
+      'img = debug_io("photo.jpg")\n' +
+      'debug_video(0)',
+    example3:
+      '# 场景 3：生产环境容错管线——单帧失败不中断，超时兜底，逐帧记录\n' +
+      '# 应对 OOM、脏帧、解码失败等偶发问题\n' +
+      'def robust_pipeline(source):\n' +
+      '    cap = cv2.VideoCapture(source)\n' +
+      '    ok_frames = 0\n' +
+      '    skip = 0\n' +
+      '    while True:\n' +
+      '        ret, frame = cap.read()\n' +
+      '        if not ret:\n' +
+      '            skip += 1\n' +
+      '            if skip > 10: break        # 连续失败给个上限\n' +
+      '            continue\n' +
+      '        try:\n' +
+      '            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)  # 可能 OOM\n' +
+      '            ok_frames += 1\n' +
+      '        except Exception:\n' +
+      '            traceback.print_exc()\n' +
+      '            continue\n' +
+      '        cv2.imshow("ok", gray)\n' +
+      '        if cv2.waitKey(1) & 0xFF == 27: break\n' +
+      '    cap.release()\n' +
+      '    print(f"成功帧 {ok_frames}，跳过 {skip}")\n\n' +
+      '# 跑前先断言环境\n' +
+      'assert int(cv2.__version__.split(".")[0]) >= 4, "OpenCV 版本过旧"\n' +
+      'robust_pipeline("camera_0.avi")'
   },
   {
     id: 'opencv-next-step',
@@ -362,7 +551,69 @@ module.exports = [
       '# pano = stitch([cv2.imread(f"view{i}.jpg") for i in range(1, 4)])\n' +
       '# if pano is not None:\n' +
       '#     cv2.imwrite("panorama.jpg", pano)\n\n' +
-      'cv2.imshow("qr", img)\n' +
-      'cv2.waitKey(0)'
+       'cv2.imshow("qr", img)\n' +
+       'cv2.waitKey(0)',
+    example2:
+      '# 场景 2：行人检测——HOG + SVM（OpenCV 内置）快速上手\n' +
+      '# pip 自带，无需深度学习，CPU 上也能跑\n' +
+      'hog = cv2.HOGDescriptor()\n' +
+      'hog.setSVMDetector(cv2.HOGDescriptor_getDefaultPeopleDetector())\n\n' +
+      'img = cv2.imread("street.jpg")\n' +
+      'rects, _ = hog.detectMultiScale(img, winStride=(8, 8), padding=(4, 4), scale=1.05)\n\n' +
+      'def non_max_suppression(boxes, thr=0.5):\n' +
+      '    x1, y1, x2, y2 = (b[:, i] for b, i in\n' +
+      '                      [(boxes, 0), (boxes, 1), (boxes, 2), (boxes, 3)])\n' +
+      '    area = (x2 - x1 + 1) * (y2 - y1 + 1)\n' +
+      '    idx = np.argsort(y2)\n' +
+      '    keep = []\n' +
+      '    while idx.size:\n' +
+      '        i = idx[-1]; keep.append(i)\n' +
+      '        xx1 = np.maximum(x1[i], x1[idx[:-1]])\n' +
+      '        yy1 = np.maximum(y1[i], y1[idx[:-1]])\n' +
+      '        xx2 = np.minimum(x2[i], x2[idx[:-1]])\n' +
+      '        yy2 = np.minimum(y2[i], y2[idx[:-1]])\n' +
+      '        inter = np.maximum(0, xx2 - xx1) * np.maximum(0, yy2 - yy1)\n' +
+      '        idx = idx[np.where(inter / area[idx[:-1]] < thr)[0]]\n' +
+      '    return boxes[keep]\n\n' +
+      'boxes = np.array([[x, y, x + w, y + h] for (x, y, w, h) in rects])\n' +
+      'for (x1, y1, x2, y2) in non_max_suppression(boxes):\n' +
+      '    cv2.rectangle(img, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 0), 2)\n' +
+      'cv2.imshow("people", img)\n' +
+      'cv2.waitKey(0)',
+    example3:
+      '# 场景 3：cv2.dnn 玩转 YOLOv8 ONNX 推理 + 摄像头实时检测\n' +
+      '# 先导出：yolo export model=yolov8n.pt format=onnx\n' +
+      'net = cv2.dnn.readNetFromONNX("yolov8n.onnx")\n' +
+      'net.setPreferableBackend(cv2.dnn.DNN_BACKEND_OPENCV)\n' +
+      'net.setPreferableTarget(cv2.dnn.DNN_TARGET_CPU)\n' +
+      'CLASSES = ["person", "bicycle", "car", "motorbike"]\n\n' +
+      'def detect(frame):\n' +
+      '    blob = cv2.dnn.blobFromImage(frame, 1 / 255.0, (640, 640),\n' +
+      '                                 swapRB=True, crop=False)\n' +
+      '    net.setInput(blob)\n' +
+      '    out = net.forward()[0]              # (84, N)\n' +
+      '    boxes, scores, cls = [], [], []\n' +
+      '    for r in range(4, out.shape[0]):    # 跳过 4 个坐标\n' +
+      '        row = out[r]\n' +
+      '        if row.ndim == 0:               # 防御起见\n' +
+      '            continue\n' +
+      '        if row > 0.5:\n' +
+      '            idx = int(row.argmax())\n' +
+      '            if idx < len(CLASSES):\n' +
+      '                scores.append(float(row[idx]))\n' +
+      '                cls.append(idx)\n' +
+      '    # 简化演示：只打印总目标数；生产中与 NMS 配合取框\n' +
+      '    return len(scores)\n\n' +
+      'cap = cv2.VideoCapture(0)\n' +
+      'while True:\n' +
+      '    ret, frame = cap.read()\n' +
+      '    if not ret: break\n' +
+      '    n = detect(frame)\n' +
+      '    cv2.putText(frame, f"objects={n}", (20, 40),\n' +
+      '                cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)\n' +
+      '    cv2.imshow("yolo", frame)\n' +
+      '    if cv2.waitKey(1) & 0xFF == 27: break\n' +
+      'cap.release()\n' +
+      'cv2.destroyAllWindows()'
   }
 ];

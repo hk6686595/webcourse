@@ -55,7 +55,50 @@ module.exports = [
       '                         [ 0, -1,  0]], dtype=np.float32)\n' +
       'sharp = cv2.filter2D(img, -1, sharp_kernel)\n' +
       'cv2.imshow("sharpen", sharp)\n' +
-      'cv2.waitKey(0)'
+      'cv2.waitKey(0)',
+    example2:
+      'import cv2\n' +
+      'import numpy as np\n\n' +
+      '# ---- 实用技巧：用 PSNR 客观对比不同滤波器的去噪效果 ----\n' +
+      'clean = cv2.imread("photo_clean.jpg")\n' +
+      'noisy = cv2.imread("photo_noisy.jpg")\n\n' +
+      'def psnr(original, processed):\n' +
+      '    mse = np.mean((original.astype(float) - processed.astype(float)) ** 2)\n' +
+      '    if mse == 0: return float("inf")\n' +
+      '    return 10 * np.log10(255.0 ** 2 / mse)\n\n' +
+      'filters = {\n' +
+      '    "mean":       cv2.blur(noisy, (5, 5)),\n' +
+      '    "gaussian":   cv2.GaussianBlur(noisy, (5, 5), 0),\n' +
+      '    "median":     cv2.medianBlur(noisy, 5),\n' +
+      '    "bilateral":  cv2.bilateralFilter(noisy, 9, 75, 75),\n' +
+      '}\n\n' +
+      'for name, result in filters.items():\n' +
+      '    print(f"{name:12s}  PSNR = {psnr(clean, result):.2f} dB")\n\n' +
+      '# 选出最佳滤波器后，可链式叠加：先高斯降噪，再双边保边\n' +
+      'stage1 = cv2.GaussianBlur(noisy, (3, 3), 0)\n' +
+      'final  = cv2.bilateralFilter(stage1, 9, 75, 75)\n' +
+      'print(f"链式组合      PSNR = {psnr(clean, final):.2f} dB")',
+    example3:
+      'import cv2\n' +
+      'import numpy as np\n\n' +
+      '# ---- 实用技巧：双边滤波磨皮 + 锐化还原细节 ----\n' +
+      'portrait = cv2.imread("portrait.jpg")\n\n' +
+      '# Step 1: 双边滤波平滑皮肤（保留边缘）\n' +
+      'smooth = cv2.bilateralFilter(portrait, 15, 80, 80)\n\n' +
+      '# Step 2: 高斯差分提取细节层\n' +
+      'blur_large = cv2.GaussianBlur(portrait, (21, 21), 0)\n' +
+      'blur_small = cv2.GaussianBlur(portrait, (3, 3), 0)\n' +
+      'detail = cv2.subtract(blur_small, blur_large)\n\n' +
+      '# Step 3: 将细节层按比例加回磨皮结果\n' +
+      'alpha = 0.6\n' +
+      'result = cv2.addWeighted(smooth, 1.0, detail.astype(np.float32), alpha, 0)\n' +
+      'result = np.clip(result, 0, 255).astype(np.uint8)\n\n' +
+      'cv2.imshow("original", portrait)\n' +
+      'cv2.imshow("smoothed", smooth)\n' +
+      'cv2.imshow("detail",   detail)\n' +
+      'cv2.imshow("result",   result)\n' +
+      'cv2.waitKey(0)\n' +
+      'cv2.destroyAllWindows()'
   },
   {
     id: 'opencv-canny',
@@ -116,6 +159,51 @@ module.exports = [
       '    e = cv2.Canny(blurred, lo, hi)\n' +
       '    cv2.imshow("canny track", e)\n' +
       '    if cv2.waitKey(30) & 0xFF == 27: break\n' +
+      'cv2.destroyAllWindows()',
+    example2:
+      'import cv2\n' +
+      'import numpy as np\n\n' +
+      '# ---- 实用技巧：Canny + findContours 提取目标轮廓 ----\n' +
+      'img = cv2.imread("coins.jpg")\n' +
+      'gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)\n' +
+      'blurred = cv2.GaussianBlur(gray, (5, 5), 0)\n\n' +
+      '# 自动阈值\n' +
+      'med = float(np.median(blurred))\n' +
+      'edges = cv2.Canny(blurred, int(max(0, 0.67 * med)), int(min(255, 1.33 * med)))\n\n' +
+      '# 形态学闭运算连接断裂边缘\n' +
+      'kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))\n' +
+      'closed = cv2.morphologyEx(edges, cv2.MORPH_CLOSE, kernel)\n\n' +
+      '# 提取轮廓并过滤面积太小的\n' +
+      'contours, _ = cv2.findContours(closed, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)\n' +
+      'for cnt in contours:\n' +
+      '    area = cv2.contourArea(cnt)\n' +
+      '    if area < 500: continue\n' +
+      '    x, y, w, h = cv2.boundingRect(cnt)\n' +
+      '    cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)\n' +
+      '    cv2.putText(img, str(area), (x, y - 5),\n' +
+      '                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)\n\n' +
+      'cv2.imshow("contours", img)\n' +
+      'cv2.waitKey(0)\n' +
+      'cv2.destroyAllWindows()',
+    example3:
+      'import cv2\n' +
+      'import numpy as np\n\n' +
+      '# ---- 进阶：Canny 多尺度融合检测不同尺度边缘 ----\n' +
+      'img = cv2.imread("street.jpg")\n' +
+      'gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)\n\n' +
+      'edges_coarse = cv2.Canny(cv2.GaussianBlur(gray, (7, 7), 0), 30, 100)\n' +
+      'edges_fine   = cv2.Canny(cv2.GaussianBlur(gray, (3, 3), 0), 80, 200)\n\n' +
+      '# 位或融合：任一尺度检测到的边缘都保留\n' +
+      'edges_fused = cv2.bitwise_or(edges_coarse, edges_fine)\n\n' +
+      '# 在原图上叠加\n' +
+      'overlay = img.copy()\n' +
+      'overlay[edges_fused != 0] = (0, 0, 255)\n' +
+      'blended = cv2.addWeighted(img, 0.7, overlay, 0.3, 0)\n\n' +
+      'cv2.imshow("coarse", edges_coarse)\n' +
+      'cv2.imshow("fine",   edges_fine)\n' +
+      'cv2.imshow("fused",  edges_fused)\n' +
+      'cv2.imshow("overlay", blended)\n' +
+      'cv2.waitKey(0)\n' +
       'cv2.destroyAllWindows()'
   },
   {
@@ -175,6 +263,52 @@ module.exports = [
       ']\n' +
       'for ax, (t, i, c) in zip(axes.ravel(), imgs):\n' +
       '    ax.imshow(i, cmap=c); ax.axis("off"); ax.set_title(t)\n' +
-      'plt.tight_layout(); plt.show()'
+      'plt.tight_layout(); plt.show()',
+    example2:
+      'import cv2\n' +
+      'import numpy as np\n\n' +
+      '# ---- 实用技巧：Sobel 梯度 + 阈值化快速检测水平/垂直线条 ----\n' +
+      'gray = cv2.imread("document.jpg", cv2.IMREAD_GRAYSCALE)\n\n' +
+      '# 水平方向梯度（检测垂直边缘）\n' +
+      'sobel_x = cv2.convertScaleAbs(cv2.Sobel(gray, cv2.CV_64F, 1, 0, ksize=3))\n' +
+      '_, vert_lines = cv2.threshold(sobel_x, 100, 255, cv2.THRESH_BINARY)\n\n' +
+      '# 垂直方向梯度（检测水平边缘）\n' +
+      'sobel_y = cv2.convertScaleAbs(cv2.Sobel(gray, cv2.CV_64F, 0, 1, ksize=3))\n' +
+      '_, horiz_lines = cv2.threshold(sobel_y, 100, 255, cv2.THRESH_BINARY)\n\n' +
+      '# 形态学膨胀加粗线条后去噪\n' +
+      'k_v = cv2.getStructuringElement(cv2.MORPH_RECT, (1, 15))\n' +
+      'k_h = cv2.getStructuringElement(cv2.MORPH_RECT, (15, 1))\n' +
+      'vert_clean  = cv2.morphologyEx(vert_lines, cv2.MORPH_OPEN, k_v)\n' +
+      'horiz_clean = cv2.morphologyEx(horiz_lines, cv2.MORPH_OPEN, k_h)\n\n' +
+      'cv2.imshow("vertical edges",  vert_clean)\n' +
+      'cv2.imshow("horizontal edges", horiz_clean)\n' +
+      'cv2.waitKey(0)\n' +
+      'cv2.destroyAllWindows()',
+    example3:
+      'import cv2\n' +
+      'import numpy as np\n\n' +
+      '# ---- 进阶：梯度幅值 + 方向的全貌可视化（HOG 思路原型）----\n' +
+      'gray = cv2.imread("texture.jpg", cv2.IMREAD_GRAYSCALE)\n' +
+      'gray = cv2.resize(gray, (256, 256))\n\n' +
+      'sobelx = cv2.Sobel(gray, cv2.CV_64F, 1, 0, ksize=3)\n' +
+      'sobely = cv2.Sobel(gray, cv2.CV_64F, 0, 1, ksize=3)\n\n' +
+      '# 梯度幅值\n' +
+      'mag = cv2.magnitude(sobelx, sobely)\n' +
+      'mag_u8 = cv2.convertScaleAbs(mag)\n\n' +
+      '# 梯度方向（角度）\n' +
+      'angle = cv2.phase(sobelx, sobely, angleInDegrees=True)\n\n' +
+      '# 伪彩色映射便于观察\n' +
+      'mag_color  = cv2.applyColorMap(mag_u8, cv2.COLORMAP_JET)\n' +
+      'angle_u8   = np.uint8(angle / 360.0 * 255)\n' +
+      'angle_color = cv2.applyColorMap(angle_u8, cv2.COLORMAP_HSV)\n\n' +
+      'cv2.imshow("magnitude",  mag_color)\n' +
+      'cv2.imshow("direction",  angle_color)\n\n' +
+      '# 利用方向做边缘着色（Canny 非极大抑制的前置步骤）\n' +
+      'vis = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)\n' +
+      'mask = mag > 50\n' +
+      'vis[mask] = (0, 0, 255)\n' +
+      'cv2.imshow("edge overlay", vis)\n' +
+      'cv2.waitKey(0)\n' +
+      'cv2.destroyAllWindows()'
   }
 ];

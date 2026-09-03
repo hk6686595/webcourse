@@ -51,6 +51,42 @@ module.exports = [
       'import numpy as np\n' +
       'square = resize_keep_ratio(img, 800)\n' +
       'cv2.imshow("square", square)\n' +
+      'cv2.waitKey(0)',
+    example2:
+      'import cv2\n\n' +
+      'img = cv2.imread("photo.jpg")\n' +
+      'h, w = img.shape[:2]\n\n' +
+      '# ========== 用不同插值方法缩放到同一尺寸，对比质量 ==========\n' +
+      'methods = [\n' +
+      '    ("INTER_NEAREST", cv2.INTER_NEAREST),\n' +
+      '    ("INTER_LINEAR",  cv2.INTER_LINEAR),\n' +
+      '    ("INTER_CUBIC",   cv2.INTER_CUBIC),\n' +
+      '    ("INTER_AREA",    cv2.INTER_AREA),\n' +
+      ']\n\n' +
+      'for name, flag in methods:\n' +
+      '    small = cv2.resize(img, (w // 4, h // 4), interpolation=flag)\n' +
+      '    restored = cv2.resize(small, (w, h), interpolation=flag)\n' +
+      '    cv2.imshow(name, restored)\n' +
+      'cv2.waitKey(0)\n' +
+      'cv2.destroyAllWindows()',
+    example3:
+      'import cv2\n' +
+      'import numpy as np\n' +
+      'import glob\n\n' +
+      '# ========== 批量缩放：把文件夹里所有图片统一成 640x480 ==========\n' +
+      'TARGET_SIZE = (640, 480)\n' +
+      'for path in glob.glob("images/*.jpg"):\n' +
+      '    img = cv2.imread(path)\n' +
+      '    resized = cv2.resize(img, TARGET_SIZE, interpolation=cv2.INTER_AREA)\n' +
+      '    out_path = path.replace("images/", "resized/")\n' +
+      '    cv2.imwrite(out_path, resized)\n\n' +
+      '# ========== 等比缩放：短边缩到 256，长边自适应 ==========\n' +
+      'img = cv2.imread("photo.jpg")\n' +
+      'h, w = img.shape[:2]\n' +
+      'new_h, new_w = 256, int(256 * w / h) if h < w else (int(256 * h / w), 256)\n' +
+      'new_h, new_w = (256, int(256 * w / h)) if h < w else (int(256 * h / w), 256)\n' +
+      'result = cv2.resize(img, (new_w, new_h))\n' +
+      'cv2.imshow("ratio 256", result)\n' +
       'cv2.waitKey(0)'
   },
   {
@@ -102,7 +138,55 @@ module.exports = [
       'M3 = cv2.getRotationMatrix2D((cx, cy), 30, 1.0)\n' +
       'M3[0, 2] += (new_w - w) / 2\n' +
       'M3[1, 2] += (new_h - h) / 2\n' +
-      'img_rot_full = cv2.warpAffine(img, M3, (new_w, new_h))'
+      'img_rot_full = cv2.warpAffine(img, M3, (new_w, new_h))',
+    example2:
+      'import cv2\n' +
+      'import numpy as np\n\n' +
+      'img = cv2.imread("photo.jpg")\n' +
+      'h, w = img.shape[:2]\n\n' +
+      '# ========== 绕任意非中心点旋转 ==========\n' +
+      '# 绕左上角 (100, 100) 逆时针 45°\n' +
+      'M = cv2.getRotationMatrix2D((100, 100), 45, 1.0)\n' +
+      'dst1 = cv2.warpAffine(img, M, (w * 2, h * 2),\n' +
+      '                      borderValue=(200, 200, 200))\n' +
+      'cv2.imshow("rotate around (100,100)", dst1)\n\n' +
+      '# ========== 旋转后自动裁剪到有效区域 ==========\n' +
+      'def rotate_and_crop(img, angle):\n' +
+      '    h, w = img.shape[:2]\n' +
+      '    M = cv2.getRotationMatrix2D((w / 2, h / 2), angle, 1.0)\n' +
+      '    cos = abs(M[0, 0]); sin = abs(M[0, 1])\n' +
+      '    nw = int(h * sin + w * cos)\n' +
+      '    nh = int(h * cos + w * sin)\n' +
+      '    M[0, 2] += (nw - w) / 2\n' +
+      '    M[1, 2] += (nh - h) / 2\n' +
+      '    rotated = cv2.warpAffine(img, M, (nw, nh))\n' +
+      '    # 裁回原图大小\n' +
+      '    cx, cy = nw // 2, nh // 2\n' +
+      '    return rotated[cy - h // 2:cy + h // 2,\n' +
+      '                   cx - w // 2:cx + w // 2]\n\n' +
+      'result = rotate_and_crop(img, 30)\n' +
+      'cv2.imshow("rotated cropped", result)\n' +
+      'cv2.waitKey(0)',
+    example3:
+      'import cv2\n' +
+      'import numpy as np\n\n' +
+      'img = cv2.imread("photo.jpg")\n' +
+      'h, w = img.shape[:2]\n\n' +
+      '# ========== 多角度旋转拼接：生成旋转九宫格预览 ==========\n' +
+      'angles = range(0, 360, 45)          # 0, 45, 90, ... 315\n' +
+      'thumb_h, thumb_w = h // 3, w // 3\n' +
+      'canvas = np.zeros((thumb_h * 3, thumb_w * 3, 3), dtype=np.uint8)\n\n' +
+      'for i, angle in enumerate(angles[:9]):\n' +
+      '    M = cv2.getRotationMatrix2D((w / 2, h / 2), angle, 0.3)\n' +
+      '    thumb = cv2.warpAffine(img, M, (thumb_w, thumb_h),\n' +
+      '                           borderValue=(50, 50, 50))\n' +
+      '    r, c = divmod(i, 3)\n' +
+      '    canvas[r * thumb_h:(r + 1) * thumb_h,\n' +
+      '           c * thumb_w:(c + 1) * thumb_w] = thumb\n' +
+      '    cv2.putText(thumb, str(angle), (10, 30),\n' +
+      '                cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)\n\n' +
+      'cv2.imshow("rotation grid", canvas)\n' +
+      'cv2.waitKey(0)'
   },
   {
     id: 'opencv-translate',
@@ -141,6 +225,45 @@ module.exports = [
       'row = np.hstack([img, fliplr, shifted])\n' +
       'cv2.namedWindow("row", cv2.WINDOW_NORMAL)\n' +
       'cv2.imshow("row", row)\n' +
+      'cv2.waitKey(0)',
+    example2:
+      'import cv2\n' +
+      'import numpy as np\n\n' +
+      'img = cv2.imread("photo.jpg")\n' +
+      'h, w = img.shape[:2]\n\n' +
+      '# ========== 随机平移 + 翻转（数据增强常用）==========\n' +
+      'def random_translate_flip(img, max_shift=50):\n' +
+      '    h, w = img.shape[:2]\n' +
+      '    dx = np.random.randint(-max_shift, max_shift + 1)\n' +
+      '    dy = np.random.randint(-max_shift, max_shift + 1)\n' +
+      '    M = np.float32([[1, 0, dx], [0, 1, dy]])\n' +
+      '    shifted = cv2.warpAffine(img, M, (w, h),\n' +
+      '                             borderMode=cv2.BORDER_REFLECT)\n' +
+      '    if np.random.rand() > 0.5:\n' +
+      '        shifted = cv2.flip(shifted, 1)\n' +
+      '    return shifted\n\n' +
+      '# 生成 4 张增强样本\n' +
+      'samples = [random_translate_flip(img) for _ in range(4)]\n' +
+      'row = np.hstack(samples)\n' +
+      'cv2.imshow("augmented", row)\n' +
+      'cv2.waitKey(0)',
+    example3:
+      'import cv2\n' +
+      'import numpy as np\n\n' +
+      'img = cv2.imread("photo.jpg")\n' +
+      'h, w = img.shape[:2]\n\n' +
+      '# ========== 镜像铺贴：用平移+翻转生成无缝纹理 ==========\n' +
+      '# 右翻再拼接，消除边缘接缝\n' +
+      'right_half = cv2.flip(img[:, w // 2:], 1)    # 右半边水平翻转\n' +
+      'left_half = cv2.flip(img[:, :w // 2], 1)     # 左半边水平翻转\n' +
+      'tile_h = np.hstack([right_half, left_half])   # 水平镜像铺贴\n' +
+      'tile_v = np.vstack([tile_h, cv2.flip(tile_h, 0)])  # 再垂直翻转\n' +
+      'cv2.imshow("seamless tile", tile_v)\n\n' +
+      '# ========== 环形平移：wrap-around 无黑边 ==========\n' +
+      'M_right = np.float32([[1, 0, 100], [0, 1, 0]])\n' +
+      'shifted = cv2.warpAffine(img, M_right, (w, h),\n' +
+      '                         borderMode=cv2.BORDER_WRAP)\n' +
+      'cv2.imshow("wrap shift", shifted)\n' +
       'cv2.waitKey(0)'
   },
   {
@@ -191,6 +314,44 @@ module.exports = [
       '                 [s,  c, (1 - c) * cy - s * cx]])\n' +
       'result = cv2.warpAffine(img, M2, (w + 100, h + 100))\n' +
       'cv2.imshow("rotated around center", result)\n' +
+      'cv2.waitKey(0)',
+    example2:
+      'import cv2\n' +
+      'import numpy as np\n\n' +
+      'img = cv2.imread("text_skew.jpg")\n' +
+      'h, w = img.shape[:2]\n\n' +
+      '# ========== 矫正倾斜文本（手动指定 3 点）==========\n' +
+      '# 原图中倾斜文本的 3 个角点\n' +
+      'src_pts = np.float32([[50, 100],\n' +
+      '                      [w - 80, 120],\n' +
+      '                      [60, h - 50]])\n' +
+      '# 矫正后希望变成水平矩形的 3 个角点\n' +
+      'dst_pts = np.float32([[0, 0],\n' +
+      '                      [w - 130, 0],\n' +
+      '                      [0, h - 50]])\n\n' +
+      'M = cv2.getAffineTransform(src_pts, dst_pts)\n' +
+      'corrected = cv2.warpAffine(img, M, (w, h))\n' +
+      'cv2.imshow("original skew", img)\n' +
+      'cv2.imshow("corrected", corrected)\n' +
+      'cv2.waitKey(0)',
+    example3:
+      'import cv2\n' +
+      'import numpy as np\n\n' +
+      'img = cv2.imread("doc.jpg")\n' +
+      'h, w = img.shape[:2]\n\n' +
+      '# ========== 仿射：剪切 + 透视模拟效果 ==========\n' +
+      '# 水平剪切（shear）：保持高度不变，列偏移随行线性增长\n' +
+      'shear_x = 0.3\n' +
+      'M_shear = np.float32([[1, shear_x, 0],\n' +
+      '                      [0, 1,       0]])\n' +
+      'sheared = cv2.warpAffine(img, M_shear,\n' +
+      '                         (int(w + abs(shear_x) * h), h))\n\n' +
+      '# 对比：缩放 + 平移的组合\n' +
+      'M_scale = np.float32([[0.8, 0, 50],\n' +
+      '                      [0,   0.8, 30]])\n' +
+      'scaled = cv2.warpAffine(img, M_scale, (w, h))\n\n' +
+      'cv2.imshow("shear", sheared)\n' +
+      'cv2.imshow("scale+translate", scaled)\n' +
       'cv2.waitKey(0)'
   },
   {
@@ -256,6 +417,53 @@ module.exports = [
       'else:\n' +
       '    print("未找到文档四边形，保留手动结果")\n' +
       '    cv2.imshow("manual doc", doc)\n' +
+      'cv2.waitKey(0)',
+    example2:
+      'import cv2\n' +
+      'import numpy as np\n\n' +
+      'img = cv2.imread("road.jpg")\n' +
+      'h, w = img.shape[:2]\n\n' +
+      '# ========== 鸟瞰视角变换（BEV）：车道线检测常用 ==========\n' +
+      '# 原图中车道的 4 个点（近处宽、远处窄）\n' +
+      'src = np.float32([[200, h],\n' +
+      '                  [w - 200, h],\n' +
+      '                  [w - 50, h // 2],\n' +
+      '                  [50, h // 2]])\n\n' +
+      '# 鸟瞰图目标：平行矩形\n' +
+      'W, H = 400, 600\n' +
+      'dst = np.float32([[0, H],\n' +
+      '                  [W, H],\n' +
+      '                  [W, 0],\n' +
+      '                  [0, 0]])\n\n' +
+      'M = cv2.getPerspectiveTransform(src, dst)\n' +
+      'bev = cv2.warpPerspective(img, M, (W, H))\n' +
+      'cv2.imshow("bird eye view", bev)\n' +
+      'cv2.waitKey(0)',
+    example3:
+      'import cv2\n' +
+      'import numpy as np\n\n' +
+      'img = cv2.imread("photo.jpg")\n' +
+      'h, w = img.shape[:2]\n\n' +
+      '# ========== 透视变换 + 逆变换：验证单应矩阵 ==========\n' +
+      'src = np.float32([[50, 50],\n' +
+      '                  [w - 50, 80],\n' +
+      '                  [w - 30, h - 30],\n' +
+      '                  [40, h - 50]])\n' +
+      'dst = np.float32([[0, 0],\n' +
+      '                  [w, 0],\n' +
+      '                  [w, h],\n' +
+      '                  [0, h]])\n\n' +
+      'H = cv2.getPerspectiveTransform(src, dst)\n' +
+      'H_inv = cv2.getPerspectiveTransform(dst, src)  # 逆变换\n\n' +
+      'warped = cv2.warpPerspective(img, H, (w, h))\n' +
+      'restored = cv2.warpPerspective(warped, H_inv, (w, h))\n\n' +
+      '# 对比原图和还原图的差异\n' +
+      'diff = cv2.absdiff(img, restored)\n' +
+      'print("reconstruction MSE:", np.mean(diff ** 2))\n' +
+      'cv2.imshow("original", img)\n' +
+      'cv2.imshow("warped", warped)\n' +
+      'cv2.imshow("restored", restored)\n' +
+      'cv2.imshow("diff", diff * 5)\n' +
       'cv2.waitKey(0)'
   }
 ];
