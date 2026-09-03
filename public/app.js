@@ -172,6 +172,7 @@ async function openFeature(id, li) {
     : state.lang === 'docker' || state.lang === 'sqlite' || state.lang === 'linux' || state.lang === 'git' || state.lang === 'redis' || state.lang === 'linuxdev' || state.lang === 'network' ? 'py'
     : state.lang === 'reverse' ? 'cpp'
     : state.lang === 'aspnet' ? 'cs'
+    : state.lang === 'desktopui' ? 'cs'
     : 'cpp';
 
   const badgeCls = (v) => 'badge lvl-' + v;
@@ -252,11 +253,12 @@ $('cs-count').textContent = meta.csharp;
   $('aspnet-count').textContent = meta.aspnet;
   $('network-count').textContent = meta.network;
   $('gamedev-count').textContent = meta.gamedev;
+  $('desktopui-count').textContent = meta.desktopui;
   } catch { /* 忽略 */ }
 })();
 
 /* 支持 #csharp / #cpp20 直达 */
-const HASH_VIEWS = ['csharp', 'patterns', 'python', 'js', 'ts', 'agent', 'cpp11', 'cpp20', 'unity', 'opencv', 'docker', 'sqlite', 'linux', 'rust', 'pandas', 'nodejs', 'git', 'redis', 'linuxdev', 'reverse', 'aspnet', 'network', 'gamedev'];
+const HASH_VIEWS = ['csharp', 'patterns', 'python', 'js', 'ts', 'agent', 'cpp11', 'cpp20', 'unity', 'opencv', 'docker', 'sqlite', 'linux', 'rust', 'pandas', 'nodejs', 'git', 'redis', 'linuxdev', 'reverse', 'aspnet', 'network', 'gamedev', 'desktopui'];
 {
   const h = location.hash.slice(1);
   if (HASH_VIEWS.includes(h)) showView(h);

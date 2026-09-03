@@ -24,7 +24,8 @@ const dumps = {
   reverse: require('../data/reverseFeatures'),
   aspnet: require('../data/aspnetFeatures'),
   network: require('../data/networkFeatures'),
-  gamedev: require('../data/gamedevFeatures')
+  gamedev: require('../data/gamedevFeatures'),
+  desktopui: require('../data/desktopuiFeatures')
 };
 
 const outDir = path.join(__dirname, '..', 'public', 'api');
