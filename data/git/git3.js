@@ -37,6 +37,29 @@ git pull --rebase
 # 只抓不合并
 git fetch origin
 git log origin/main --oneline`,
+  example2: `# 远程地址管理
+git remote add origin <url>
+git remote set-url origin <new-url>     # 改地址(如换 SSH)
+git remote remove origin                # 移除远程
+git remote -v                           # 查看 name 与地址
+
+# 多远程(常见于 fork 工作流)
+git remote add upstream <原始仓库url>    # 上游
+git remote -v
+git fetch upstream                      # 拉取上游更新
+git merge upstream/main                 # 合入自己 main`,
+  example3: `# 推送被拒绝的处理(别人已提交)
+git push                 # 报错: rejected
+git pull --rebase        # 先取并变基
+git push                 # 成功
+
+# 只抓不合并的进阶: 对比远程再决定
+git fetch origin
+git log main..origin/main --oneline    # 看远程多出的提交
+git log origin/main..main --oneline    # 看本地多出的提交
+git diff main origin/main              # 差异
+# 确认后再合并
+git merge origin/main`,
 };
 
 const git12 = {
@@ -74,6 +97,34 @@ git push --tags
 # 删除
 git tag -d v1.0.0
 git push origin --delete v1.0.0`,
+  example2: `# 在指定提交上打标签(而非 HEAD)
+git tag v0.9.0 abc1234
+git tag -a v1.1.0 -m "添加新接口" <hash>
+
+# 按模式筛选
+git tag -l "v1.*"          # 所有 v1 开头
+git tag -l "2024-*"
+
+# 查看标签对应的提交
+git show v1.0.0 --stat
+git checkout v1.0.0        # 切到标签(处于 detached HEAD)
+git switch -c release/v1   # 从标签开分支再改`,
+  example3: `# 标签与发布联动
+# 推送单个 / 全部标签
+git push origin v2.0.0
+git push --tags
+
+# 删除本地 / 远程标签
+git tag -d v1.0.0
+git push origin --delete v1.0.0
+
+# 在 CI 中对 tag 触发构建
+# .github/workflows/release.yml:
+# on:
+#   push:
+#     tags: ["v*"]
+
+# 之后用 tag 生成 release 下载包/notes`,
 };
 
 const git13 = {
@@ -118,6 +169,52 @@ git commit -m "chore: 移除误提交的 .env"
 
 # 调试
 git check-ignore -v .env`,
+  example2: `# 更完整的常见忽略集合
+# 依赖 / 构建
+node_modules/
+vendor/
+dist/
+build/
+*.min.js
+*.map
+
+# 环境与密钥
+.env
+.env.*
+*.pem
+*.key
+
+# 系统 / 编辑器
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# 日志与临时
+*.log
+tmp/
+coverage/`,
+  example3: `# 取反 / 精确匹配 / 调试
+# 忽略所有 .log 但保留重要日志
+*.log
+!important.log
+
+# 只在仓库根生效(斜杠开头)
+/secret.key
+
+# 目录下所有文件, 但保留一个
+build/**
+!build/keep.txt
+
+# 调试: 为什么某文件被忽略
+git check-ignore -v node_modules/.bin/x
+# 输出: .gitignore:1:node_modules/  node_modules/.bin/x
+
+# 已跟踪文件的取消
+git rm --cached -r dist/
+git commit -m "chore: 停止跟踪 dist 构建产物"`,
 };
 
 const git14 = {
@@ -159,6 +256,39 @@ git rebase --continue
 
 # 放弃一切
 git merge --abort`,
+  example2: `# 冲突标记的完整形态
+<<<<<<< HEAD
+当前分支(main)的内容
+=======
+对方分支(feature)的内容
+>>>>>>> feature/login
+
+# 手动合并的两种做法
+# 1) 保留一边(只留 feature 的内容)
+======= 删到只看 feature 的内容, 把 <<<<<<< HEAD 和我的内容删掉
+>>>>>>> feature/login  再删掉这些标记
+
+# 2) 两边都保留(手工合成)
+console.log("main 版");     # 删除 <<<<<<< HEAD 与 ======= 上面部分
+console.log("feature 版");  # 删除 ======= 下面与 >>>>>>> feature 部分`,
+  example3: `# 冲突解决后的完整提交
+git status                    # 看到 "both modified: src/app.js"
+# 打开文件 -> 手工合成 -> 删掉所有 <<<<<<< ======= >>>>>>>
+git add src/app.js
+git commit -m "merge: 解决 app.js 冲突"
+
+# rebase 中冲突
+git rebase main               # 报冲突
+# 解决后
+git add .
+git rebase --continue
+
+# 用 IDE 内置合并 UI(推荐)
+git config --global merge.tool vscode
+git mergetool
+
+# 放弃整个合并
+git merge --abort`,
 };
 
 const git15 = {
@@ -194,6 +324,34 @@ git fetch origin --prune          # 清理已删除的分支引用
 git merge feature/login
 git push origin main
 git branch -d feature/login`,
+  example2: `# 分支命名与规范提交
+# 功能 / 修复 / 热修 分支前缀
+git switch -c feature/login
+git switch -c fix/typo
+git switch -c hotfix/crash
+git switch -c refactor/api
+
+# 每个 PR 一个功能, 小步合并
+git add . && git commit -m "feat(login): 邮箱登录"
+git push -u origin feature/login
+
+# 合并后同步删除远程已合并分支
+git fetch origin --prune`,
+  example3: `# GitHub Flow 完整闭环(含 review)
+1) git switch -c feature/login
+2) 编码 + git commit(多次)
+3) git push -u origin feature/login
+4) 在 GitHub 发起 PR
+5) 同伴 review, CI 跑测试
+6) 通过后 Merge(常用 squash merge)
+7) git switch main
+   git pull
+   git branch -d feature/login
+   git fetch --prune
+
+# 其他策略速览
+#   Git Flow:      main + develop + release/hotfix
+#   Trunk-Based:   everyone 直推 main/短分支, 靠自动化`,
 };
 
 if (typeof module !== 'undefined') module.exports = { git11, git12, git13, git14, git15 };

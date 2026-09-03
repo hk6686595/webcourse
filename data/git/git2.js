@@ -31,6 +31,39 @@ git diff HEAD~2 HEAD     # 最近两次提交之间
 git diff --stat
 git diff --name-only
 git diff -w              # 忽略空白差异`,
+  example2: `# 只看单文件 / 目录的差异
+git diff -- src/index.js
+git diff -- src/ tests/
+
+# 词级差异（改动行内精确到单词）
+git diff --word-diff
+
+# 少量上下文行
+git diff -U3              # 默认 3 行
+git diff -U1              # 前后各 1 行
+
+# 颜色与分页
+git diff --color
+git diff --color=always | less -R
+
+# 配合 IDE / 外部工具打开图形化 diff
+git config --global diff.tool vscode
+git difftool`,
+  example3: `# diff 与分支/引用
+# 当前分支相对 main 的所有差异
+git diff main
+
+# 两个提交之间
+git diff HEAD~2 HEAD
+
+# 暂存区与某次提交对比
+git diff --staged HEAD~1
+
+# 只看新增/删除行数（--stat 概览）
+git diff --stat main feature/x
+
+# 检查要提交的文件是否有空白错误
+git diff --check`,
 };
 
 const git7 = {
@@ -65,6 +98,34 @@ git stash pop                        # 恢复并删除
 git stash show -p stash@{0}          # 查看内容
 git stash drop stash@{0}             # 丢弃某个
 git stash clear                      # 清空全部`,
+  example2: `# 常见场景补全
+# 场景：紧急切换分支，但不小心还有未跟踪文件
+git stash push -u -m "含未跟踪文件"   # -u 连新文件一起暂存
+
+# 场景：真正恢复并同时删除记录
+git stash pop                        # 等价 apply + drop
+
+# 场景：多个 stash 并存，精确恢复
+git stash list                       # stash@{0}, stash@{1}...
+git stash apply stash@{2}            # 恢复指定某个
+
+# 恢复时可能冲突，解决后：
+git add . && git commit -m "恢复 stash 改动"`,
+  example3: `# stash 与分支/新提交
+# 从某个 stash 开新分支（不再弹回原处）
+git stash branch fix/urgent stash@{0}
+
+# 只把已跟踪文件的改动弹回
+git stash apply --index              # 恢复暂存状态
+
+# 查看某个 stash 改动的文件
+git stash show stash@{0}
+git stash show -p stash@{0}          # 带完整内容
+
+# 改名 / 弃车保帅
+git stash drop stash@{0}             # 丢弃确定不要的
+git stash clear                      # 一键清空全部（危险但有用）
+`,
 };
 
 const git8 = {
@@ -100,6 +161,29 @@ git revert <commit-hash>    # 撤销指定提交
 # 后悔药：找回误删的提交
 git reflog
 git reset --hard HEAD@{2}`,
+  example2: `# reset 三档对同一处改动的差别
+git commit -m "temp"                 # 先有一笔提交
+git reset --soft HEAD~1              # 指针回退，改动保留在暂存区
+git reset HEAD~1                     # 指针回退，改动退回工作区(未暂存)
+git reset --hard HEAD~1              # 指针回退，改动彻底消失
+
+# 只撤销暂存、保留工作区（相当于撤回 git add）
+git reset HEAD file
+
+# 回退到指定提交
+git reset --hard <commit-hash>`,
+  example3: `# 已推送分支的安全回滚用法
+git revert HEAD                      # 生成反向提交(推荐)
+git revert --no-commit HEAD~3..HEAD  # 一次暂存多个反向改动，统一提交
+
+# 用 reflog 找回被 reset 误删的提交
+git reflog                           # 列出所有 HEAD 移动记录
+git reset --hard <hash>              # 回到 find 到的那个提交
+
+# 区分场景速记:
+#  未推送 -> reset（改历史）
+#  已推送 -> revert（加反向提交，不动历史）
+git status`,
 };
 
 const git9 = {
@@ -136,6 +220,27 @@ git restore -p
 # 等价老写法
 git checkout -- file
 git reset HEAD file`,
+  example2: `# 从某次提交恢复单个/多个文件
+git restore --source=<commit-hash> src/index.js
+git restore --source=HEAD~2 README.md style.css
+
+# 完全丢弃所有未提交改动(工作区+暂存区一起还原)
+git restore .                        # 当前目录所有文件
+git restore --staged --worktree .    # 同时撤销 add 并还原工作区
+
+# 找回误删且未提交的文件
+git restore deleted-file.js`,
+  example3: `# 交互式「按块」恢复（精细控制）
+git restore -p src/app.js
+# 提示符输入：y恢复该块 / n跳过 / a整文件 / d整文件跳过
+
+# 只恢复特定文件的历史版本
+git show <commit-hash>:path/to/file > 新文件
+
+# restore 与 reset 分工:
+#   reset HEAD file -> 撤销 git add（退回工作区）
+#   restore file    -> 丢弃工作区改动
+git status`,
 };
 
 const git10 = {
@@ -173,6 +278,34 @@ git merge feature/login              # 此时是快进
 git add <file>
 git rebase --continue
 git rebase --abort`,
+  example2: `# merge 的历史图 vs rebase 的历史图
+# merge（保留分叉）
+git switch main
+git merge feature/login          # 出现 Merge branch 提交节点
+git log --graph --oneline
+
+# rebase（线性）
+git switch feature/login
+git rebase main                  # 把 feature 提交依次重放到 main 顶部
+git log --graph --oneline        # 一条直线，更整洁
+
+# 一行拉取时自动变基
+git pull --rebase`,
+  example3: `# 快进合并与 --no-ff
+# feature 基于 main 且 main 未动 -> 可快进(不产生合并提交)
+git merge feature/login
+
+# 想保留“功能合并”节点用 --no-ff
+git merge --no-ff feature/login
+
+# rebase 冲突演练：每搬一个提交都解决一次
+# 搬第 N 个提交时报冲突 -> 改 -> add -> continue
+git rebase --continue
+# 实在搞不定直接放弃
+git rebase --abort
+
+# rebase 后推送需强制推送（仅自己的分支）
+git push --force-with-lease`, 
 };
 
 if (typeof module !== 'undefined') module.exports = { git6, git7, git8, git9, git10 };

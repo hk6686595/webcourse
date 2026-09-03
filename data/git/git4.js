@@ -33,6 +33,41 @@ git rebase -i HEAD~3
 # 保存退出后，编辑最终的提交消息即可
 git rebase --continue
 git rebase --abort`,
+  example2: `# reword 只改消息(最安全)
+git rebase -i HEAD~3
+# pick a1b2c3 feat: 登录页
+# reword 4d5e6f 把这条改成更有意义的名字
+# 保存退出 -> 会再弹编辑器让你改这条消息
+
+# drop 删除某条提交
+git rebase -i HEAD~5
+# drop 3f4a5b  (该条提交会被移除)
+# 注意: 若该提交后续被引用可能引发冲突
+
+# reorder: 直接上下移动 pick 行的顺序`,
+  example3: `# 完整整理场景
+# 假设 feature 上有 5 条杂乱提交
+# 814a1  add login
+# 821b2  wip
+# 833c3  fix style
+# 844d4  add test
+# 855e5  docs
+
+git rebase -i HEAD~5
+# 调整为:
+# pick 814a1 add login
+# squash 821b2 wip
+# fixup 833c3 fix style
+# pick 844d4 add test
+# pick 855e5 docs
+
+# 结果: 3 条干净提交
+#   <c1> add login (整合了 wip + fix)
+#   <c2> add test
+#   <c3> docs
+
+# 若 push 过则需要强制推送
+git push --force-with-lease`,
 };
 
 const git17 = {
@@ -72,6 +107,43 @@ Closes #12"
 git push -u origin fix/typo
 
 # 到 GitHub 上发起 Pull Request`,
+  example2: `# 收到 review 反馈后如何更新 PR
+# 继续在同一个 feature 分支提交
+git add .
+git commit -m "fix: 按 review 调整命名"
+git push            # PR 自动更新
+
+# 若希望历史干净, 可 squash 后再 push 强推
+git rebase -i HEAD~3
+git push --force-with-lease
+
+# PR 合并后清理
+git switch main
+git pull
+git branch -d fix/typo
+git push origin --delete fix/typo   # 也删远程分支`,
+  example3: `# Fork 工作流全流程(open-source 参与)
+# 1) GitHub 网页上 Fork 目标仓库
+git clone https://github.com/你/forked-repo.git
+cd forked-repo
+git remote add upstream https://github.com/原仓库.git
+
+# 2) 每次开发前与上游同步
+git fetch upstream
+git switch main
+git rebase upstream/main          # 或 git merge upstream/main
+git push origin main
+
+# 3) 建分支开发
+git switch -c fix/issue-7
+# …编码, 提交…
+git push -u origin fix/issue-7
+
+# 4) 网页发起 PR, 维护者 review 合并
+
+# 5) 备注: 通过 commit 消息关联 issue
+git commit -m "fix: 修复空指针
+Fixes #7"`,
 };
 
 const git18 = {
@@ -96,12 +168,12 @@ const git18 = {
   example: `# 好的提交信息示例
 feat(login): 支持邮箱验证码登录
 
-<p>新增邮箱验证码登录方式，未注册邮箱会自动创建账号。</p>
+新增邮箱验证码登录方式，未注册邮箱会自动创建账号。
 Closes #45
 
 fix(api): 修复分页参数丢失问题
 
-<p>列表接口在翻页时 offset 未正确传递，导致第二页返回重复数据。</p>
+列表接口在翻页时 offset 未正确传递，导致第二页返回重复数据。
 
 docs(readme): 补充开发环境配置说明
 
@@ -109,6 +181,39 @@ docs(readme): 补充开发环境配置说明
 feat!(auth): JWT 改为无状态令牌
 
 BREAKING CHANGE: 客户端令牌格式不兼容，需重新登录。`,
+  example2: `# 各种 type 的典型写法
+feat: 新增功能
+fix: 修复 bug
+docs: 仅改文档
+style: 格式(不变更逻辑)
+refactor: 重构(行为不变)
+perf: 性能优化
+test: 补测试
+build: 构建/依赖相关
+ci: CI 配置
+chore: 杂项
+
+# scope(可省略)用括号括起, 单数名词
+feat(api): 新增 /users 接口
+fix(ui): 修复按钮禁用态样式
+refactor(core): 抽取公共工具函数`,
+  example3: `# 多行提交消息的写法(主题 + 空行 + 正文)
+git commit -m "feat(auth): 增加双因素认证" -m "
+- 支持 TOTP 动态口令
+- 通过时可绑定多个设备
+- 关闭后 30 天内可重新开启"
+
+# 或使用编辑器写多行
+git commit               # 打开默认编辑器
+
+# 关联 issue(自动关闭)
+Closes #12
+Fixes #34
+Resolves #56
+
+# 用工具强制规范
+npx commitizen init cz-conventional-changelog --save-dev
+npx cz                   # 交互式生成规范提交`,
 };
 
 const git19 = {
@@ -158,6 +263,26 @@ jobs:
           node-version: 20
       - run: npm ci
       - run: npm test`,
+  example3: `# 前端更常见的做法: husky + lint-staged
+npm i -D husky lint-staged
+# package.json
+# {
+#   "lint-staged": { "*.js": ["eslint --fix", "prettier --write"] }
+# }
+# npx husky init -> 生成 .husky/pre-commit
+# .husky/pre-commit:
+#   npx lint-staged
+
+# CI 按路径过滤(GitHub Actions)
+# on:
+#   push:
+#     paths:
+#       - "src/**"
+#       - ".github/workflows/*.yml"
+#     branches: [ main ]
+
+# CI 中可利用 git 信息做差异分析
+# - run: git diff --name-only <上一次提交> <本次提交>`
 };
 
 const git20 = {
@@ -207,6 +332,49 @@ git revert HEAD
 git log --oneline --graph --all
 git diff --staged
 git show HEAD`,
+  example2: `# ===== 常用组合速查 =====
+# 提交前看会提交什么
+git diff --staged
+
+# 快速看最近改动
+git log --oneline --graph --all -20
+
+# 撤销误 add
+git restore --staged file
+
+# 恢复被删文件
+git restore deleted.js
+
+# 找回误删提交
+git reflog
+git reset --hard <hash>
+
+# 分支新建+切换一步到位
+git switch -c feat/x
+
+# 拉取并清理
+git pull --rebase
+git fetch --prune`,
+  example3: `# 高级专题入口
+# 1) bisect 二分定位引入 bug 的提交
+git bisect start
+git bisect bad              # 当前是坏的
+git bisect good <旧hash>    # 某次是好的
+# 每次标记 good/bad, 直到定位到罪魁提交
+git bisect reset
+
+# 2) rerere 记住冲突解法
+git config --global rerere.enabled true
+
+# 3) 子仓库
+git submodule add <url> lib/x
+git subtree add --prefix=lib/y <url>
+
+# 4) 交互式工具
+lazygit            # 终端 TUI
+git config --global alias.st "status -sb"
+
+# 建议学习路线: 命令 -> 工作流 -> rebase -> 内部原理 -> 自动化`,
 };
 
 if (typeof module !== 'undefined') module.exports = { git16, git17, git18, git19, git20 };

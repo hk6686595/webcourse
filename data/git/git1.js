@@ -28,6 +28,32 @@ git commit -m "first commit"   # 提交（同时记录本次快照）
 
 git status               # 查看工作区/暂存区状态
 git log --oneline        # 查看提交历史（简洁一行式）`,
+  example2: `# 走一遍完整的首次提交流程（含查看效果）
+cd ~/projects
+mkdir my-app && cd my-app
+
+git init                         # 初始化（默认分支是 main）
+echo "hello" > readme.txt
+git status                       # 显示 readme.txt 为 Untracked（未跟踪）
+
+git add readme.txt               # 加入暂存区
+git status                       # 变为 Changes to be committed（绿色）
+
+git commit -m "feat: 添加 readme"
+git log --oneline                # 看到 1 条提交
+git log --stat                   # 查看提交改动的文件统计`,
+  example3: `# 三棵“树”对照 —— 改动在不同阶段的流转
+# 1) 工作区：你正在编辑的文件
+echo "new" >> readme.txt
+
+# 2) 暂存区：git add 之后进入
+git add readme.txt
+
+# 3) 本地仓库：git commit 之后固化
+git commit -m "docs: 追加内容"
+
+# 用 git status 观察文件从 "modified 未暂存"
+# 到 "Changes to be committed" 再到 "nothing to commit" 的过程`,
 };
 
 const git2 = {
@@ -65,6 +91,36 @@ git config --global init.defaultBranch main
 # 查看
 git config --list
 git config user.name`,
+  example2: `# 常用配置项逐一看
+# 编辑器（合并冲突 / commit 消息打开它）
+git config --global core.editor "code --wait"   # VS Code
+git config --global core.editor vim
+
+# 换行符：Windows 自动转 CRLF，mac/Linux 用 LF
+git config --global core.autocrlf input
+
+# 提交时去除尾随空格
+git config --global core.whitespace trailing-space
+
+# 推送时自动变基（避免多余的合并提交）
+git config --global pull.rebase true
+
+# 取消全局配置
+git config --global --unset user.email`,
+  example3: `# 仓库级配置（只对当前仓库生效，覆盖全局）
+cd my-cool-repo
+
+# 同一台机器多人/多身份时的做法
+git config user.name  "Work Name"
+git config user.email "work@company.com"
+
+# 查看某个配置的来源：local(仓库) / global(全局) / system(系统)
+git config --show-origin user.name
+
+# 修改全局配置文件（等价命令）
+git config --global --edit      # 打开 ~/.gitconfig
+# 或直接编辑:
+# vim ~/.gitconfig`,
 };
 
 const git3 = {
@@ -104,6 +160,34 @@ git commit --amend -m "feat: 添加登录页（含表单校验）"
 # 预检
 git status
 git diff --staged`,
+  example2: `# 用 git add -p 把改动拆成多个提交
+git add -p src/app.js
+# 出现交互提示，输入字母操作：
+# y  暂存这一块
+# n  跳过这一块
+# s  把这一块拆成更小
+# e  手动编辑这一块
+# a 暂存整个文件, d 跳过整个文件
+
+# 常见多文件暂存组合
+git add src/ tests/            # 两个目录
+git add '*.css'                # 所有 css（需引号防 shell 展开）
+git add -u                     # 只暂存已跟踪文件的修改/删除（不新增）`,
+  example3: `# 提交消息规范写法（主题 + 空行 + 正文）
+git commit -m "feat: 支持邮箱登录
+
+- 新增邮箱验证码接口
+- 未注册邮箱自动创建账号
+- 密码使用 bcrypt 加密存储
+
+Closes #45"
+
+# --amend 补充漏掉的文件（常见用法）
+git add forgot-file.js
+git commit --amend --no-edit    # 并入上一条且不修改消息
+
+# 查看提交包含哪些文件
+git show --stat HEAD`,
 };
 
 const git4 = {
@@ -142,6 +226,37 @@ git merge feature/login
 # 清理
 git branch -d feature/login     # 已合并，安全删除
 git branch -a`,
+  example2: `# 分支的查看与切换细节
+git branch                      # 列出本地分支，* 标记当前分支
+git branch -v                   # 附带各自最新提交
+git branch -vv                  # 附带跟踪的远程分支
+git branch -a                   # 含远程分支（红色）
+git branch -r                   # 只看远程分支
+
+# switch 的几种用法
+git switch feature/x            # 切换到已存在分支
+git switch -c feature/y         # 创建并切换
+git switch -                    # 切回上一个分支（极常用）
+git switch -c feature/z <hash>  # 从指定提交创建`,
+  example3: `# 重命名与删除
+# 重命名当前分支
+git branch -m new-name
+# 重命名其他分支
+git branch -m old-name new-name
+
+# 删除已合并分支（安全）
+git branch -d feature/done
+
+# 强删未合并分支（会丢失改动）
+git branch -D feature/abandoned
+
+# 场景：并行开发两个功能
+git switch main
+git switch -c feature/a    # 功能 A
+git add . && git commit -m "feat: A 完成"
+git switch main
+git switch -c feature/b    # 功能 B（基于最新 main）
+# 两个分支互不干扰，随时切换`,
 };
 
 const git5 = {
@@ -180,6 +295,35 @@ git log --oneline -- src/App.js
 # 详情
 git log --stat
 git show HEAD                   # 最近一次提交的完整差异`,
+  example2: `# 更多过滤维度
+# 组合多个条件
+git log --author="Zhang" --since="2024-01-01" --oneline
+
+# 按提交内容搜索（-S 找新增/删除某字符串的提交）
+git log -S "function login" --oneline
+
+# 只显示某个范围内的提交
+git log main..feature/x         # 在 feature 但不在 main
+git log feature/x..main         # 反之
+
+# 看两个分支的分叉点
+git merge-base main feature/x`,
+  example3: `# 图形化与统计视图
+# 漂亮的图形+单行+全部分支
+git log --graph --oneline --decorate --all
+
+# 别名固化后更省事
+git config --global alias.tree "log --graph --oneline --decorate --all"
+
+# 统计每个作者提交次数
+git shortlog -sn
+# 每个作者提交次数 + 主题
+git shortlog -sne
+
+# 查看某次提交改了什么
+git show <commit-hash>
+git show --stat <commit-hash>
+git diff <hash1> <hash2>        # 两次提交之间的差异`,
 };
 
 if (typeof module !== 'undefined') module.exports = { git1, git2, git3, git4, git5 };
