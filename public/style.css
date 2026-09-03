@@ -313,6 +313,7 @@ main#app { flex: 1; overflow: hidden; overscroll-behavior: contain; }
 .card-redis   { --accent: #d92b21; }
 .card-reverse { --accent: #6a4fa3; }
 .card-aspnet { --accent: #512bd4; }
+.card-network { --accent: #0b7285; }
 
 /* 卡片入场动画（轻柔上浮 + 弹跳尾韵） */
 @keyframes fadeUp {

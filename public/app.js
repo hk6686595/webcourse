@@ -169,7 +169,7 @@ async function openFeature(id, li) {
     : state.lang === 'js' || state.lang === 'nodejs' ? 'js'
     : state.lang === 'ts' ? 'ts'
     : state.lang === 'rust' ? 'rust'
-    : state.lang === 'docker' || state.lang === 'sqlite' || state.lang === 'linux' || state.lang === 'git' || state.lang === 'redis' || state.lang === 'linuxdev' ? 'py'
+    : state.lang === 'docker' || state.lang === 'sqlite' || state.lang === 'linux' || state.lang === 'git' || state.lang === 'redis' || state.lang === 'linuxdev' || state.lang === 'network' ? 'py'
     : state.lang === 'reverse' ? 'cpp'
     : state.lang === 'aspnet' ? 'cs'
     : 'cpp';
@@ -250,11 +250,12 @@ $('cs-count').textContent = meta.csharp;
   $('redis-count').textContent = meta.redis;
   $('reverse-count').textContent = meta.reverse;
   $('aspnet-count').textContent = meta.aspnet;
+  $('network-count').textContent = meta.network;
   } catch { /* 忽略 */ }
 })();
 
 /* 支持 #csharp / #cpp20 直达 */
-const HASH_VIEWS = ['csharp', 'patterns', 'python', 'js', 'ts', 'agent', 'cpp11', 'cpp20', 'unity', 'opencv', 'docker', 'sqlite', 'linux', 'rust', 'pandas', 'nodejs', 'git', 'redis', 'linuxdev', 'reverse', 'aspnet'];
+const HASH_VIEWS = ['csharp', 'patterns', 'python', 'js', 'ts', 'agent', 'cpp11', 'cpp20', 'unity', 'opencv', 'docker', 'sqlite', 'linux', 'rust', 'pandas', 'nodejs', 'git', 'redis', 'linuxdev', 'reverse', 'aspnet', 'network'];
 {
   const h = location.hash.slice(1);
   if (HASH_VIEWS.includes(h)) showView(h);

@@ -22,7 +22,8 @@ const dumps = {
   git: require('../data/gitFeatures'),
   redis: require('../data/redisFeatures'),
   reverse: require('../data/reverseFeatures'),
-  aspnet: require('../data/aspnetFeatures')
+  aspnet: require('../data/aspnetFeatures'),
+  network: require('../data/networkFeatures')
 };
 
 const outDir = path.join(__dirname, '..', 'public', 'api');
