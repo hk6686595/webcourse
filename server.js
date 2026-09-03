@@ -44,6 +44,8 @@ const reverseFeatures = require('./data/reverseFeatures');
 const aspnetFeatures = require('./data/aspnetFeatures');
 // 网络编程教程
 const networkFeatures = require('./data/networkFeatures');
+// 游戏开发技术详解教程
+const gamedevFeatures = require('./data/gamedevFeatures');
 
 const app = express();
 app.use(express.json({ limit: '256kb' }));
@@ -462,6 +464,24 @@ app.get('/api/network', (req, res) => {
 });
 app.get('/api/network/:id', (req, res) => {
   const f = networkFeatures.find(x => x.id === req.params.id);
+  if (!f) return res.status(404).json({ error: '特性不存在' });
+  res.json(f);
+});
+
+// ---------- 游戏开发技术详解教程 ----------
+app.get('/api/gamedev', (req, res) => {
+  const { q } = req.query;
+  let list = gamedevFeatures;
+  if (q) {
+    const kw = String(q).toLowerCase();
+    list = list.filter(f =>
+      (f.title + f.summary + f.detail.join(' ') + f.example + (f.example3 || '')).toLowerCase().includes(kw));
+  }
+  res.json(list.map(({ id, title, category, version, level, summary }) =>
+    ({ id, title, category, version, level, summary })));
+});
+app.get('/api/gamedev/:id', (req, res) => {
+  const f = gamedevFeatures.find(x => x.id === req.params.id);
   if (!f) return res.status(404).json({ error: '特性不存在' });
   res.json(f);
 });

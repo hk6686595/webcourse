@@ -251,11 +251,12 @@ $('cs-count').textContent = meta.csharp;
   $('reverse-count').textContent = meta.reverse;
   $('aspnet-count').textContent = meta.aspnet;
   $('network-count').textContent = meta.network;
+  $('gamedev-count').textContent = meta.gamedev;
   } catch { /* 忽略 */ }
 })();
 
 /* 支持 #csharp / #cpp20 直达 */
-const HASH_VIEWS = ['csharp', 'patterns', 'python', 'js', 'ts', 'agent', 'cpp11', 'cpp20', 'unity', 'opencv', 'docker', 'sqlite', 'linux', 'rust', 'pandas', 'nodejs', 'git', 'redis', 'linuxdev', 'reverse', 'aspnet', 'network'];
+const HASH_VIEWS = ['csharp', 'patterns', 'python', 'js', 'ts', 'agent', 'cpp11', 'cpp20', 'unity', 'opencv', 'docker', 'sqlite', 'linux', 'rust', 'pandas', 'nodejs', 'git', 'redis', 'linuxdev', 'reverse', 'aspnet', 'network', 'gamedev'];
 {
   const h = location.hash.slice(1);
   if (HASH_VIEWS.includes(h)) showView(h);

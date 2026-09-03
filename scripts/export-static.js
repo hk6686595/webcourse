@@ -23,7 +23,8 @@ const dumps = {
   redis: require('../data/redisFeatures'),
   reverse: require('../data/reverseFeatures'),
   aspnet: require('../data/aspnetFeatures'),
-  network: require('../data/networkFeatures')
+  network: require('../data/networkFeatures'),
+  gamedev: require('../data/gamedevFeatures')
 };
 
 const outDir = path.join(__dirname, '..', 'public', 'api');
