@@ -19,7 +19,34 @@ module.exports = [
       'print(math.sqrt(16))     # 4.0\n' +
       'print(d.today())\n\n' +
       'if __name__ == "__main__":\n' +
-      '    print("直接运行")'
+      '    print("直接运行")',
+    example2:
+      '# 常用内置模块速览\n' +
+      'import os\n' +
+      'import sys\n' +
+      'import random\n' +
+      'import math\n\n' +
+      'print(os.getcwd())            # 当前工作目录\n' +
+      'print(sys.version_info.major) # 主版本号\n' +
+      'print(random.randint(1, 6))  # 1-6 随机\n' +
+      'print(math.floor(3.7))       # 3\n' +
+      'print(math.ceil(3.2))        # 4\n' +
+      'print(math.pi)               # 3.14...',
+    example3:
+      '# 一个简单模块 mymath.py\n' +
+      '# ----------------------------\n' +
+      '"一个加减法模块"\n\n' +
+      'def add(a, b):\n' +
+      '    return a + b\n\n' +
+      'def sub(a, b):\n' +
+      '    return a - b\n\n' +
+      'if __name__ == "__main__":\n' +
+      '    print(add(10, 5))\n' +
+      '# ----------------------------\n' +
+      '# 使用:\n' +
+      '# import mymath\n' +
+      '# print(mymath.add(1, 2))   # 3\n' +
+      '# 或: from mymath import add'
   },
   {
     id: 'py-args-kwargs',
@@ -41,7 +68,30 @@ module.exports = [
       'def add(a, b):\n' +
       '    return a + b\n' +
       'data = {"a": 2, "b": 3}\n' +
-      'print(add(**data))       # 5'
+      'print(add(**data))       # 5',
+    example2:
+      '# 求和函数\n' +
+      'def total(*nums):\n' +
+      '    return sum(nums)\n\n' +
+      'print(total(1, 2, 3, 4))      # 10\n' +
+      'print(total(*range(5)))       # 10\n\n' +
+      '# 转发/包装\n' +
+      'def logger(func, *args, **kwargs):\n' +
+      '    print(f"调用 {func.__name__} args={args} kwargs={kwargs}")\n' +
+      '    return func(*args, **kwargs)\n\n' +
+      'print(logger(add, 3, 4))      # 调用 add ... -> 7',
+    example3:
+      '# 仅关键字参数的收集\n' +
+      'def connect(url, *, timeout=30, retry=3):\n' +
+      '    return f"{url} timeout={timeout} retry={retry}"\n\n' +
+      '# timeout/retry 只能用关键字传入\n' +
+      'print(connect("http://x.com"))\n' +
+      'print(connect("http://x.com", timeout=10, retry=5))\n\n' +
+      '# **kwargs 捕获任意额外配置\n' +
+      'def config(**opts):\n' +
+      '    for k, v in opts.items():\n' +
+      '        print(f"{k} = {v}")\n\n' +
+      'config(host="localhost", port=8080, debug=True)'
   },
   {
     id: 'py-asyncio',
@@ -66,7 +116,39 @@ module.exports = [
       'async def main():\n' +
       '    results = await asyncio.gather(fetch(1), fetch(2), fetch(3))\n' +
       '    print(results)\n\n' +
-      'asyncio.run(main())'
+      'asyncio.run(main())',
+    example2:
+      '# asyncio.create_task 调度\n' +
+      'import asyncio\n\n' +
+      'async def worker(name, delay):\n' +
+      '    await asyncio.sleep(delay)\n' +
+      '    print(f"{name} 完成")\n\n' +
+      'async def main():\n' +
+      '    tasks = [\n' +
+      '        asyncio.create_task(worker("A", 0.2)),\n' +
+      '        asyncio.create_task(worker("B", 0.1)),\n' +
+      '        asyncio.create_task(worker("C", 0.3)),\n' +
+      '    ]\n' +
+      '    await asyncio.gather(*tasks)\n\n' +
+      'asyncio.run(main())\n' +
+      '# 打印顺序: B 完成 / A 完成 / C 完成',
+    example3:
+      '# 超时与等待\n' +
+      'import asyncio\n\n' +
+      'async def slow():\n' +
+      '    await asyncio.sleep(2)\n' +
+      '    return "慢任务结果"\n\n' +
+      'async def main():\n' +
+      '    try:\n' +
+      '        result = await asyncio.wait_for(slow(), timeout=1)\n' +
+      '    except asyncio.TimeoutError:\n' +
+      '        print("超时了")\n\n' +
+      'asyncio.run(main())\n\n' +
+      '# asyncio.sleep(0) 让出控制权；用资源锁:\n' +
+      'lock = asyncio.Lock()\n' +
+      'async def critical():\n' +
+      '    async with lock:\n' +
+      '        print("互斥区")\n'
   },
   {
     id: 'py-concurrency',
@@ -86,7 +168,43 @@ module.exports = [
       '    return n * n\n\n' +
       'with ThreadPoolExecutor(max_workers=3) as ex:\n' +
       '    results = list(ex.map(task, [1, 2, 3, 4]))\n' +
-      'print(results)          # [1, 4, 9, 16]'
+      'print(results)          # [1, 4, 9, 16]',
+    example2:
+      '# IO 并发：同时下载多个 URL（用请求替代模拟）\n' +
+      'from concurrent.futures import ThreadPoolExecutor\n' +
+      'import time\n\n' +
+      'def fetch(url):\n' +
+      '    time.sleep(0.5)              # 模拟 IO 等待\n' +
+      '    return f"{url} 内容"\n\n' +
+      'urls = [f"http://site/{i}" for i in range(4)]\n\n' +
+      'start = time.perf_counter()\n' +
+      'with ThreadPoolExecutor(max_workers=4) as ex:\n' +
+      '    results = list(ex.map(fetch, urls))\n' +
+      'print("耗时约", round(time.perf_counter() - start, 2), "s")\n' +
+      'print(results)',
+    example3:
+      '# 进程池做 CPU 密集（多核并行）\n' +
+      'from concurrent.futures import ProcessPoolExecutor\n' +
+      'import math\n\n' +
+      'def is_prime(n):\n' +
+      '    if n < 2:\n' +
+      '        return False\n' +
+      '    for i in range(2, int(math.sqrt(n)) + 1):\n' +
+      '        if n % i == 0:\n' +
+      '            return False\n' +
+      '    return True\n\n' +
+      'nums = range(1_000_000, 1_000_100)\n' +
+      'with ProcessPoolExecutor() as ex:\n' +
+      '    primes = list(ex.map(is_prime, nums))\n' +
+      'print(f"区间内素数个数: {sum(primes)}")\n\n' +
+      '# 共享状态/锁（线程安全）\n' +
+      'import threading\n' +
+      'lock = threading.Lock()\n' +
+      'counter = 0\n' +
+      'def inc():\n' +
+      '    global counter\n' +
+      '    with lock:\n' +
+      '        counter += 1\n'
   },
   {
     id: 'py-stdlib',
@@ -102,13 +220,41 @@ module.exports = [
     ],
     example:
       'from pathlib import Path\n' +
-      'from collections import Counter\n' +
+      'from collections import Counter, defaultdict, deque\n' +
       'import json\n\n' +
-      'p = Path("data") / "a.txt"\n' +
-      'print(p.suffix)\n\n' +
+      'p = Path(".")\n' +
+      'print(list(p.iterdir())[:3])   # 目录下内容\n' +
       'c = Counter("abracadabra")\n' +
       'print(c.most_common(2))     # [("a", 5), ("b", 2)]\n\n' +
-      'print(json.dumps({"x": 1})) # {"x": 1}'
+      'print(json.dumps({"x": 1}, ensure_ascii=False))',
+    example2:
+      '# defaultdict 与 deque\n' +
+      'from collections import defaultdict, deque\n\n' +
+      '# defaultdict: 键不存在时自动给默认值\n' +
+      'groups = defaultdict(list)\n' +
+      'for name, team in [("Tom", "A"), ("Amy", "B"), ("Bob", "A")]:\n' +
+      '    groups[team].append(name)\n' +
+      'print(dict(groups))\n' +
+      '# {\'A\': [\'Tom\', \'Bob\'], \'B\': [\'Amy\']}\n\n' +
+      '# deque: 双端队列，左右都可 O(1) 操作\n' +
+      'dq = deque([1, 2, 3])\n' +
+      'dq.appendleft(0)\n' +
+      'dq.append(4)\n' +
+      'dq.rotate(1)\n' +
+      'print(list(dq))',
+    example3:
+      '# datetime 处理日期时间\n' +
+      'from datetime import datetime, timedelta\n\n' +
+      'now = datetime.now()\n' +
+      'print(now.strftime("%Y-%m-%d %H:%M:%S"))\n\n' +
+      'future = now + timedelta(days=10, hours=2)\n' +
+      'print(future.date())\n\n' +
+      '# 解析字符串\n' +
+      'dt = datetime.strptime("2024-01-15", "%Y-%m-%d")\n' +
+      'print(dt.weekday())          # 周一=0\n\n' +
+      'import os\n' +
+      'print(os.path.exists("."))   # True\n' +
+      'print(os.getenv("HOME"))'
   },
   {
     id: 'py-re',
@@ -129,7 +275,31 @@ module.exports = [
       'print(nums)                  # ["12345", "678"]\n\n' +
       'm = re.search(r"金额 (\\d+)", text)\n' +
       'print(m.group(1))            # 678\n\n' +
-      'print(re.sub(r"\\d+", "#", text))'
+      'print(re.sub(r"\\d+", "#", text))   # 订单号 # 金额 #',
+    example2:
+      '# 常用正则模式\n' +
+      'import re\n\n' +
+      '# 邮箱\n' +
+      'emails = ["a@b.com", "not-an-email", "x@y.org.cn"]\n' +
+      'pat = re.compile(r"[\\w.+-]+@[\\w-]+\\.[\\w.]+")\n' +
+      'valid = [e for e in emails if pat.fullmatch(e)]\n' +
+      'print(valid)\n\n' +
+      '# 手机号/日期提取\n' +
+      'text = "电话 138-1234-5678，生日 1990/08/15"\n' +
+      'print(re.findall(r"\\d{3}-\\d{4}-\\d{4}", text))\n' +
+      'print(re.search(r"\\d{4}/\\d{2}/\\d{2}", text).group())',
+    example3:
+      '# 命名分组与替换引用\n' +
+      'import re\n' +
+      'text = "2024-01-15"\n' +
+      '# 命名分组\n' +
+      'm = re.match(r"(?P<year>\\d{4})-(?P<month>\\d{2})-(?P<day>\\d{2})", text)\n' +
+      'print(m.groupdict())   # {\'year\': \'2024\', ...}\n\n' +
+      '# 替换时引用分组：改成 15/01/2024\n' +
+      'new = re.sub(r"(\\d{4})-(\\d{2})-(\\d{2})", r"\\3/\\2/\\1", text)\n' +
+      'print(new)\n\n' +
+      '# 忽略大小写标志\n' +
+      'print(re.search(r"python", "I love Python", re.IGNORECASE).group())'
   },
   {
     id: 'py-functional',
@@ -153,7 +323,32 @@ module.exports = [
       'print(s)                       # 10\n\n' +
       'add = lambda a, b: a + b\n' +
       'add5 = partial(add, 5)\n' +
-      'print(add5(3))                 # 8'
+      'print(add5(3))                 # 8',
+    example2:
+      '# map/filter 惰性迭代器\n' +
+      'nums = [1, 2, 3, 4, 5, 6]\n\n' +
+      'squares = map(lambda x: x * x, nums)\n' +
+      'print(squares)                 # <map object>\n' +
+      'print(list(squares))           # [1, 4, 9, 16, 25, 36]\n\n' +
+      'evens = filter(lambda x: x % 2 == 0, nums)\n' +
+      'print(list(evens))             # [2, 4, 6]\n\n' +
+      '# 多序列映射\n' +
+      'a = [1, 2, 3]\n' +
+      'b = [10, 20, 30]\n' +
+      'print(list(map(lambda x, y: x + y, a, b)))  # [11, 22, 33]',
+    example3:
+      '# itertools 常用组合\n' +
+      'from itertools import chain, groupby, permutations\n\n' +
+      '# chain 拼接多个迭代器\n' +
+      'print(list(chain([1, 2], [3, 4], [5])))\n' +
+      '# [1, 2, 3, 4, 5]\n\n' +
+      '# groupby 分组（需先排序）\n' +
+      'from collections import Counter\n' +
+      'words = sorted(["cat", "dog", "car", "door"])\n' +
+      'for key, group in groupby(words, key=lambda w: w[0]):\n' +
+      '    print(key, list(group))\n\n' +
+      '# permutations 排列\n' +
+      'print(list(permutations("AB", 2)))   # [(\'A\', \'B\'), (\'B\', \'A\')]'
   },
   {
     id: 'py-fileio',
@@ -173,7 +368,34 @@ module.exports = [
       '    f.write("第二行\\n")\n\n' +
       'with open("out.txt", "r", encoding="utf-8") as f:\n' +
       '    for line in f:\n' +
-      '        print(line.rstrip())'
+      '        print(line.rstrip())',
+    example2:
+      '# 写入多行与追加\n' +
+      'lines = ["line1", "line2", "line3"]\n\n' +
+      '# 一次性写多行\n' +
+      'with open("out.txt", "w", encoding="utf-8") as f:\n' +
+      '    f.writelines(line + "\\n" for line in lines)\n\n' +
+      '# 追加模式\n' +
+      'with open("out.txt", "a", encoding="utf-8") as f:\n' +
+      '    f.write("line4\\n")\n\n' +
+      '# 读取全部/逐行\n' +
+      'with open("out.txt", "r", encoding="utf-8") as f:\n' +
+      '    print(f.readlines())',
+    example3:
+      '# 二进制文件与读取技巧\n' +
+      '# 写二进制\n' +
+      'data = bytearray([0, 1, 2, 255])\n' +
+      'with open("bin.dat", "wb") as f:\n' +
+      '    f.write(data)\n\n' +
+      '# 读二进制\n' +
+      'with open("bin.dat", "rb") as f:\n' +
+      '    content = f.read()\n' +
+      'print(list(content))        # [0, 1, 2, 255]\n\n' +
+      '# seek 跳转\n' +
+      'with open("out.txt", "r", encoding="utf-8") as f:\n' +
+      '    f.seek(0)\n' +
+      '    first = f.readline()\n' +
+      '    print("第一行:", first.rstrip())'
   },
   {
     id: 'py-slicing',
@@ -193,7 +415,34 @@ module.exports = [
       'print(s[::-1])         # dlrow olleh\n' +
       'print(s[-5:])          # world\n' +
       'nums = [0, 1, 2, 3, 4, 5]\n' +
-      'print(nums[::2])       # [0, 2, 4]'
+      'print(nums[::2])       # [0, 2, 4]',
+    example2:
+      '# 负数索引\n' +
+      'nums = [10, 20, 30, 40, 50]\n' +
+      'print(nums[-1])        # 50 最后一个\n' +
+      'print(nums[-2:])       # [40, 50] 最后两个\n' +
+      'print(nums[:-1])       # [10, 20, 30, 40] 去掉最后\n\n' +
+      '# 反转\n' +
+      'print(nums[::-1])      # [50, 40, 30, 20, 10]\n\n' +
+      '# 步长\n' +
+      'print(nums[1::2])      # [20, 40]\n' +
+      'print(nums[::3])       # [10, 40]',
+    example3:
+      '# 切片赋值（就地修改）\n' +
+      'nums = [1, 2, 3, 4, 5]\n' +
+      'nums[1:3] = [20, 30]\n' +
+      'print(nums)            # [1, 20, 30, 4, 5]\n\n' +
+      'nums[2:4] = []         # 删除一块\n' +
+      'print(nums)            # [1, 20, 5]\n\n' +
+      '# 用切片做浅拷贝\n' +
+      'a = [1, 2, 3]\n' +
+      'copy = a[:]\n' +
+      'copy.append(4)\n' +
+      'print(a, copy)         # [1, 2, 3] [1, 2, 3, 4]\n\n' +
+      '# slice 对象复用\n' +
+      'sli = slice(0, 3)\n' +
+      'print([1, 2, 3, 4][sli])   # [1, 2, 3]\n' +
+      'print("abcdef"[sli])       # abc'
   },
   {
     id: 'py-enum',
@@ -215,7 +464,44 @@ module.exports = [
       '    BLUE = auto()\n\n' +
       'c = Color.RED\n' +
       'print(c.name, c.value)     # RED 1\n' +
-      'print(c is Color.RED)      # True'
+      'print(c is Color.RED)      # True',
+    example2:
+      '# 显式值与遍历\n' +
+      'from enum import Enum\n\n' +
+      'class Status(Enum):\n' +
+      '    PENDING = 1\n' +
+      '    PROCESSING = 2\n' +
+      '    DONE = 3\n\n' +
+      '# 遍历\n' +
+      'for s in Status:\n' +
+      '    print(s.name, s.value)\n\n' +
+      '# 由值获取成员\n' +
+      's = Status(2)\n' +
+      'print(s.name)              # PROCESSING\n\n' +
+      '# 比较与哈希\n' +
+      'print(Status.PENDING == Status.PENDING)\n' +
+      'print(Status.PENDING == 1)   # False! 不等同于整数',
+    example3:
+      '# 带属性的枚举\n' +
+      'from enum import Enum\n\n' +
+      'class HttpStatus(Enum):\n' +
+      '    OK = (200, "成功")\n' +
+      '    NOT_FOUND = (404, "未找到")\n' +
+      '    SERVER_ERROR = (500, "服务器错误")\n\n' +
+      '    def __init__(self, code, msg):\n' +
+      '        self.code = code\n' +
+      '        self.msg = msg\n' +
+      '    def __str__(self):\n' +
+      '        return f"{self.code} {self.msg}"\n\n' +
+      'r = HttpStatus.NOT_FOUND\n' +
+      'print(r.code, r.msg)       # 404 未找到\n' +
+      'print(str(r))\n\n' +
+      '# 用枚举做分支，避免魔法字符串\n' +
+      'def handle(s: HttpStatus):\n' +
+      '    if s is HttpStatus.NOT_FOUND:\n' +
+      '        return "404 页面"\n' +
+      '    return "ok"\n' +
+      'print(handle(HttpStatus.NOT_FOUND))'
   },
   {
     id: 'py-descriptors',
@@ -244,7 +530,47 @@ module.exports = [
       'class Account:\n' +
       '    balance = Validated(0)\n\n' +
       'a = Account()\n' +
-      'a.balance = 100'
+      'a.balance = 100\n' +
+      'print(a.balance)      # 100\n' +
+      'try:\n' +
+      '    a.balance = -5\n' +
+      'except ValueError as e:\n' +
+      '    print("拒绝:", e)',
+    example2:
+      '# property 本质是描述符\n' +
+      'class Temperature:\n' +
+      '    def __init__(self, celsius):\n' +
+      '        self._celsius = celsius\n' +
+      '    @property\n' +
+      '    def fahrenheit(self):\n' +
+      '        return self._celsius * 9 / 5 + 32\n' +
+      '    @fahrenheit.setter\n' +
+      '    def fahrenheit(self, v):\n' +
+      '        self._celsius = (v - 32) * 5 / 9\n\n' +
+      't = Temperature(100)\n' +
+      'print(t.fahrenheit)         # 212.0\n' +
+      't.fahrenheit = 32\n' +
+      'print(t._celsius)           # 0.0',
+    example3:
+      '# 懒加载描述符\n' +
+      'class Lazy:\n' +
+      '    def __init__(self, func):\n' +
+      '        self.func = func\n' +
+      '        self.name = func.__name__\n' +
+      '    def __get__(self, obj, owner):\n' +
+      '        if obj is None:\n' +
+      '            return self\n' +
+      '        value = self.func(obj)\n' +
+      '        setattr(obj, self.name, value)  # 缓存\n' +
+      '        return value\n\n' +
+      'class Data:\n' +
+      '    @Lazy\n' +
+      '    def expensive(self):\n' +
+      '        print("只计算一次...")\n' +
+      '        return sum(range(100))\n\n' +
+      'd = Data()\n' +
+      'print(d.expensive)   # 计算\n' +
+      'print(d.expensive)   # 用缓存，不再计算'
   },
   {
     id: 'py-metaclass',
@@ -269,7 +595,38 @@ module.exports = [
       '    pass\n\n' +
       'class A(Plugin):\n' +
       '    pass\n\n' +
-      'print(list(Registry._items))   # ["Plugin", "A"]'
+      'print(list(Registry._items))   # ["Plugin", "A"]',
+    example2:
+      '# 用元类在类定义时校验/改写\n' +
+      'class EnforceNamespace(type):\n' +
+      '    def __new__(mcs, name, bases, ns):\n' +
+      '        # 要求类提供 name 属性\n' +
+      '        if name != "Base" and "name" not in ns:\n' +
+      '            raise TypeError(f"{name} 缺少 name 属性")\n' +
+      '        return super().__new__(mcs, name, bases, ns)\n\n' +
+      'class Base(metaclass=EnforceNamespace):\n' +
+      '    pass\n\n' +
+      'class Good(Base):\n' +
+      '    name = "ok"\n\n' +
+      'try:\n' +
+      '    class Bad(Base):\n' +
+      '        pass\n' +
+      'except TypeError as e:\n' +
+      '    print("被拦截:", e)',
+    example3:
+      '# 自动给方法添加前缀（类似骨架）\n' +
+      'class AutoPrefix(type):\n' +
+      '    def __new__(mcs, name, bases, ns):\n' +
+      '        for k in list(ns):\n' +
+      '            if k.startswith("do_"):\n' +
+      '                ns["api_" + k[3:]] = ns[k]\n' +
+      '        return super().__new__(mcs, name, bases, ns)\n\n' +
+      'class Service(metaclass=AutoPrefix):\n' +
+      '    def do_save(self):\n' +
+      '        return "saved"\n\n' +
+      's = Service()\n' +
+      'print(s.do_save())          # saved\n' +
+      'print(s.api_save())         # saved（自动生成的别名）'
   },
   {
     id: 'py-match',
@@ -294,7 +651,50 @@ module.exports = [
       '            return f"坐标 {x},{y}"\n' +
       '        case _:\n' +
       '            return "未知"\n\n' +
-      'print(handle({"type": "join", "user": "Tom"}))'
+      'print(handle({"type": "join", "user": "Tom"}))\n' +
+      'print(handle([3, 4]))\n' +
+      'print(handle("其他"))',
+    example2:
+      '# 匹配类型与守卫\n' +
+      'import math\n\n' +
+      'def show(v):\n' +
+      '    match v:\n' +
+      '        case int(x) if x > 0:\n' +
+      '            return f"正整数 {x}"\n' +
+      '        case int(x):\n' +
+      '            return f"其他整数 {x}"\n' +
+      '        case float(x):\n' +
+      '            return f"浮点 {x}"\n' +
+      '        case str(s):\n' +
+      '            return f"字符串: {s}"\n' +
+      '        case _:\n' +
+      '            return "未知类型"\n\n' +
+      'print(show(5))\n' +
+      'print(show(-2))\n' +
+      'print(show(3.14))\n' +
+      'print(show("hi"))',
+    example3:
+      '# 处理计算结果：根据数学表达式结构分发\n' +
+      'def eval_expr(expr):\n' +
+      '    match expr:\n' +
+      '        case ("add", a, b):\n' +
+      '            return eval_expr(a) + eval_expr(b)\n' +
+      '        case ("mul", a, b):\n' +
+      '            return eval_expr(a) * eval_expr(b)\n' +
+      '        case int(n):\n' +
+      '            return n\n' +
+      '        case _:\n' +
+      '            raise ValueError("无法求值")\n\n' +
+      '# 表达式: (1 + 2) * 3\n' +
+      'expr = ("mul", ("add", 1, 2), 3)\n' +
+      'print(eval_expr(expr))   # 9\n\n' +
+      '# 匹配多个候选（或模式）\n' +
+      'color = "red"\n' +
+      'match color:\n' +
+      '    case "red" | "green" | "blue":\n' +
+      '        print("RGB 颜色")\n' +
+      '    case _:\n' +
+      '        print("其他")'
   },
   {
     id: 'py-walrus',
@@ -314,7 +714,42 @@ module.exports = [
       'results = [m.group(0) for s in data if (m := re.search(r"\\d+", s))]\n' +
       'print(results)              # ["123", "99"]\n\n' +
       'while (line := input("> ")) != "q":\n' +
-      '    print("你输入了", line)'
+      '    print("你输入了", line)',
+    example2:
+      '# 避免重复计算\n' +
+      'def expensive_calc():\n' +
+      '    print("计算中...")\n' +
+      '    return 42\n\n' +
+      '# 传统写法（计算两次）\n' +
+      '# value = expensive_calc()\n' +
+      '# if value > 0: use(value)\n\n' +
+      '# 海象写法（只算一次，但保留可用性）\n' +
+      'if (value := expensive_calc()) > 0:\n' +
+      '    print("得到正数", value)\n\n' +
+      '# 在循环条件里使用\n' +
+      'chunk_size = 3\n' +
+      'items = iter("abcdefgh")\n' +
+      'cur = items\n' +
+      'import itertools\n' +
+      'for chunk in itertools.islice(iter(["abc", "def", "gh"]), 3):\n' +
+      '    print(chunk)',
+    example3:
+      '# while 读取文件片段：既是条件又保留结果\n' +
+      'def read(chunk):\n' +
+      '    # 模拟返回片段，空串表示结束\n' +
+      '    return chunk and chunk[::-1] or ""\n\n' +
+      'stream = ["hello ", "world", ""]\n' +
+      'idx = 0\n' +
+      'while (piece := read(stream[idx] if idx < len(stream) else "")):\n' +
+      '    print(piece)\n' +
+      '    idx += 1\n\n' +
+      '# 在推导式中同时使用多个海象\n' +
+      'nums = [1, 4, 9, 16]\n' +
+      'roots = [(r := x ** 0.5) for x in nums if r > 2]\n' +
+      'print(roots)   # [3.0, 4.0]\n\n' +
+      '# 注意海象的优先级：需括号\n' +
+      'print((n := 10) + 5)   # 15\n' +
+      'print(n)               # 10'
   },
   {
     id: 'py-pep604',
@@ -337,7 +772,37 @@ module.exports = [
       '    return None\n\n' +
       'print(f(3))        # 6\n' +
       'print(f("ab"))     # 2\n' +
-      'print(isinstance(5, int | str))   # True'
+      'print(isinstance(5, int | str))   # True',
+    example2:
+      '# None 联合（等价 Optional）\n' +
+      'from typing import Optional\n\n' +
+      'def find(key: str) -> str | None:\n' +
+      '    table = {"a": "Alpha"}\n' +
+      '    return table.get(key)\n\n' +
+      'print(find("a"))    # Alpha\n' +
+      'print(find("zz"))   # None\n\n' +
+      '# 与旧式 Optional 等价\n' +
+      'def old(k: str) -> Optional[str]:\n' +
+      '    return None\n\n' +
+      '# 更丰富的联合\n' +
+      'def accept(v: int | float | str) -> str:\n' +
+      '    return "数字" if isinstance(v, (int, float)) else "字符串"\n\n' +
+      'print(accept(1), accept(2.5), accept("x"))',
+    example3:
+      '# 联合类型用于容器\n' +
+      'from typing import list as _unused   # 示意\n' +
+      'def total(values: list[int] | tuple[int, ...]) -> int:\n' +
+      '    return sum(values)\n\n' +
+      'print(total([1, 2, 3]))\n' +
+      'print(total((4, 5)))\n\n' +
+      '# isinstance 多类型联合\n' +
+      'def normalize(v: int | str):\n' +
+      '    if isinstance(v, (int, float)):\n' +
+      '        return v\n' +
+      '    if isinstance(v, str):\n' +
+      '        return v.strip().lower()\n\n' +
+      'print(normalize("  Hello "))    # hello\n' +
+      'print(normalize(42))            # 42'
   },
   {
     id: 'py-fstring-debug',
@@ -356,6 +821,30 @@ module.exports = [
       'y = 3.14159\n' +
       'print(f"{x=}")            # x=10\n' +
       'print(f"{x + 1=}")        # x + 1=11\n' +
-      'print(f"{y=:.2f}")        # y=3.14'
+      'print(f"{y=:.2f}")        # y=3.14',
+    example2:
+      '# 多个表达式同时调试\n' +
+      'a, b, c = 5, 10, 20\n' +
+      'print(f"{a=} {b=} {c=}")\n' +
+      '# a=5 b=10 c=20\n\n' +
+      'total = a + b + c\n' +
+      'avg = total / 3\n' +
+      'print(f"{total=} {avg=:.2f}")\n\n' +
+      '# 列表/字典也能用\n' +
+      'items = [1, 2, 3]\n' +
+      'd = {"k": "v"}\n' +
+      'print(f"{items=} {d=}")',
+    example3:
+      '# 调试时的格式控制\n' +
+      'price = 1234.567\n' +
+      'rate = 0.085\n' +
+      'tax = price * rate\n' +
+      'print(f"{price=:.2f}")\n' +
+      'print(f"{rate=:.1%}")     # 百分数格式\n' +
+      'print(f"{tax=:.2f}")\n\n' +
+      '# 结合字符串宽度对齐调试\n' +
+      'name = "Tom"\n' +
+      'print(f"{name=:>10}")\n' +
+      'print(f"{name=:<10}|")'
   }
 ];

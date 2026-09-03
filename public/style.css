@@ -45,31 +45,31 @@
 }
 
 [data-theme="dark"] {
-  --bg: #12131a;
-  --bg-glow-1: 40, 90, 200;
-  --bg-glow-2: 140, 80, 220;
-  --panel: rgba(38, 40, 50, 0.55);
-  --panel-strong: rgba(38, 40, 50, 0.92);
-  --panel2: rgba(255, 255, 255, 0.06);
-  --border: rgba(255, 255, 255, 0.12);
-  --border-strong: rgba(255, 255, 255, 0.2);
-  --text: #f5f5f7;
-  --dim: #a1a1a6;
-  --dim2: #6e6e73;
-  --accent: #0a84ff;
-  --accent-soft: rgba(10, 132, 255, 0.22);
-  --code-bg: rgba(0, 0, 0, 0.28);
-  --code-fg: #efeff4;
-  --tok-com: #8e8e93;
-  --tok-str: #30d158;
-  --tok-kw: #bf5af2;
-  --tok-type: #64d2ff;
-  --tok-num: #ffd60a;
-  --tok-pre: #ff9f0a;
-  --shadow-card: 0 1px 2px rgba(0,0,0,.3), 0 10px 30px -12px rgba(0,0,0,.5);
-  --shadow-card-hover: 0 4px 8px rgba(0,0,0,.35), 0 24px 48px -16px rgba(0,20,80,.5);
-  --shadow-input: 0 1px 2px rgba(0,0,0,.2);
-  --hairline: 0 0 0 1px rgba(255,255,255,.04);
+  --bg: #16171d;
+  --bg-glow-1: 86, 122, 214;
+  --bg-glow-2: 158, 110, 226;
+  --panel: rgba(44, 46, 58, 0.5);
+  --panel-strong: rgba(46, 48, 60, 0.88);
+  --panel2: rgba(255, 255, 255, 0.055);
+  --border: rgba(255, 255, 255, 0.09);
+  --border-strong: rgba(255, 255, 255, 0.16);
+  --text: #f1f1f4;
+  --dim: #a2a3ab;
+  --dim2: #76777f;
+  --accent: #409cff;
+  --accent-soft: rgba(64, 156, 255, 0.18);
+  --code-bg: rgba(19, 20, 27, 0.55);
+  --code-fg: #e8e8ee;
+  --tok-com: #7f8492;
+  --tok-str: #7ee2a8;
+  --tok-kw: #cf7af0;
+  --tok-type: #8fd0ff;
+  --tok-num: #ffd166;
+  --tok-pre: #ffb26b;
+  --shadow-card: 0 1px 2px rgba(0,0,0,.25), 0 12px 32px -14px rgba(0,0,0,.45);
+  --shadow-card-hover: 0 4px 10px rgba(0,0,0,.3), 0 26px 52px -18px rgba(10,20,70,.45);
+  --shadow-input: 0 1px 2px rgba(0,0,0,.18);
+  --hairline: 0 0 0 1px rgba(255,255,255,.05);
 }
 
 html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
@@ -99,6 +99,13 @@ body::before {
     radial-gradient(45% 40% at 8% 100%, rgba(var(--bg-glow-2), .12), transparent 70%);
 }
 body::after { display: none; }
+
+/* 深色模式：更柔和的环境光晕，避免过于浓重 */
+[data-theme="dark"] body::before {
+  background:
+    radial-gradient(54% 42% at 82% -4%, rgba(var(--bg-glow-1), .12), transparent 70%),
+    radial-gradient(46% 40% at 6% 102%, rgba(var(--bg-glow-2), .09), transparent 72%);
+}
 
 /* ---------- header：毛玻璃 ---------- */
 header {
@@ -301,6 +308,8 @@ main#app { flex: 1; overflow: hidden; overscroll-behavior: contain; }
 .card-rust    { --accent: #dea584; }
 .card-pandas  { --accent: #130654; }
 .card-nodejs  { --accent: #3c873a; }
+.card-git     { --accent: #e24329; }
+.card-redis   { --accent: #d92b21; }
 
 /* 卡片入场动画（轻柔上浮 + 弹跳尾韵） */
 @keyframes fadeUp {

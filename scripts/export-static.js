@@ -17,7 +17,9 @@ const dumps = {
   linux: require('../data/linuxFeatures'),
   rust: require('../data/rustFeatures'),
   pandas: require('../data/pandasFeatures'),
-  nodejs: require('../data/nodejsFeatures')
+  nodejs: require('../data/nodejsFeatures'),
+  git: require('../data/gitFeatures'),
+  redis: require('../data/redisFeatures')
 };
 
 const outDir = path.join(__dirname, '..', 'public', 'api');

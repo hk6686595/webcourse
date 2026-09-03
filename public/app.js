@@ -169,7 +169,7 @@ async function openFeature(id, li) {
     : state.lang === 'js' || state.lang === 'nodejs' ? 'js'
     : state.lang === 'ts' ? 'ts'
     : state.lang === 'rust' ? 'rust'
-    : state.lang === 'docker' || state.lang === 'sqlite' || state.lang === 'linux' ? 'py'
+    : state.lang === 'docker' || state.lang === 'sqlite' || state.lang === 'linux' || state.lang === 'git' || state.lang === 'redis' ? 'py'
     : 'cpp';
 
   const badgeCls = (v) => 'badge lvl-' + v;
@@ -243,11 +243,13 @@ $('cs-count').textContent = meta.csharp;
   $('rust-count').textContent = meta.rust;
   $('pandas-count').textContent = meta.pandas;
   $('nodejs-count').textContent = meta.nodejs;
+  $('git-count').textContent = meta.git;
+  $('redis-count').textContent = meta.redis;
   } catch { /* 忽略 */ }
 })();
 
 /* 支持 #csharp / #cpp20 直达 */
-const HASH_VIEWS = ['csharp', 'patterns', 'python', 'js', 'ts', 'agent', 'cpp11', 'cpp20', 'unity', 'opencv', 'docker', 'sqlite', 'linux', 'rust', 'pandas', 'nodejs'];
+const HASH_VIEWS = ['csharp', 'patterns', 'python', 'js', 'ts', 'agent', 'cpp11', 'cpp20', 'unity', 'opencv', 'docker', 'sqlite', 'linux', 'rust', 'pandas', 'nodejs', 'git', 'redis'];
 {
   const h = location.hash.slice(1);
   if (HASH_VIEWS.includes(h)) showView(h);
@@ -260,7 +262,7 @@ function applyTheme(t) {
   const btn = $('theme-toggle');
   if (btn) btn.textContent = t === 'light' ? '深色' : '浅色';
   const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.setAttribute('content', t === 'light' ? '#eaeef5' : '#12131a');
+  if (meta) meta.setAttribute('content', t === 'light' ? '#eaeef5' : '#16171d');
 }
 (function initTheme() {
   let saved = null;
