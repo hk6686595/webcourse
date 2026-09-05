@@ -17,15 +17,12 @@ const dumps = {
   linux: require('../data/linuxFeatures'),
   linuxdev: require('../data/linuxdevFeatures'),
   rust: require('../data/rustFeatures'),
-  pandas: require('../data/pandasFeatures'),
   nodejs: require('../data/nodejsFeatures'),
   git: require('../data/gitFeatures'),
   redis: require('../data/redisFeatures'),
   reverse: require('../data/reverseFeatures'),
   aspnet: require('../data/aspnetFeatures'),
-  network: require('../data/networkFeatures'),
-  gamedev: require('../data/gamedevFeatures'),
-  desktopui: require('../data/desktopuiFeatures'),
+  efcore: require('../data/efcoreFeatures'),
   msfullstack: require('../data/msfullstackFeatures')
 };
 

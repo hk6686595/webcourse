@@ -38,15 +38,12 @@
     <button class="nav-btn" data-view="linux">Linux 命令</button>
     <button class="nav-btn" data-view="linuxdev">Linux 开发</button>
     <button class="nav-btn" data-view="rust">Rust 语言</button>
-    <button class="nav-btn" data-view="pandas">数据分析</button>
     <button class="nav-btn" data-view="nodejs">Node.js</button>
     <button class="nav-btn" data-view="git">Git 版本控制</button>
     <button class="nav-btn" data-view="redis">Redis</button>
     <button class="nav-btn" data-view="reverse">逆向基础</button>
     <button class="nav-btn" data-view="aspnet">ASP.NET Core</button>
-    <button class="nav-btn" data-view="network">网络编程</button>
-    <button class="nav-btn" data-view="gamedev">游戏开发</button>
-    <button class="nav-btn" data-view="desktopui">桌面 UI</button>
+    <button class="nav-btn" data-view="efcore">EF Core</button>
     <button class="nav-btn" data-view="msfullstack">微软全栈</button>
   </nav>
 </header>
@@ -57,13 +54,13 @@
     <div class="hero">
       <h2>系统学习<b>现代语言特性</b></h2>
       <p>精选 C# 与 C++20 的核心语法特性，每个特性配有版本信息、要点解析与可读代码示例。</p>
-      <p class="hero-sub">24 个专题 · 500+ 篇详解 · 从零到工程化</p>
+      <p class="hero-sub">22 个专题 · 550+ 篇详解 · 从零到工程化</p>
     </div>
     <div class="cards">
       <a class="card card-cs" data-goto="csharp" href="#csharp">
         <div class="card-icon">⌨</div>
         <h3>C# 语法特性详解</h3>
-        <p>从自动属性到模式匹配、async/await 到 Span&lt;T&gt;，覆盖 C# 1.0 → 12.0 演进路上的关键特性。</p>
+        <p>从自动属性到模式匹配、async/await 到 Span&lt;T&gt;，覆盖 C# 1.0 → 14.0 演进路上的关键特性。</p>
         <div class="card-meta"><span id="cs-count">…</span> 个特性 · 按主题分类</div>
       </a>
       <a class="card card-pattern" data-goto="patterns" href="#patterns">
@@ -150,12 +147,6 @@
         <p>所有权、借用、生命周期、结构体、枚举、并发与异步，从入门到构建 CLI 与 Web 服务的系统学习。</p>
         <div class="card-meta"><span id="rust-count">…</span> 篇 · 入门 / 所有权 / 数据结构 / 并发 / 实战</div>
       </a>
-      <a class="card card-pandas" data-goto="pandas" href="#pandas">
-        <div class="card-icon">PD</div>
-        <h3>Python 数据分析</h3>
-        <p>Pandas 数据清洗、分组聚合、透视表、时间序列、可视化与性能优化，掌握用 Python 处理真实数据。</p>
-        <div class="card-meta"><span id="pandas-count">…</span> 篇 · 入门 / Series / 分组 / 聚合 / 时间 / 可视化 / 实战</div>
-      </a>
       <a class="card card-nodejs" data-goto="nodejs" href="#nodejs">
         <div class="card-icon">N</div>
         <h3>Node.js 后端开发</h3>
@@ -186,23 +177,11 @@
         <p>环境与项目、DI、中间件、Minimal API、控制器与路由、EF Core、Identity/JWT、SignalR、缓存与部署。</p>
         <div class="card-meta"><span id="aspnet-count">…</span> 篇 · 基础 / API / 数据 / 安全 / 实时 / 部署 / 实战</div>
       </a>
-      <a class="card card-network" data-goto="network" href="#network">
-        <div class="card-icon">NW</div>
-        <h3>网络编程</h3>
-        <p>OSI/TCP-IP、以太网与 ARP、IP/TCP/UDP、DNS/HTTP/HTTPS、Socket 编程、异步、WebSocket、抓包与架构。</p>
-        <div class="card-meta"><span id="network-count">…</span> 篇 · 基础 / 应用层 / 编程 / 安全 / 架构 / 实战</div>
-      </a>
-      <a class="card card-gamedev" data-goto="gamedev" href="#gamedev">
-        <div class="card-icon">GD</div>
-        <h3>游戏开发技术</h3>
-        <p>游戏循环、向量与渲染管线、状态机、精灵/动画、Unity 与 Godot、物理与碰撞、A* 寻路、粒子、联机与优化发布。</p>
-        <div class="card-meta"><span id="gamedev-count">…</span> 篇 · 核心 / 引擎 / 物理 / 玩法 / 联机 / 优化 / 实战</div>
-      </a>
-      <a class="card card-desktopui" data-goto="desktopui" href="#desktopui">
-        <div class="card-icon">DU</div>
-        <h3>桌面 UI 开发</h3>
-        <p>XAML 与布局、控件模板、MVVM、数据绑定、资源样式、窗口导航、绘制动画、Avalonia/Electron/Tauri、打包与优化。</p>
-        <div class="card-meta"><span id="desktopui-count">…</span> 篇 · 基础 / 架构 / 数据 / 跨平台 / 打包 / 优化 / 实战</div>
+      <a class="card card-efcore" data-goto="efcore" href="#efcore">
+        <div class="card-icon">EF</div>
+        <h3>Entity Framework Core</h3>
+        <p>ORM 原理、DbContext 与实体映射、迁移、LINQ 查询、关系模型、并发控制与性能优化，Microsoft 官方 ORM 系统教程。</p>
+        <div class="card-meta"><span id="efcore-count">…</span> 篇 · 入门 / 建模 / 查询 / 进阶 / 性能 / 实战</div>
       </a>
       <a class="card card-msfullstack" data-goto="msfullstack" href="#msfullstack">
         <div class="card-icon">MS</div>

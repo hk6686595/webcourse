@@ -11,7 +11,7 @@ const KW = {
   rust: 'fn let mut const static use mod pub struct enum trait impl self Self super crate break continue for while loop if else match return where as async await dyn move ref type unsafe extern macro_rules in if let while let true false Some None Ok Err box'
 };
 const TYPES = {
-  cs: 'int string bool double decimal float long short byte sbyte char uint ulong ushort object dynamic Task Action Func ValueTask Span ReadOnlySpan IAsyncEnumerable CancellationToken IList IDictionary IEnumerable IQueryable List Dictionary HashSet Nullable DateTime TimeSpan Guid Math Console Convert String Int32 Int64 Decimal Boolean Exception HttpClient WebApplication record class struct interface enum',
+  cs: 'int string bool double decimal float long short byte sbyte char uint ulong ushort object dynamic Task Action Func ValueTask Span ReadOnlySpan IAsyncEnumerable CancellationToken IList IDictionary IEnumerable IQueryable List Dictionary HashSet Nullable DateTime TimeSpan Guid Math Console Convert String Int32 Int64 Decimal Boolean Exception HttpClient WebApplication DbContext DbSet EntityState DbUpdateException DbUpdateConcurrencyException DbContextOptions DbContextOptionsBuilder ModelBuilder SaveChanges SaveChangesAsync Include ThenInclude AsNoTracking AsSplitQuery ExecuteUpdateAsync ExecuteDeleteAsync ToListAsync FindAsync SingleAsync FirstOrDefaultAsync CountAsync FromSql ExecuteSqlInterpolatedAsync HasOne WithMany HasForeignKey HasIndex HasQueryFilter HasPrecision IsRequired ToTable AddDbContext EnsureCreated Migrate record class struct interface enum',
   cpp: 'string string_view vector array span map set unordered_map optional variant tuple pair unique_ptr shared_ptr weak_ptr function thread jthread mutex atomic semaphore latch barrier generator coroutine_handle promise_type stop_token counting_semaphore strong_ordering weak_ordering partial_ordering formatter hash iterator size_t',
   js: 'console Math JSON Object Array Promise Map Set Symbol Number String Boolean Date RegExp Function Proxy Reflect BigInt Int8Array Uint8Array Float64Array document window globalThis setTimeout setInterval queueMicrotask structuredClone Symbol Iterator Generator AsyncFunction',
   ts: 'string number boolean bigint symbol object undefined null any unknown never void Array Promise Record Partial Required Pick Omit Readonly Exclude Extract NonNullable ReturnType Parameters Awaited ConstructorParameters InstanceType ReadonlyArray Map Set Date Error JSON console document window fetch HTMLElement',
@@ -165,14 +165,14 @@ async function openFeature(id, li) {
   const f = state.cache[id];
   if (!f) return;
   const codeLang = state.lang === 'csharp' || state.lang === 'patterns' || state.lang === 'unity' ? 'cs'
-    : state.lang === 'python' || state.lang === 'agent' || state.lang === 'opencv' || state.lang === 'pandas' ? 'py'
+    : state.lang === 'python' || state.lang === 'agent' || state.lang === 'opencv' ? 'py'
     : state.lang === 'js' || state.lang === 'nodejs' ? 'js'
     : state.lang === 'ts' ? 'ts'
     : state.lang === 'rust' ? 'rust'
-    : state.lang === 'docker' || state.lang === 'sqlite' || state.lang === 'linux' || state.lang === 'git' || state.lang === 'redis' || state.lang === 'linuxdev' || state.lang === 'network' ? 'py'
+    : state.lang === 'docker' || state.lang === 'sqlite' || state.lang === 'linux' || state.lang === 'git' || state.lang === 'redis' || state.lang === 'linuxdev' ? 'py'
     : state.lang === 'reverse' ? 'cpp'
     : state.lang === 'aspnet' ? 'cs'
-    : state.lang === 'desktopui' ? 'cs'
+    : state.lang === 'efcore' ? 'cs'
     : state.lang === 'msfullstack' ? 'cs'
     : 'cpp';
 
@@ -246,21 +246,18 @@ $('cs-count').textContent = meta.csharp;
   $('linux-count').textContent = meta.linux;
   $('linuxdev-count').textContent = meta.linuxdev;
   $('rust-count').textContent = meta.rust;
-  $('pandas-count').textContent = meta.pandas;
   $('nodejs-count').textContent = meta.nodejs;
   $('git-count').textContent = meta.git;
   $('redis-count').textContent = meta.redis;
   $('reverse-count').textContent = meta.reverse;
   $('aspnet-count').textContent = meta.aspnet;
-  $('network-count').textContent = meta.network;
-  $('gamedev-count').textContent = meta.gamedev;
-  $('desktopui-count').textContent = meta.desktopui;
+  $('efcore-count').textContent = meta.efcore;
   $('msfullstack-count').textContent = meta.msfullstack;
   } catch { /* 忽略 */ }
 })();
 
 /* 支持 #csharp / #cpp20 直达 */
-const HASH_VIEWS = ['csharp', 'patterns', 'python', 'js', 'ts', 'agent', 'cpp11', 'cpp20', 'unity', 'opencv', 'docker', 'sqlite', 'linux', 'rust', 'pandas', 'nodejs', 'git', 'redis', 'linuxdev', 'reverse', 'aspnet', 'network', 'gamedev', 'desktopui', 'msfullstack'];
+const HASH_VIEWS = ['csharp', 'patterns', 'python', 'js', 'ts', 'agent', 'cpp11', 'cpp20', 'unity', 'opencv', 'docker', 'sqlite', 'linux', 'rust', 'nodejs', 'git', 'redis', 'linuxdev', 'reverse', 'aspnet', 'efcore', 'msfullstack'];
 {
   const h = location.hash.slice(1);
   if (HASH_VIEWS.includes(h)) showView(h);

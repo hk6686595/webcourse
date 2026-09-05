@@ -30,8 +30,6 @@ const linuxFeatures = require('./data/linuxFeatures');
 const linuxdevFeatures = require('./data/linuxdevFeatures');
 // Rust 语言教程
 const rustFeatures = require('./data/rustFeatures');
-// Python 数据分析（Pandas）教程
-const pandasFeatures = require('./data/pandasFeatures');
 // Node.js 后端教程
 const nodejsFeatures = require('./data/nodejsFeatures');
 // Git 版本控制教程
@@ -42,12 +40,8 @@ const redisFeatures = require('./data/redisFeatures');
 const reverseFeatures = require('./data/reverseFeatures');
 // ASP.NET Core 开发教程
 const aspnetFeatures = require('./data/aspnetFeatures');
-// 网络编程教程
-const networkFeatures = require('./data/networkFeatures');
-// 游戏开发技术详解教程
-const gamedevFeatures = require('./data/gamedevFeatures');
-// 桌面 UI 开发教程
-const desktopuiFeatures = require('./data/desktopuiFeatures');
+// Entity Framework Core 教程
+const efcoreFeatures = require('./data/efcoreFeatures');
 // 微软全栈开发教程
 const msfullstackFeatures = require('./data/msfullstackFeatures');
 
@@ -346,24 +340,6 @@ app.get('/api/rust/:id', (req, res) => {
   res.json(f);
 });
 
-// ---------- Pandas 教程 ----------
-app.get('/api/pandas', (req, res) => {
-  const { q } = req.query;
-  let list = pandasFeatures;
-  if (q) {
-    const kw = String(q).toLowerCase();
-    list = list.filter(f =>
-      (f.title + f.summary + f.detail.join(' ') + f.example + (f.example3 || '')).toLowerCase().includes(kw));
-  }
-  res.json(list.map(({ id, title, category, version, level, summary }) =>
-    ({ id, title, category, version, level, summary })));
-});
-app.get('/api/pandas/:id', (req, res) => {
-  const f = pandasFeatures.find(x => x.id === req.params.id);
-  if (!f) return res.status(404).json({ error: '特性不存在' });
-  res.json(f);
-});
-
 // ---------- Node.js 教程 ----------
 app.get('/api/nodejs', (req, res) => {
   const { q } = req.query;
@@ -454,56 +430,20 @@ app.get('/api/aspnet/:id', (req, res) => {
   res.json(f);
 });
 
-// ---------- 网络编程教程 ----------
-app.get('/api/network', (req, res) => {
+// ---------- Entity Framework Core 教程 ----------
+app.get('/api/efcore', (req, res) => {
   const { q } = req.query;
-  let list = networkFeatures;
+  let list = efcoreFeatures;
   if (q) {
     const kw = String(q).toLowerCase();
     list = list.filter(f =>
-      (f.title + f.summary + f.detail.join(' ') + f.example + (f.example3 || '')).toLowerCase().includes(kw));
+      (f.title + f.summary + f.detail.join(' ') + f.example + (f.example2 || '')).toLowerCase().includes(kw));
   }
   res.json(list.map(({ id, title, category, version, level, summary }) =>
     ({ id, title, category, version, level, summary })));
 });
-app.get('/api/network/:id', (req, res) => {
-  const f = networkFeatures.find(x => x.id === req.params.id);
-  if (!f) return res.status(404).json({ error: '特性不存在' });
-  res.json(f);
-});
-
-// ---------- 游戏开发技术详解教程 ----------
-app.get('/api/gamedev', (req, res) => {
-  const { q } = req.query;
-  let list = gamedevFeatures;
-  if (q) {
-    const kw = String(q).toLowerCase();
-    list = list.filter(f =>
-      (f.title + f.summary + f.detail.join(' ') + f.example + (f.example3 || '')).toLowerCase().includes(kw));
-  }
-  res.json(list.map(({ id, title, category, version, level, summary }) =>
-    ({ id, title, category, version, level, summary })));
-});
-app.get('/api/gamedev/:id', (req, res) => {
-  const f = gamedevFeatures.find(x => x.id === req.params.id);
-  if (!f) return res.status(404).json({ error: '特性不存在' });
-  res.json(f);
-});
-
-// ---------- 桌面 UI 开发教程 ----------
-app.get('/api/desktopui', (req, res) => {
-  const { q } = req.query;
-  let list = desktopuiFeatures;
-  if (q) {
-    const kw = String(q).toLowerCase();
-    list = list.filter(f =>
-      (f.title + f.summary + f.detail.join(' ') + f.example + (f.example3 || '')).toLowerCase().includes(kw));
-  }
-  res.json(list.map(({ id, title, category, version, level, summary }) =>
-    ({ id, title, category, version, level, summary })));
-});
-app.get('/api/desktopui/:id', (req, res) => {
-  const f = desktopuiFeatures.find(x => x.id === req.params.id);
+app.get('/api/efcore/:id', (req, res) => {
+  const f = efcoreFeatures.find(x => x.id === req.params.id);
   if (!f) return res.status(404).json({ error: '特性不存在' });
   res.json(f);
 });

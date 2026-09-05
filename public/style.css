@@ -307,15 +307,12 @@ main#app { flex: 1; overflow: hidden; overscroll-behavior: contain; }
 .card-linux   { --accent: #fcc624; }
 .card-linuxdev { --accent: #0fa88a; }
 .card-rust   { --accent: #dea584; }
-.card-pandas  { --accent: #130654; }
 .card-nodejs  { --accent: #3c873a; }
 .card-git     { --accent: #e24329; }
 .card-redis   { --accent: #d92b21; }
 .card-reverse { --accent: #6a4fa3; }
 .card-aspnet { --accent: #512bd4; }
-.card-network { --accent: #0b7285; }
-.card-gamedev { --accent: #e8590c; }
-.card-desktopui { --accent: #c2255c; }
+.card-efcore { --accent: #8b5cf6; }
 .card-msfullstack { --accent: #0078d4; }
 
 /* 卡片入场动画（轻柔上浮 + 弹跳尾韵） */
