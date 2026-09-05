@@ -316,6 +316,7 @@ main#app { flex: 1; overflow: hidden; overscroll-behavior: contain; }
 .card-network { --accent: #0b7285; }
 .card-gamedev { --accent: #e8590c; }
 .card-desktopui { --accent: #c2255c; }
+.card-msfullstack { --accent: #0078d4; }
 
 /* 卡片入场动画（轻柔上浮 + 弹跳尾韵） */
 @keyframes fadeUp {

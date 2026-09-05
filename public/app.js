@@ -173,6 +173,7 @@ async function openFeature(id, li) {
     : state.lang === 'reverse' ? 'cpp'
     : state.lang === 'aspnet' ? 'cs'
     : state.lang === 'desktopui' ? 'cs'
+    : state.lang === 'msfullstack' ? 'cs'
     : 'cpp';
 
   const badgeCls = (v) => 'badge lvl-' + v;
@@ -254,11 +255,12 @@ $('cs-count').textContent = meta.csharp;
   $('network-count').textContent = meta.network;
   $('gamedev-count').textContent = meta.gamedev;
   $('desktopui-count').textContent = meta.desktopui;
+  $('msfullstack-count').textContent = meta.msfullstack;
   } catch { /* 忽略 */ }
 })();
 
 /* 支持 #csharp / #cpp20 直达 */
-const HASH_VIEWS = ['csharp', 'patterns', 'python', 'js', 'ts', 'agent', 'cpp11', 'cpp20', 'unity', 'opencv', 'docker', 'sqlite', 'linux', 'rust', 'pandas', 'nodejs', 'git', 'redis', 'linuxdev', 'reverse', 'aspnet', 'network', 'gamedev', 'desktopui'];
+const HASH_VIEWS = ['csharp', 'patterns', 'python', 'js', 'ts', 'agent', 'cpp11', 'cpp20', 'unity', 'opencv', 'docker', 'sqlite', 'linux', 'rust', 'pandas', 'nodejs', 'git', 'redis', 'linuxdev', 'reverse', 'aspnet', 'network', 'gamedev', 'desktopui', 'msfullstack'];
 {
   const h = location.hash.slice(1);
   if (HASH_VIEWS.includes(h)) showView(h);

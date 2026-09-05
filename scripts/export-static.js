@@ -25,7 +25,8 @@ const dumps = {
   aspnet: require('../data/aspnetFeatures'),
   network: require('../data/networkFeatures'),
   gamedev: require('../data/gamedevFeatures'),
-  desktopui: require('../data/desktopuiFeatures')
+  desktopui: require('../data/desktopuiFeatures'),
+  msfullstack: require('../data/msfullstackFeatures')
 };
 
 const outDir = path.join(__dirname, '..', 'public', 'api');

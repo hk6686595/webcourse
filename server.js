@@ -48,6 +48,8 @@ const networkFeatures = require('./data/networkFeatures');
 const gamedevFeatures = require('./data/gamedevFeatures');
 // 桌面 UI 开发教程
 const desktopuiFeatures = require('./data/desktopuiFeatures');
+// 微软全栈开发教程
+const msfullstackFeatures = require('./data/msfullstackFeatures');
 
 const app = express();
 app.use(express.json({ limit: '256kb' }));
@@ -502,6 +504,24 @@ app.get('/api/desktopui', (req, res) => {
 });
 app.get('/api/desktopui/:id', (req, res) => {
   const f = desktopuiFeatures.find(x => x.id === req.params.id);
+  if (!f) return res.status(404).json({ error: '特性不存在' });
+  res.json(f);
+});
+
+// ---------- 微软全栈开发教程 ----------
+app.get('/api/msfullstack', (req, res) => {
+  const { q } = req.query;
+  let list = msfullstackFeatures;
+  if (q) {
+    const kw = String(q).toLowerCase();
+    list = list.filter(f =>
+      (f.title + f.summary + f.detail.join(' ') + f.example + (f.example3 || '')).toLowerCase().includes(kw));
+  }
+  res.json(list.map(({ id, title, category, version, level, summary }) =>
+    ({ id, title, category, version, level, summary })));
+});
+app.get('/api/msfullstack/:id', (req, res) => {
+  const f = msfullstackFeatures.find(x => x.id === req.params.id);
   if (!f) return res.status(404).json({ error: '特性不存在' });
   res.json(f);
 });
