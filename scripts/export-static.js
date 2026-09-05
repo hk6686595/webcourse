@@ -10,20 +10,15 @@ const dumps = {
   agent: require('../data/agentFeatures'),
   patterns: require('../data/patternsFeatures'),
   python: require('../data/pythonFeatures'),
-  unity: require('../data/unityFeatures'),
   opencv: require('../data/opencvFeatures'),
   docker: require('../data/dockerFeatures'),
-  sqlite: require('../data/sqliteFeatures'),
   linux: require('../data/linuxFeatures'),
-  linuxdev: require('../data/linuxdevFeatures'),
   rust: require('../data/rustFeatures'),
   nodejs: require('../data/nodejsFeatures'),
   git: require('../data/gitFeatures'),
-  redis: require('../data/redisFeatures'),
   reverse: require('../data/reverseFeatures'),
   aspnet: require('../data/aspnetFeatures'),
-  efcore: require('../data/efcoreFeatures'),
-  msfullstack: require('../data/msfullstackFeatures')
+  efcore: require('../data/efcoreFeatures')
 };
 
 const outDir = path.join(__dirname, '..', 'public', 'api');

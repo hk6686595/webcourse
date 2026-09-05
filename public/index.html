@@ -31,20 +31,15 @@
     <button class="nav-btn" data-view="agent">AI Agent 开发</button>
     <button class="nav-btn" data-view="cpp11">C++ 11/14/17</button>
     <button class="nav-btn" data-view="cpp20">C++20 特性</button>
-    <button class="nav-btn" data-view="unity">Unity3D 教程</button>
     <button class="nav-btn" data-view="opencv">OpenCV 教程</button>
     <button class="nav-btn" data-view="docker">Docker 教程</button>
-      <button class="nav-btn" data-view="sqlite">SQLite 教程</button>
     <button class="nav-btn" data-view="linux">Linux 命令</button>
-    <button class="nav-btn" data-view="linuxdev">Linux 开发</button>
     <button class="nav-btn" data-view="rust">Rust 语言</button>
     <button class="nav-btn" data-view="nodejs">Node.js</button>
     <button class="nav-btn" data-view="git">Git 版本控制</button>
-    <button class="nav-btn" data-view="redis">Redis</button>
     <button class="nav-btn" data-view="reverse">逆向基础</button>
     <button class="nav-btn" data-view="aspnet">ASP.NET Core</button>
     <button class="nav-btn" data-view="efcore">EF Core</button>
-    <button class="nav-btn" data-view="msfullstack">微软全栈</button>
   </nav>
 </header>
 
@@ -54,7 +49,7 @@
     <div class="hero">
       <h2>系统学习<b>现代语言特性</b></h2>
       <p>精选 C# 与 C++20 的核心语法特性，每个特性配有版本信息、要点解析与可读代码示例。</p>
-      <p class="hero-sub">22 个专题 · 550+ 篇详解 · 从零到工程化</p>
+      <p class="hero-sub">17 个专题 · 450+ 篇详解 · 从零到工程化</p>
     </div>
     <div class="cards">
       <a class="card card-cs" data-goto="csharp" href="#csharp">
@@ -105,12 +100,6 @@
         <p>Concepts、Ranges、协程、Modules、三路比较……四大新支柱与常用库增强一网打尽。</p>
         <div class="card-meta"><span id="cpp-count">…</span> 个特性 · 核心语言 + 标准库</div>
       </a>
-      <a class="card card-unity" data-goto="unity" href="#unity">
-        <div class="card-icon">U</div>
-        <h3>Unity3D 游戏引擎教程</h3>
-        <p>从编辑器、脚本生命周期、序列化到 URP/HDRP、DOTS、Netcode、性能分析与构建自动化，偏中高级开发者。</p>
-        <div class="card-meta"><span id="unity-count">…</span> 篇 · 工程 / 渲染 / 物理 / 动画 / UI / 网络 / 性能</div>
-      </a>
       <a class="card card-cv" data-goto="opencv" href="#opencv">
         <div class="card-icon">CV</div>
         <h3>OpenCV 图像处理教程</h3>
@@ -123,23 +112,11 @@
         <p>从容器与镜像概念、Dockerfile 编写、Compose 编排到 Swarm、Swarm 安全与多阶段构建，零基础到工程化。</p>
         <div class="card-meta"><span id="docker-count">…</span> 篇 · 入门 / 容器 / 镜像 / Compose / 安全 / 实战</div>
       </a>
-      <a class="card card-sqlite" data-goto="sqlite" href="#sqlite">
-        <div class="card-icon">DB</div>
-        <h3>SQLite 数据库教程</h3>
-        <p>从零配置嵌入式数据库入手，覆盖 CRUD、JOIN、索引、窗口函数、事务与 Python/Node 集成。</p>
-        <div class="card-meta"><span id="sqlite-count">…</span> 篇 · 基础 / 进阶 / 高级 / 实战</div>
-      </a>
       <a class="card card-linux" data-goto="linux" href="#linux">
         <div class="card-icon">L</div>
         <h3>Linux 系统常用命令</h3>
         <p>文件、权限、文本处理、进程、磁盘、网络、Shell 脚本与系统排查，工程必备的 Linux 命令全集。</p>
         <div class="card-meta"><span id="linux-count">…</span> 篇 · 文件 / 文本 / 进程 / 网络 / Shell / 实战</div>
-      </a>
-      <a class="card card-linuxdev" data-goto="linuxdev" href="#linuxdev">
-        <div class="card-icon">⚙</div>
-        <h3>Linux 平台软件开发</h3>
-        <p>工具链与构建（gcc/Make/CMake）、GDB 调试、系统编程（进程/线程/Socket）、打包、容器与 CI，赋能原生开发。</p>
-        <div class="card-meta"><span id="linuxdev-count">…</span> 篇 · 工具链 / 系统编程 / 构建 / 部署 / 实战</div>
       </a>
       <a class="card card-rust" data-goto="rust" href="#rust">
         <div class="card-icon">R</div>
@@ -159,12 +136,6 @@
         <p>初始化、分支、合并与变基、撤销回滚、远程协作、冲突解决、PR 流程与提交规范，团队协作必备。</p>
         <div class="card-meta"><span id="git-count">…</span> 篇 · 入门 / 分支 / 撤销 / 协作 / 高级 / 实战</div>
       </a>
-      <a class="card card-redis" data-goto="redis" href="#redis">
-        <div class="card-icon">R</div>
-        <h3>Redis 数据库</h3>
-        <p>五种数据结构、过期淘汰、持久化、缓存策略、分布式锁、限流、消息队列与集群高可用实战。</p>
-        <div class="card-meta"><span id="redis-count">…</span> 篇 · 入门 / 数据类型 / 机制 / 应用 / 集成 / 高可用</div>
-      </a>
       <a class="card card-reverse" data-goto="reverse" href="#reverse">
         <div class="card-icon">RE</div>
         <h3>逆向工程基础</h3>
@@ -182,12 +153,6 @@
         <h3>Entity Framework Core</h3>
         <p>ORM 原理、DbContext 与实体映射、迁移、LINQ 查询、关系模型、并发控制与性能优化，Microsoft 官方 ORM 系统教程。</p>
         <div class="card-meta"><span id="efcore-count">…</span> 篇 · 入门 / 建模 / 查询 / 进阶 / 性能 / 实战</div>
-      </a>
-      <a class="card card-msfullstack" data-goto="msfullstack" href="#msfullstack">
-        <div class="card-icon">MS</div>
-        <h3>微软全栈开发</h3>
-        <p>ASP.NET Core + Blazor + EF Core + Identity + SignalR + Azure，从零构建完整的微软技术栈 Web 应用。</p>
-        <div class="card-meta"><span id="msfullstack-count">…</span> 篇 · 架构 / 前端 / 数据 / 安全 / 实时 / 部署</div>
       </a>
     </div>
   </section>
