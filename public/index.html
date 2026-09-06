@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#16171d">
+<title>LangDocs · 多语言语法特性详解站</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <div class="header-bar">
+    <div class="brand">
+      <h1>LangDocs<span class="dot"></span></h1>
+      <span class="subtitle">多语言语法特性详解 · C# · C++ · Python · JavaScript · TypeScript · Rust · Agent · NumPy · Pandas</span>
+    </div>
+    <div class="header-actions">
+      <button id="theme-toggle" class="nav-btn" title="切换浅色/深色主题">浅色</button>
+      <button id="nav-toggle" class="icon-btn" type="button" aria-label="打开导航" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+  <nav id="top-nav">
+    <button class="nav-btn active" data-view="home">首页</button>
+    <button class="nav-btn" data-view="csharp">C# 语法特性</button>
+    <button class="nav-btn" data-view="patterns">C# 设计模式</button>
+    <button class="nav-btn" data-view="python">Python 语法</button>
+    <button class="nav-btn" data-view="js">JavaScript 语法</button>
+    <button class="nav-btn" data-view="ts">TypeScript 语法</button>
+    <button class="nav-btn" data-view="agent">AI Agent 开发</button>
+    <button class="nav-btn" data-view="cpp11">C++ 11/14/17</button>
+    <button class="nav-btn" data-view="cpp20">C++20 特性</button>
+    <button class="nav-btn" data-view="opencv">OpenCV 教程</button>
+    <button class="nav-btn" data-view="docker">Docker 教程</button>
+    <button class="nav-btn" data-view="linux">Linux 命令</button>
+    <button class="nav-btn" data-view="rust">Rust 语言</button>
+    <button class="nav-btn" data-view="nodejs">Node.js</button>
+    <button class="nav-btn" data-view="git">Git 版本控制</button>
+    <button class="nav-btn" data-view="reverse">逆向基础</button>
+    <button class="nav-btn" data-view="aspnet">ASP.NET Core</button>
+    <button class="nav-btn" data-view="efcore">EF Core</button>
+    <button class="nav-btn" data-view="numpy">NumPy</button>
+    <button class="nav-btn" data-view="pandas">Pandas</button>
+  </nav>
+</header>
+
+<main id="app">
+  <!-- ============ 首页 ============ -->
+  <section id="view-home" class="view">
+    <div class="hero">
+      <h2>系统学习<b>现代语言特性</b></h2>
+      <p>精选 C# 与 C++20 的核心语法特性，每个特性配有版本信息、要点解析与可读代码示例。</p>
+      <p class="hero-sub">19 个专题 · 480+ 篇详解 · 从零到工程化</p>
+    </div>
+    <div class="cards">
+      <a class="card card-cs" data-goto="csharp" href="#csharp">
+        <div class="card-icon">⌨</div>
+        <h3>C# 语法特性详解</h3>
+        <p>从自动属性到模式匹配、async/await 到 Span&lt;T&gt;，覆盖 C# 1.0 → 14.0 演进路上的关键特性。</p>
+        <div class="card-meta"><span id="cs-count">…</span> 个特性 · 按主题分类</div>
+      </a>
+      <a class="card card-pattern" data-goto="patterns" href="#patterns">
+        <div class="card-icon">◆</div>
+        <h3>C# 23 种设计模式</h3>
+        <p>用 C# 示例完整讲解 GoF 的创建型、结构型与行为型三大类 23 种经典设计模式。</p>
+        <div class="card-meta"><span id="pattern-count">…</span> 种模式 · 含可运行示例</div>
+      </a>
+      <a class="card card-py" data-goto="python" href="#python">
+        <div class="card-icon">Py</div>
+        <h3>Python 语法详解</h3>
+        <p>从动态类型、推导式、装饰器到 asyncio、模式匹配与类型注解，系统梳理现代 Python 核心语法。</p>
+        <div class="card-meta"><span id="py-count">…</span> 个特性 · 基础到进阶</div>
+      </a>
+      <a class="card card-js" data-goto="js" href="#js">
+        <div class="card-icon">JS</div>
+        <h3>JavaScript 语法详解</h3>
+        <p>从 let/const、闭包、原型链到 Promise、async/await、Proxy，系统梳理现代 JS 的核心语法。</p>
+        <div class="card-meta"><span id="js-count">…</span> 个特性 · 基础到进阶</div>
+      </a>
+      <a class="card card-ts" data-goto="ts" href="#ts">
+        <div class="card-icon">TS</div>
+        <h3>TypeScript 语法详解</h3>
+        <p>从类型注解、接口、联合类型到泛型、工具类型与 tsconfig，从零掌握 JS 的类型超集。</p>
+        <div class="card-meta"><span id="ts-count">…</span> 个特性 · 从零到工程化</div>
+      </a>
+      <a class="card card-agent" data-goto="agent" href="#agent">
+        <div class="card-icon">AI</div>
+        <h3>AI Agent 开发教程</h3>
+        <p>从 LLM 调用、工具循环、ReAct 到记忆、RAG、MCP 与安全评估，从零手写一个可用 Agent。</p>
+        <div class="card-meta"><span id="agent-count">…</span> 课 · 从零到工程化</div>
+      </a>
+      <a class="card card-cpp2" data-goto="cpp11" href="#cpp11">
+        <div class="card-icon">⚙</div>
+        <h3>C++ 11 / 14 / 17 标准特性</h3>
+        <p>auto、移动语义、智能指针、Lambda、结构化绑定、if constexpr、std::optional……现代 C++ 三次里程碑迭代。</p>
+        <div class="card-meta"><span id="cpp11-count">…</span> 个特性 · 按版本与主题分类</div>
+      </a>
+      <a class="card card-cpp" data-goto="cpp20" href="#cpp20">
+        <div class="card-icon">⚙</div>
+        <h3>C++20 标准特性板块</h3>
+        <p>Concepts、Ranges、协程、Modules、三路比较……四大新支柱与常用库增强一网打尽。</p>
+        <div class="card-meta"><span id="cpp-count">…</span> 个特性 · 核心语言 + 标准库</div>
+      </a>
+      <a class="card card-cv" data-goto="opencv" href="#opencv">
+        <div class="card-icon">CV</div>
+        <h3>OpenCV 图像处理教程</h3>
+        <p>从环境安装、图像读写、颜色空间到滤波、边缘、轮廓、视频与实战，面向刚入门的学者。</p>
+        <div class="card-meta"><span id="opencv-count">…</span> 篇 · 入门 / 几何 / 颜色 / 滤波 / 轮廓 / 视频</div>
+      </a>
+      <a class="card card-docker" data-goto="docker" href="#docker">
+        <div class="card-icon">🐳</div>
+        <h3>Docker 容器教程</h3>
+        <p>从容器与镜像概念、Dockerfile 编写、Compose 编排到 Swarm、Swarm 安全与多阶段构建，零基础到工程化。</p>
+        <div class="card-meta"><span id="docker-count">…</span> 篇 · 入门 / 容器 / 镜像 / Compose / 安全 / 实战</div>
+      </a>
+      <a class="card card-linux" data-goto="linux" href="#linux">
+        <div class="card-icon">L</div>
+        <h3>Linux 系统常用命令</h3>
+        <p>文件、权限、文本处理、进程、磁盘、网络、Shell 脚本与系统排查，工程必备的 Linux 命令全集。</p>
+        <div class="card-meta"><span id="linux-count">…</span> 篇 · 文件 / 文本 / 进程 / 网络 / Shell / 实战</div>
+      </a>
+      <a class="card card-rust" data-goto="rust" href="#rust">
+        <div class="card-icon">R</div>
+        <h3>Rust 语言教程</h3>
+        <p>所有权、借用、生命周期、结构体、枚举、并发与异步，从入门到构建 CLI 与 Web 服务的系统学习。</p>
+        <div class="card-meta"><span id="rust-count">…</span> 篇 · 入门 / 所有权 / 数据结构 / 并发 / 实战</div>
+      </a>
+      <a class="card card-nodejs" data-goto="nodejs" href="#nodejs">
+        <div class="card-icon">N</div>
+        <h3>Node.js 后端开发</h3>
+        <p>模块与异步、Express、中间件、REST API、数据库、JWT 认证、文件上传与部署，从零构建后端服务。</p>
+        <div class="card-meta"><span id="nodejs-count">…</span> 篇 · 入门 / Express / 数据库 / 认证 / 部署 / 实战</div>
+      </a>
+      <a class="card card-git" data-goto="git" href="#git">
+        <div class="card-icon">G</div>
+        <h3>Git 版本控制</h3>
+        <p>初始化、分支、合并与变基、撤销回滚、远程协作、冲突解决、PR 流程与提交规范，团队协作必备。</p>
+        <div class="card-meta"><span id="git-count">…</span> 篇 · 入门 / 分支 / 撤销 / 协作 / 高级 / 实战</div>
+      </a>
+      <a class="card card-reverse" data-goto="reverse" href="#reverse">
+        <div class="card-icon">RE</div>
+        <h3>逆向工程基础</h3>
+        <p>二进制与汇编、ELF/PE 格式、静态与动态分析、GDB/Frida、脱壳、反混淆与综合实战，进阶工程师视角。</p>
+        <div class="card-meta"><span id="reverse-count">…</span> 篇 · 基石 / 静态 / 动态 / 脱壳 / 平台 / 实战</div>
+      </a>
+      <a class="card card-aspnet" data-goto="aspnet" href="#aspnet">
+        <div class="card-icon">AS</div>
+        <h3>ASP.NET Core 开发</h3>
+        <p>环境与项目、DI、中间件、Minimal API、控制器与路由、EF Core、Identity/JWT、SignalR、缓存与部署。</p>
+        <div class="card-meta"><span id="aspnet-count">…</span> 篇 · 基础 / API / 数据 / 安全 / 实时 / 部署 / 实战</div>
+      </a>
+      <a class="card card-efcore" data-goto="efcore" href="#efcore">
+        <div class="card-icon">EF</div>
+        <h3>Entity Framework Core</h3>
+        <p>ORM 原理、DbContext 与实体映射、迁移、LINQ 查询、关系模型、并发控制与性能优化，Microsoft 官方 ORM 系统教程。</p>
+        <div class="card-meta"><span id="efcore-count">…</span> 篇 · 入门 / 建模 / 查询 / 进阶 / 性能 / 实战</div>
+      </a>
+      <a class="card card-np" data-goto="numpy" href="#numpy">
+        <div class="card-icon">Np</div>
+        <h3>NumPy 数值计算教程</h3>
+        <p>从 ndarray、广播、通用函数到线性代数分解、随机数与性能优化，Python 数据科学的第一块基石。</p>
+        <div class="card-meta"><span id="np-count">…</span> 篇 · 入门 / 创建 / 索引 / 运算 / 线性代数 / 进阶</div>
+      </a>
+      <a class="card card-pd" data-goto="pandas" href="#pandas">
+        <div class="card-icon">Pd</div>
+        <h3>Pandas 数据分析教程</h3>
+        <p>从 Series / DataFrame、读写、loc / iloc 到 groupby、merge、时间序列、透视表与可视化，结构化数据处理一站通。</p>
+        <div class="card-meta"><span id="pd-count">…</span> 篇 · 入门 / 读写 / 索引 / 清洗 / 操作 / 进阶</div>
+      </a>
+    </div>
+  </section>
+
+  <!-- ============ 文档视图（C# / C++20 共用骨架） ============ -->
+  <section id="view-docs" class="view" style="display:none">
+    <div id="sidebar-backdrop" class="sidebar-backdrop" hidden></div>
+    <div class="docs-toolbar">
+      <button type="button" id="sidebar-toggle" class="toolbar-btn">目录</button>
+      <span id="toolbar-title" class="toolbar-title">选择一篇开始阅读</span>
+    </div>
+    <div class="docs-split">
+      <aside id="docs-sidebar">
+        <input id="doc-search" type="search" placeholder="搜索特性 / 关键字…" spellcheck="false" enterkeyhint="search">
+        <ul id="feature-list"></ul>
+      </aside>
+      <article id="doc-content">
+        <div id="doc-empty">
+          <span class="empty-desktop">从左侧选择一个特性开始阅读</span>
+          <span class="empty-mobile">点上方「目录」选择一篇开始阅读</span>
+        </div>
+        <div id="doc-body" style="display:none">
+          <div id="doc-badges"></div>
+          <h2 id="doc-title"></h2>
+          <p id="doc-summary"></p>
+          <div id="doc-sections"></div>
+        </div>
+      </article>
+    </div>
+  </section>
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>

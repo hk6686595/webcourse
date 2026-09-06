@@ -1,0 +1,14 @@
+{
+  "name": "cpp-algo-judge",
+  "version": "1.0.0",
+  "description": "语言特性详解站：C# 语法特性详解 + C++11/14/17/20 标准特性板块",
+  "main": "server.js",
+  "scripts": {
+    "build": "node scripts/export-static.js",
+    "prestart": "node scripts/export-static.js",
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}
