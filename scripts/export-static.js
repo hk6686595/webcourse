@@ -20,7 +20,8 @@ const dumps = {
   aspnet: require('../data/aspnetFeatures'),
   efcore: require('../data/efcoreFeatures'),
   numpy: require('../data/numpyFeatures'),
-  pandas: require('../data/pandasFeatures')
+  pandas: require('../data/pandasFeatures'),
+  protocol: require('../data/protocolFeatures')
 };
 
 const outDir = path.join(__dirname, '..', 'public', 'api');

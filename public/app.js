@@ -164,7 +164,8 @@ async function openFeature(id, li) {
 
   const f = state.cache[id];
   if (!f) return;
-  const codeLang = state.lang === 'csharp' || state.lang === 'patterns' ? 'cs'
+  const codeLang = f.lang && KW[f.lang] ? f.lang
+    : state.lang === 'csharp' || state.lang === 'patterns' ? 'cs'
     : state.lang === 'python' || state.lang === 'agent' || state.lang === 'opencv' ? 'py'
     : state.lang === 'js' || state.lang === 'nodejs' ? 'js'
     : state.lang === 'ts' ? 'ts'
@@ -250,11 +251,12 @@ $('cs-count').textContent = meta.csharp;
   $('efcore-count').textContent = meta.efcore;
   $('np-count').textContent = meta.numpy;
   $('pd-count').textContent = meta.pandas;
+  $('proto-count').textContent = meta.protocol;
   } catch { /* 忽略 */ }
 })();
 
 /* 支持 #csharp / #cpp20 直达 */
-const HASH_VIEWS = ['csharp', 'patterns', 'python', 'js', 'ts', 'agent', 'cpp11', 'cpp20', 'opencv', 'docker', 'linux', 'rust', 'nodejs', 'git', 'reverse', 'aspnet', 'efcore', 'numpy', 'pandas'];
+const HASH_VIEWS = ['csharp', 'patterns', 'python', 'js', 'ts', 'agent', 'cpp11', 'cpp20', 'opencv', 'docker', 'linux', 'rust', 'nodejs', 'git', 'reverse', 'aspnet', 'efcore', 'numpy', 'pandas', 'protocol'];
 {
   const h = location.hash.slice(1);
   if (HASH_VIEWS.includes(h)) showView(h);

@@ -310,7 +310,8 @@ main#app { flex: 1; overflow: hidden; overscroll-behavior: contain; }
 .card-aspnet { --accent: #512bd4; }
 .card-efcore { --accent: #8b5cf6; }
 .card-np     { --accent: #4dabcf; }
-.card-pd     { --accent: #e07b39; }
+  .card-pd     { --accent: #e07b39; }
+  .card-proto  { --accent: #2fb344; }
 
 /* 卡片入场动画（轻柔上浮 + 弹跳尾韵） */
 @keyframes fadeUp {
@@ -326,6 +327,8 @@ main#app { flex: 1; overflow: hidden; overscroll-behavior: contain; }
 .cards .card:nth-child(6) { animation-delay: .17s; }
 .cards .card:nth-child(7) { animation-delay: .20s; }
 .cards .card:nth-child(8) { animation-delay: .23s; }
+.cards .card:nth-child(19) { animation-delay: .32s; }
+.cards .card:nth-child(20) { animation-delay: .35s; }
 
 /* ---------- docs layout ---------- */
 #view-docs { display: flex; flex-direction: column; overflow: hidden; height: 100%; }
