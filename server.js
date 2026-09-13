@@ -40,6 +40,8 @@ const numpyFeatures = require('./data/numpyFeatures');
 const pandasFeatures = require('./data/pandasFeatures');
 // 网络通信协议详解（Protobuf + MQTT + WebSocket）
 const protocolFeatures = require('./data/protocolFeatures');
+// C++ 指针详解
+const pointerFeatures = require('./data/pointerFeatures');
 
 const app = express();
 app.use(express.json({ limit: '256kb' }));
@@ -421,6 +423,24 @@ app.get('/api/protocol', (req, res) => {
 });
 app.get('/api/protocol/:id', (req, res) => {
   const f = protocolFeatures.find(x => x.id === req.params.id);
+  if (!f) return res.status(404).json({ error: '特性不存在' });
+  res.json(f);
+});
+
+// ---------- C++ 指针详解 ----------
+app.get('/api/pointer', (req, res) => {
+  const { q } = req.query;
+  let list = pointerFeatures;
+  if (q) {
+    const kw = String(q).toLowerCase();
+    list = list.filter(f =>
+      (f.title + f.summary + f.detail.join(' ') + f.example + (f.example2 || '') + (f.example3 || '')).toLowerCase().includes(kw));
+  }
+  res.json(list.map(({ id, title, category, version, level, summary }) =>
+    ({ id, title, category, version, level, summary })));
+});
+app.get('/api/pointer/:id', (req, res) => {
+  const f = pointerFeatures.find(x => x.id === req.params.id);
   if (!f) return res.status(404).json({ error: '特性不存在' });
   res.json(f);
 });

@@ -21,7 +21,8 @@ const dumps = {
   efcore: require('../data/efcoreFeatures'),
   numpy: require('../data/numpyFeatures'),
   pandas: require('../data/pandasFeatures'),
-  protocol: require('../data/protocolFeatures')
+  protocol: require('../data/protocolFeatures'),
+  pointer: require('../data/pointerFeatures')
 };
 
 const outDir = path.join(__dirname, '..', 'public', 'api');

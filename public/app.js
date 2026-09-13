@@ -172,6 +172,7 @@ async function openFeature(id, li) {
     : state.lang === 'rust' ? 'rust'
     : state.lang === 'docker' || state.lang === 'linux' || state.lang === 'git' ? 'py'
     : state.lang === 'reverse' ? 'cpp'
+    : state.lang === 'pointer' ? 'cpp'
     : state.lang === 'aspnet' ? 'cs'
     : state.lang === 'efcore' ? 'cs'
     : state.lang === 'numpy' || state.lang === 'pandas' ? 'py'
@@ -252,11 +253,12 @@ $('cs-count').textContent = meta.csharp;
   $('np-count').textContent = meta.numpy;
   $('pd-count').textContent = meta.pandas;
   $('proto-count').textContent = meta.protocol;
+  $('ptr-count').textContent = meta.pointer;
   } catch { /* 忽略 */ }
 })();
 
 /* 支持 #csharp / #cpp20 直达 */
-const HASH_VIEWS = ['csharp', 'patterns', 'python', 'js', 'ts', 'agent', 'cpp11', 'cpp20', 'opencv', 'docker', 'linux', 'rust', 'nodejs', 'git', 'reverse', 'aspnet', 'efcore', 'numpy', 'pandas', 'protocol'];
+const HASH_VIEWS = ['csharp', 'patterns', 'python', 'js', 'ts', 'agent', 'cpp11', 'cpp20', 'opencv', 'docker', 'linux', 'rust', 'nodejs', 'git', 'reverse', 'aspnet', 'efcore', 'numpy', 'pandas', 'protocol', 'pointer'];
 {
   const h = location.hash.slice(1);
   if (HASH_VIEWS.includes(h)) showView(h);
